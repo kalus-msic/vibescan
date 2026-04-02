@@ -1,0 +1,38 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Django
+*.sqlite3
+staticfiles/
+mediafiles/
+
+# Docs & interní soubory (nenahrávat na GitHub)
+docs/
+CLAUDE.md
+
+# Wireframe (dev only)
+wireframe/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
