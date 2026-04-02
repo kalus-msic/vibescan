@@ -42,6 +42,17 @@ def scan_rescan(request, pk):
 
 def scan_status(request, pk):
     scan = get_object_or_404(ScanResult, pk=pk)
+
+    # Detect stuck scans — if pending/running for more than 2 minutes, mark as failed
+    if scan.status in (ScanStatus.PENDING, ScanStatus.RUNNING):
+        from django.utils import timezone
+        age = (timezone.now() - scan.created_at).total_seconds()
+        if age > 120:
+            scan.status = ScanStatus.FAILED
+            scan.error_message = "Sken vypršel — Celery worker pravděpodobně neodpovídá. Zkuste to znovu."
+            scan.completed_at = timezone.now()
+            scan.save(update_fields=["status", "error_message", "completed_at"])
+
     if scan.status == ScanStatus.DONE:
         return render(request, "scanner/partials/results.html", {"scan": scan})
     if scan.status == ScanStatus.FAILED:
