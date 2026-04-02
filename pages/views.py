@@ -54,7 +54,7 @@ SECURITY_BLOCKS = [
 8. Vstup od uživatele validuj na frontendu I backendu. Používej ORM nebo parametrizované dotazy — nikdy string concatenation v SQL.
 9. API endpointy: každý endpoint musí kontrolovat autentizaci I autorizaci. Nikdy neberi user ID z URL — vždy ze session (prevence IDOR). Odděluj CRUD routy od server actions.
 10. Rate limiting na login a citlivé endpointy. Pro veřejné API nastav IP block list proti zneužití.
-11. Nastav limity pro upload souborů (velikost, typ, počet).
+11. Nastav limity pro upload souborů (velikost, typ, počet). Ověřuj skutečný obsah souboru (magic bytes), nespoléhej jen na příponu nebo MIME typ.
 12. HTTPS vždy, HTTP přesměruj na HTTPS.
 13. Tracking skripty (Google Analytics, Facebook Pixel) načítej až po souhlasu uživatele (cookie consent).
 14. Externí skripty z CDN musí mít integrity atribut (Subresource Integrity) kde je to možné.""",
@@ -86,7 +86,7 @@ SECURITY_BLOCKS = [
 - Každý POST formulář má CSRF token
 - Uživatelský vstup validuj na frontendu I backendu
 - SQL dotazy pouze přes ORM nebo parametrizované dotazy
-- Limity pro upload souborů (velikost, typ, počet)
+- Limity pro upload souborů (velikost, typ, počet). Ověřuj obsah (magic bytes), nespoléhej na příponu
 
 ## API & autorizace
 - Každý endpoint kontroluje autentizaci I autorizaci
@@ -123,7 +123,7 @@ SECURITY_BLOCKS = [
 7. Jsou hesla hashovaná (bcrypt/argon2), nikdy plain text?
 8. Mají endpointy kontrolu autentizace I autorizace? Není možný IDOR (přístup k cizím datům přes ID v URL)?
 9. Je rate limiting na citlivých endpointech? Je nastaven CORS?
-10. Jsou limity pro upload souborů (velikost, typ)?
+10. Jsou limity pro upload souborů (velikost, typ)? Je ověřen skutečný obsah (magic bytes)?
 11. Je security middleware aktivní?
 
 Pokud najdeš problém, oprav ho a vysvětli co jsi změnil.""",
