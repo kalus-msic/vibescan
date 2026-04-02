@@ -17,8 +17,8 @@ def test_missing_spf_is_warning():
         assert "missing-spf" in ids
 
 
-def test_dmarc_case_insensitive():
-    """DMARC tag is case-insensitive per RFC 7489 — v=dmarc1 must match."""
+def test_dmarc_policy_none_is_warning():
+    """DMARC with p=none is weak — should be WARNING."""
     rdata = MagicMock()
     rdata.strings = [b"v=dmarc1; p=none"]
 
@@ -32,8 +32,27 @@ def test_dmarc_case_insensitive():
             mock_get.return_value.status_code = 404
             scanner = DNSScanner()
             findings = scanner.run("https://example.com", MagicMock())
-            ids = [f.id for f in findings]
-            assert "dmarc-ok" in ids
+            f = next(x for x in findings if x.id == "dmarc-weak")
+            assert f.severity == Severity.WARNING
+
+
+def test_dmarc_policy_reject_is_ok():
+    """DMARC with p=reject is strong — should be OK."""
+    rdata = MagicMock()
+    rdata.strings = [b"v=DMARC1; p=reject"]
+
+    def mock_resolve(qname, rdtype):
+        if "_dmarc" in qname:
+            return [rdata]
+        raise dns.resolver.NoAnswer
+
+    with patch("scanner.modules.dns_check.dns.resolver.resolve", side_effect=mock_resolve):
+        with patch("scanner.modules.dns_check.httpx.get") as mock_get:
+            mock_get.return_value.status_code = 404
+            scanner = DNSScanner()
+            findings = scanner.run("https://example.com", MagicMock())
+            f = next(x for x in findings if x.id == "dmarc-ok")
+            assert f.severity == Severity.OK
 
 
 def test_dkim_found_via_txt():

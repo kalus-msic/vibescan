@@ -59,13 +59,39 @@ class DNSScanner(BaseScanModule):
             answers = dns.resolver.resolve(f"_dmarc.{domain}", "TXT")
             for rdata in answers:
                 for txt in rdata.strings:
-                    if txt.decode("utf-8", errors="ignore").lower().startswith("v=dmarc1"):
+                    raw = txt.decode("utf-8", errors="ignore")
+                    if raw.lower().startswith("v=dmarc1"):
+                        policy = ""
+                        for part in raw.split(";"):
+                            part = part.strip().lower()
+                            if part.startswith("p="):
+                                policy = part[2:]
+                        if policy == "none":
+                            return Finding(
+                                id="dmarc-weak",
+                                title="DMARC záznam nalezen, ale politika je p=none",
+                                description="DMARC existuje, ale p=none nezabraňuje zneužití domény. Doporučujeme p=quarantine nebo p=reject.",
+                                severity=Severity.WARNING,
+                                category="dns",
+                                detail=raw,
+                            )
                         return Finding(
                             id="dmarc-ok",
                             title="DMARC záznam nalezen",
-                            description="Doména má nastaven DMARC záznam.",
+                            description=f"Doména má nastaven DMARC záznam s politikou p={policy}.",
                             severity=Severity.OK,
                             category="dns",
+                            detail=raw,
+                        )
+                    # TXT record exists at _dmarc but doesn't start with v=DMARC1
+                    if "dmarc" in raw.lower():
+                        return Finding(
+                            id="dmarc-invalid",
+                            title="DMARC záznam nalezen, ale má neplatný formát",
+                            description='Záznam na _dmarc existuje, ale nezačíná "v=DMARC1". Zkontrolujte formát podle RFC 7489.',
+                            severity=Severity.WARNING,
+                            category="dns",
+                            detail=raw,
                         )
         except Exception:
             pass
