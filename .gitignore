@@ -28,6 +28,9 @@ CLAUDE.md
 # Wireframe (dev only)
 wireframe/
 
+# Docker (dev only)
+docker-compose.override.yml
+
 # OS
 .DS_Store
 Thumbs.db

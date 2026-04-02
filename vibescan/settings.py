@@ -29,6 +29,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "vibescan.middleware.SecurityHeadersMiddleware",
 ]
 
 ROOT_URLCONF = "vibescan.urls"
@@ -75,6 +76,10 @@ CELERY_CACHE_BACKEND = "default"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 120
 
+# Security (vždy)
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
 # Security (produkce)
 if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
@@ -82,3 +87,4 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_HTTPONLY = True

@@ -18,7 +18,14 @@ PRIVATE_RANGES = [
 ]
 
 
+def _check_private(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> None:
+    for network in PRIVATE_RANGES:
+        if ip in network:
+            raise SSRFError(f"Skenování privátní IP adresy není povoleno: {ip}")
+
+
 def validate_scan_url(url: str) -> str:
+    """Validate URL and resolve hostname. Returns validated url."""
     if not url:
         raise ValueError("URL nesmí být prázdná.")
 
@@ -39,9 +46,7 @@ def validate_scan_url(url: str) -> str:
     except socket.gaierror:
         raise ValueError(f"Nelze přeložit hostname: {hostname}")
 
-    for network in PRIVATE_RANGES:
-        if ip in network:
-            raise SSRFError(f"Skenování privátní IP adresy není povoleno: {ip}")
+    _check_private(ip)
 
     return url
 
@@ -56,6 +61,4 @@ def validate_resolved_ip(hostname: str) -> None:
     except (socket.gaierror, ValueError):
         return  # Can't resolve — let the caller handle the connection error
 
-    for network in PRIVATE_RANGES:
-        if ip in network:
-            raise SSRFError(f"Redirect na privátní IP adresu zablokován: {ip}")
+    _check_private(ip)

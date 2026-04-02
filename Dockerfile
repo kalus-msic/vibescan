@@ -11,4 +11,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN addgroup --system app && adduser --system --ingroup app app
+
 COPY . .
+
+RUN chown -R app:app /app
+USER app

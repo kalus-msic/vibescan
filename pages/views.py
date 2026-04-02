@@ -1,4 +1,13 @@
+from django.http import HttpResponse
 from django.shortcuts import render
+
+
+SECURITY_TXT = """\
+Contact: mailto:security@vibescan.io
+Expires: 2027-04-01T00:00:00.000Z
+Preferred-Languages: cs, en
+Canonical: https://vibescan.io/.well-known/security.txt
+"""
 
 GUIDE_PROMPTS = [
     {
@@ -28,8 +37,106 @@ GUIDE_PROMPTS = [
 ]
 
 
+TOOL_CATEGORIES = [
+    {
+        "id": "no-code",
+        "title": "Vizuální buildery (bez kódu)",
+        "subtitle": "Ideální pro vizitky, landing pages a jednoduché aplikace. Hosting v ceně, nemusíš řešit server.",
+        "tools": [
+            {
+                "name": "Lovable",
+                "url": "lovable.dev",
+                "stack": "React + Vite + Tailwind + Supabase",
+                "hosting": "V ceně (nebo export na GitHub)",
+                "audience": "Úplní začátečníci, nontechnical founders",
+                "price": "Zdarma / od ~$20/měs",
+                "security_notes": "Auth přes Supabase (OAuth, email). Row-level security musíš nastavit sám. Žádné automatické security headers ani CSP.",
+                "pros": ["Nejrychlejší cesta od nápadu k fungující aplikaci", "Hosting v ceně", "Supabase integrace pro auth a DB"],
+                "cons": ["Pouze React — žádné jiné frameworky", "Backend omezen na Supabase", "Složitější logika je problém"],
+            },
+            {
+                "name": "Bolt",
+                "url": "bolt.new",
+                "stack": "Node.js (React, Next.js, Astro…) — v prohlížeči",
+                "hosting": "Deploy přes Netlify (jedním klikem)",
+                "audience": "Začátečníci až středně pokročilí",
+                "price": "Zdarma / od ~$20/měs",
+                "security_notes": "Žádné automatické zabezpečení. Bez security headers, rate limitingu nebo input sanitizace. Auth jen pokud si řekneš.",
+                "pros": ["Běží v prohlížeči — nic neinstaluješ", "Flexibilnější stack než Lovable", "Podporuje i backend (Express)"],
+                "cons": ["WebContainer má omezení (žádné nativní binárky)", "PostgreSQL/Redis složitější", "Velké projekty mohou být pomalé"],
+            },
+            {
+                "name": "v0",
+                "url": "v0.dev",
+                "stack": "React + Tailwind + shadcn/ui (UI komponenty)",
+                "hosting": "Ne — integruje se do Vercel ekosystému",
+                "audience": "Vývojáři a designéři pro rychlé prototypování UI",
+                "price": "Zdarma / od ~$20/měs",
+                "security_notes": "Generuje pouze UI komponenty — žádný backend, auth ani security. Vše je na tobě.",
+                "pros": ["Výborné UI komponenty", "Tight integrace s Vercelem a Next.js"],
+                "cons": ["Není full-stack builder", "Pouze React/Next.js", "Nevhodné pro kompletní aplikace"],
+            },
+            {
+                "name": "Replit",
+                "url": "replit.com",
+                "stack": "Libovolný jazyk (Python, Node, Go, Java…)",
+                "hosting": "V ceně (Replit Deployments)",
+                "audience": "Začátečníci, studenti, prototypování",
+                "price": "Zdarma / od ~$25/měs",
+                "security_notes": "Replit Secrets pro env vars. Sdílené kontejnery — ne pro produkční bezpečnost. Kód na free tieru může být veřejně viditelný.",
+                "pros": ["Vše v jednom — editor, běh, deploy", "Podpora mnoha jazyků", "Nejmenší třecí plocha od nápadu k deploy"],
+                "cons": ["Výkon omezený (cold starts)", "Nevhodné pro produkci", "Omezené DB možnosti"],
+            },
+        ],
+    },
+    {
+        "id": "dev-tools",
+        "title": "Vývojářské AI nástroje",
+        "subtitle": "Plná kontrola nad stackem. Potřebuješ vlastní hosting (VPS, Vercel, AWS…) a základní znalost vývoje.",
+        "tools": [
+            {
+                "name": "Claude Code",
+                "url": "claude.ai/claude-code",
+                "stack": "Libovolný — pracuje s tvým projektem na disku",
+                "hosting": "Žádný — potřebuješ vlastní server/hosting",
+                "audience": "Vývojáři kteří chtějí plnou kontrolu",
+                "price": "Claude Pro/Max předplatné ($20–$200/měs)",
+                "security_notes": "Největší flexibilita — můžeš implementovat cokoliv. Ale nic se neděje automaticky — musíš vědět co chceš.",
+                "pros": ["Plná kontrola nad stackem a architekturou", "CLI — pracuje přímo s tvými soubory a gitem", "Nejlepší pro komplexní projekty"],
+                "cons": ["Vyžaduje znalost terminálu a deploymentu", "Žádné GUI", "Musíš si zajistit hosting, DB, CI/CD"],
+            },
+            {
+                "name": "Cursor",
+                "url": "cursor.com",
+                "stack": "Libovolný — VS Code fork s AI",
+                "hosting": "Žádný — potřebuješ vlastní hosting",
+                "audience": "Vývojáři (začátečníci až pokročilí)",
+                "price": "Zdarma / Pro ~$20/měs",
+                "security_notes": "Žádné automatické zabezpečení. Kód se odesílá na AI providery — pozor na citlivá data v kódu.",
+                "pros": ["Známé VS Code prostředí", "Agent mode pro multi-file editing", "Podpora více AI modelů"],
+                "cons": ["Kód se posílá na servery AI providera", "Žádný hosting/deploy", "Agent mode může udělat destruktivní změny"],
+            },
+            {
+                "name": "Windsurf",
+                "url": "windsurf.com",
+                "stack": "Libovolný — VS Code fork s AI (Codeium/OpenAI)",
+                "hosting": "Žádný — potřebuješ vlastní hosting",
+                "audience": "Vývojáři",
+                "price": "Zdarma / Pro ~$15/měs",
+                "security_notes": "Stejné jako Cursor — kód se odesílá na AI providery. Žádné automatické security features.",
+                "pros": ["Podobné Cursoru s vlastním agentem (Cascade)", "Levnější Pro plán"],
+                "cons": ["Budoucnost nejistá po akvizici OpenAI", "Stejné nevýhody jako Cursor"],
+            },
+        ],
+    },
+]
+
+
 def guide(request):
-    return render(request, "pages/guide.html", {"prompts": GUIDE_PROMPTS})
+    return render(request, "pages/guide.html", {
+        "prompts": GUIDE_PROMPTS,
+        "tool_categories": TOOL_CATEGORIES,
+    })
 
 
 SCAN_CHECKS = [
@@ -125,6 +232,10 @@ SECURITY_CHECKLIST = [
         ],
     },
 ]
+
+
+def security_txt(request):
+    return HttpResponse(SECURITY_TXT, content_type="text/plain")
 
 
 def how_it_works(request):

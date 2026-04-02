@@ -1,7 +1,12 @@
+import logging
+
 import httpx
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 from celery import shared_task
+
+logger = logging.getLogger(__name__)
+
 from .models import ScanResult, ScanStatus
 from .modules.headers import HeaderScanner
 from .modules.ssl_check import SSLScanner
@@ -9,7 +14,7 @@ from .modules.html_check import HTMLScanner
 from .modules.dns_check import DNSScanner
 from .modules.tech import TechLeakageScanner
 from .score import calculate_vibe_score
-from .validator import validate_resolved_ip, SSRFError
+from .validator import validate_resolved_ip, validate_scan_url, SSRFError
 
 # Max response size we're willing to process (5 MB)
 MAX_RESPONSE_SIZE = 5 * 1024 * 1024
@@ -42,6 +47,9 @@ def _fail_scan(scan, message):
 
 def _fetch_url(url):
     """Fetch URL with safety checks: size limit, content-type, SSRF on redirects."""
+    # Re-validate DNS right before connecting to minimize TOCTOU window
+    validate_scan_url(url)
+
     with httpx.stream(
         "GET",
         url,
@@ -114,7 +122,7 @@ def run_scan(self, scan_id: str):
             findings = module.run(scan.url, response)
             all_findings.extend(findings)
         except Exception:
-            pass
+            logger.exception("Module %s failed for %s", module.name, scan.url)
 
         progress[i]["status"] = "done"
 
