@@ -348,7 +348,6 @@ SECURITY_CHECKLIST = [
 REVIEW_STEPS = [
     {
         "title": "1. Secrets & klíče",
-        "time": "10 min",
         "description": "Najdi přihlašovací údaje, které může kdokoliv s přístupem ke kódu nebo frontendu ukrást.",
         "search_commands": 'grep -r "api_key\\|API_KEY\\|secret\\|SECRET\\|password\\|PASSWORD\\|token\\|TOKEN" --include="*.{js,ts,py,env*,yml,yaml,json}"\ngrep -r "sk-proj-\\|sk_live_\\|AKIA\\|ghp_\\|sb_secret_" --include="*.{js,ts,py,jsx,tsx}"',
         "check_items": [
@@ -364,7 +363,6 @@ REVIEW_STEPS = [
     },
     {
         "title": "2. Autentizace & autorizace",
-        "time": "20 min",
         "description": "Najdi cesty, jak se přihlásit jako někdo jiný nebo eskalovat na admina.",
         "search_commands": 'grep -r "login\\|signup\\|authenticate\\|session\\|jwt\\|oauth" --include="*.{js,ts,py,rb,php}"\ngrep -r "is_admin\\|isAdmin\\|role\\|permission\\|authorize" --include="*.{js,ts,py,rb,php}"\ngrep -r "cookie\\|session\\|localStorage" --include="*.{js,ts,py}"',
         "check_items": [
@@ -381,7 +379,6 @@ REVIEW_STEPS = [
     },
     {
         "title": "3. Přístup k cizím datům",
-        "time": "20 min",
         "description": "Najdi endpointy kde změna ID v URL vrátí data jiného uživatele.",
         "search_commands": 'grep -r "GET.*user\\|profile\\|account\\|order\\|payment" --include="*.{js,ts,py,rb,php}"\ngrep -r "WHERE.*user\\|filter.*user\\|findOne\\|findById" --include="*.{js,ts,py,rb,php}"\nfind . -name "*resolvers*" -o -name "*schema*"',
         "check_items": [
@@ -396,7 +393,6 @@ REVIEW_STEPS = [
     },
     {
         "title": "4. Injection & spuštění kódu",
-        "time": "20 min",
         "description": "Najdi SQL injection, XSS, prompt injection a RCE zranitelnosti.",
         "search_commands": 'grep -r "SELECT.*+\\|query.*%.*s\\|execute.*format\\|raw.*sql" --include="*.{js,ts,py,rb,php}"\ngrep -r "innerHTML\\|dangerouslySetInnerHTML\\|html.*safe\\|raw.*html" --include="*.{js,ts,jsx,tsx,py,rb}"\ngrep -r "eval\\|exec\\|system\\|popen\\|subprocess\\|spawn" --include="*.{js,ts,py,rb,php}"\ngrep -r "openai\\|anthropic\\|completion\\|prompt\\|llm" --include="*.{js,ts,py}"',
         "check_items": [
@@ -414,7 +410,6 @@ REVIEW_STEPS = [
     },
     {
         "title": "5. Upload souborů",
-        "time": "10 min",
         "description": "Najdi možnosti uploadu vedoucí ke spuštění kódu nebo XSS.",
         "search_commands": 'grep -r "upload\\|multer\\|formidable\\|FileStorage\\|multipart" --include="*.{js,ts,py,rb,php}"\ngrep -r "ImageMagick\\|PIL\\|sharp\\|ffmpeg" --include="*.{js,ts,py}"\ngrep -r "s3\\|blob\\|storage\\|bucket" --include="*.{js,ts,py,rb,php}"',
         "check_items": [
@@ -430,7 +425,6 @@ REVIEW_STEPS = [
     },
     {
         "title": "6. Test vs. produkce",
-        "time": "10 min",
         "description": "Najdi testovací backdoory a debug funkce ponechané v produkci.",
         "search_commands": 'grep -r "NODE_ENV\\|DEBUG\\|ENVIRONMENT" --include="*.{js,ts,py,env*,yml}"\ngrep -r "test.*user\\|admin.*test\\|debug\\|FIXME\\|TODO.*production" --include="*.{js,ts,py,rb,php}"\nls -la *.env* config/*.yml docker-compose*.yml',
         "check_items": [
@@ -446,7 +440,6 @@ REVIEW_STEPS = [
     },
     {
         "title": "7. Základní hygiena",
-        "time": "5 min",
         "description": "Zkontroluj security headers, CORS, rate limiting a HTTPS.",
         "search_commands": 'grep -r "cors\\|CORS\\|helmet\\|security.*header" --include="*.{js,ts,py,rb,php}"\ngrep -r "rate.*limit\\|throttle\\|ratelimit" --include="*.{js,ts,py,rb,php}"\ngrep -r "https\\|ssl\\|tls\\|cert" --include="*.{js,ts,py,yml,yaml}"',
         "check_items": [
