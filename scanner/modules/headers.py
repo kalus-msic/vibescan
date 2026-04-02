@@ -109,4 +109,26 @@ class HeaderScanner(BaseScanModule):
                 detail=powered,
             ))
 
+        # X-XSS-Protection (deprecated)
+        xxss = headers.get("x-xss-protection", "")
+        if xxss and not xxss.strip().startswith("0"):
+            findings.append(Finding(
+                id="xxss-protection-deprecated",
+                title="X-XSS-Protection je zastaralý",
+                description="X-XSS-Protection header je zastaralý a moderní prohlížeče ho ignorují. Může způsobit bezpečnostní problémy. Odeberte ho nebo nastavte na 0.",
+                severity=Severity.INFO,
+                category="headers",
+                detail=xxss,
+            ))
+
+        # Cross-Origin-Opener-Policy
+        if "cross-origin-opener-policy" not in headers:
+            findings.append(Finding(
+                id="missing-coop",
+                title="Chybí Cross-Origin-Opener-Policy",
+                description="Cross-Origin-Opener-Policy (COOP) chrání stránku před cross-origin útoky přes window reference. Doporučená hodnota: same-origin.",
+                severity=Severity.INFO,
+                category="headers",
+            ))
+
         return findings
