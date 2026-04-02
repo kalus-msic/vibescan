@@ -1,3 +1,31 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
+from django.views.decorators.http import require_http_methods
+from django_ratelimit.decorators import ratelimit
+from .models import ScanResult, ScanStatus
+from .forms import ScanForm
+from .tasks import run_scan
 
-# Create your views here.
+
+@ratelimit(key="ip", rate="10/h", method="POST", block=True)
+@require_http_methods(["GET", "POST"])
+def home(request):
+    form = ScanForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        scan = ScanResult.objects.create(url=form.cleaned_data["url"])
+        run_scan.delay(str(scan.id))
+        return redirect("scanner:scan_detail", pk=scan.id)
+    return render(request, "scanner/home.html", {"form": form})
+
+
+def scan_detail(request, pk):
+    scan = get_object_or_404(ScanResult, pk=pk)
+    return render(request, "scanner/scan.html", {"scan": scan})
+
+
+def scan_status(request, pk):
+    scan = get_object_or_404(ScanResult, pk=pk)
+    if scan.status == ScanStatus.DONE:
+        return render(request, "scanner/partials/results.html", {"scan": scan})
+    if scan.status == ScanStatus.FAILED:
+        return render(request, "scanner/partials/failed.html", {"scan": scan})
+    return render(request, "scanner/partials/progress.html", {"scan": scan})
