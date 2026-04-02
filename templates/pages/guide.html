@@ -86,17 +86,45 @@
     </div>
   </div>
 
-  <!-- Prompty -->
+  <!-- Jak zabezpečit projekt od začátku -->
+  <div class="mb-14">
+    <h2 class="text-2xl font-extrabold mb-2">Jak zabezpečit projekt od začátku</h2>
+    <p class="text-slate-500 text-sm mb-6">AI nástroje neřeší bezpečnost automaticky. Musíš jim říct co mají dodržovat — a nejlépe hned na začátku, ne až po nasazení. Výzkum ukazuje, že fázovaný přístup (pravidla na začátku + review na konci) snižuje zranitelnosti až 10×.</p>
+
+    <div class="space-y-4">
+      {% for block in security_blocks %}
+      <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div class="px-5 py-4 border-b border-slate-100">
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-semibold text-sm">{{ block.title }}</span>
+            <button onclick="navigator.clipboard.writeText(this.closest('.bg-white').querySelector('pre').textContent.trim()); this.textContent='Zkopírováno!'; setTimeout(() => this.textContent='Kopírovat', 2000)"
+              class="text-xs text-slate-400 hover:text-blue-600 font-medium transition-colors cursor-pointer">Kopírovat</button>
+          </div>
+          <p class="text-xs text-slate-500">{{ block.subtitle }}</p>
+        </div>
+        <div class="p-5">
+          <pre class="text-xs text-slate-700 bg-slate-50 rounded-lg p-4 leading-relaxed whitespace-pre-wrap font-mono border border-slate-100">{{ block.content }}</pre>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 text-sm text-blue-800 leading-relaxed mt-6">
+      <span class="font-semibold">Tip:</span> Starter prompt zadej na začátek konverzace s AI. Security pravidla ulož jako soubor do projektu (CLAUDE.md, .cursorrules). Self-review prompt použij pokaždé když AI vygeneruje nový kód.
+    </div>
+  </div>
+
+  <!-- Granulární prompty -->
   <div>
-    <h2 class="text-2xl font-extrabold mb-2">Security prompty</h2>
-    <p class="text-slate-500 text-sm mb-6">Kopíruj do Claude Code, Cursoru, Lovable, Boltu nebo jakéhokoliv AI nástroje. Fungují všude stejně.</p>
+    <h2 class="text-2xl font-extrabold mb-2">Prompty pro konkrétní oblasti</h2>
+    <p class="text-slate-500 text-sm mb-6">Použij ve chvíli kdy pracuješ na konkrétní části — formuláře, autentizace, deploy. Kopíruj do Claude Code, Cursoru, Lovable, Boltu nebo jakéhokoliv AI nástroje.</p>
 
     <div class="space-y-4">
       {% for prompt in prompts %}
       <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
           <span class="font-semibold text-sm">{{ prompt.title }}</span>
-          <button onclick="navigator.clipboard.writeText(this.closest('.bg-white').querySelector('pre').textContent.trim())"
+          <button onclick="navigator.clipboard.writeText(this.closest('.bg-white').querySelector('pre').textContent.trim()); this.textContent='Zkopírováno!'; setTimeout(() => this.textContent='Kopírovat', 2000)"
             class="text-xs text-slate-400 hover:text-blue-600 font-medium transition-colors cursor-pointer">Kopírovat</button>
         </div>
         <div class="p-5">

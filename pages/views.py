@@ -37,6 +37,81 @@ GUIDE_PROMPTS = [
 ]
 
 
+SECURITY_BLOCKS = [
+    {
+        "id": "starter",
+        "title": "Starter prompt",
+        "subtitle": "Zkopíruj na začátek projektu. Řekni AI jaká pravidla má dodržovat od prvního řádku kódu.",
+        "content": """Vytvářím webovou aplikaci. Dodržuj tyto bezpečnostní pravidla od začátku:
+
+1. Všechny secrets (API klíče, hesla, tokeny) patří do .env souboru, nikdy do kódu. Vytvoř .env.example s placeholder hodnotami.
+2. Nastav HTTP security headers: HSTS, Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.
+3. Každý POST formulář musí mít CSRF ochranu.
+4. Session cookies: HttpOnly=true, Secure=true, SameSite=Lax.
+5. Žádný debug mód v produkci. Vlastní error stránky pro 404 a 500 — nesmí prozrazovat stack trace.
+6. Vstup od uživatele vždy validuj a sanitizuj. Používej parametrizované dotazy, nikdy string concatenation v SQL.
+7. Rate limiting na login a citlivé endpointy.
+8. HTTPS vždy, HTTP přesměruj na HTTPS.
+9. Tracking skripty (Google Analytics, Facebook Pixel) načítej až po souhlasu uživatele (cookie consent).
+10. Externí skripty z CDN musí mít integrity atribut (Subresource Integrity) kde je to možné.""",
+    },
+    {
+        "id": "rules-file",
+        "title": "Security pravidla pro projekt",
+        "subtitle": "Ulož jako CLAUDE.md (Claude Code), .cursorrules (Cursor) nebo do system promptu. AI nástroj je načte automaticky při každé session.",
+        "content": """# Security pravidla
+
+## Secrets
+- Žádné API klíče, hesla ani tokeny v kódu — vše do .env
+- .env musí být v .gitignore
+- .env.example obsahuje pouze placeholder hodnoty
+
+## HTTP Security
+- Content-Security-Policy: bez unsafe-inline kde je to možné
+- Strict-Transport-Security: max-age=31536000; includeSubDomains
+- X-Frame-Options: DENY
+- X-Content-Type-Options: nosniff
+- Referrer-Policy: strict-origin-when-cross-origin
+- Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+## Formuláře a vstup
+- Každý POST formulář má CSRF token
+- Uživatelský vstup vždy validuj na serveru (nikdy jen na frontendu)
+- SQL dotazy pouze přes ORM nebo parametrizované dotazy
+
+## Cookies a session
+- HttpOnly=true, Secure=true, SameSite=Lax
+- Session regenerace po přihlášení
+
+## Produkce
+- DEBUG=false, vlastní error stránky (404, 500)
+- ALLOWED_HOSTS nastaveny explicitně
+- Rate limiting na POST endpointy
+
+## Před každým commitem
+- Zkontroluj, že v kódu nejsou hardcoded secrets
+- Zkontroluj, že nové endpointy mají autorizaci""",
+    },
+    {
+        "id": "self-review",
+        "title": "Self-review prompt",
+        "subtitle": "Zadej poté co AI vygeneruje kód. Výzkum ukazuje, že self-review snižuje zranitelnosti až 10×.",
+        "content": """Zkontroluj kód, který jsi právě vygeneroval. Projdi ho z pohledu OWASP Top 10:
+
+1. Jsou všechny vstupy od uživatele validované na serveru?
+2. Jsou SQL dotazy parametrizované (žádná string concatenation)?
+3. Jsou formuláře chráněné CSRF tokenem?
+4. Nejsou v kódu hardcoded secrets (API klíče, hesla, tokeny)?
+5. Jsou error stránky bezpečné (neprozrazují stack trace ani interní cesty)?
+6. Jsou cookies nastaveny s HttpOnly, Secure a SameSite?
+7. Mají endpointy kontrolu oprávnění (autorizaci, nejen autentizaci)?
+8. Je rate limiting na citlivých endpointech?
+
+Pokud najdeš problém, oprav ho a vysvětli co jsi změnil.""",
+    },
+]
+
+
 TOOL_CATEGORIES = [
     {
         "id": "no-code",
@@ -136,6 +211,7 @@ def guide(request):
     return render(request, "pages/guide.html", {
         "prompts": GUIDE_PROMPTS,
         "tool_categories": TOOL_CATEGORIES,
+        "security_blocks": SECURITY_BLOCKS,
     })
 
 
@@ -164,6 +240,22 @@ SCAN_CHECKS = [
         "icon": "eye",
         "title": "Tech leakage",
         "description": "Detekujeme prozrazení technologického stacku přes HTTP hlavičky — X-Powered-By, Server verze a podobně. Útočníci tyto informace využívají k cílení známých zranitelností.",
+    },
+    {
+        "id": "sensitive-files",
+        "icon": "folder",
+        "title": "Citlivé soubory",
+        "description": "Kontrolujeme veřejnou dostupnost souborů, které by neměly být přístupné zvenčí. Testujeme pouze existenci (HTTP HEAD, status code) — obsah souborů nečteme.",
+        "detail_list": [
+            ".env — proměnné prostředí (hesla, API klíče, DB credentials)",
+            ".env.backup — záloha .env se stejnými secrets",
+            ".git/config — konfigurace git repozitáře (umožňuje stáhnout zdrojový kód)",
+            ".DS_Store — macOS metadata prozrazující strukturu adresářů",
+            "phpinfo.php — verze PHP, cesty, rozšíření, konfigurace serveru",
+            "server-status — Apache status page s aktivními requesty a IP klientů",
+            "wp-config.php.bak — záloha WordPress konfigurace s DB přístupy",
+            ".svn/entries — SVN metadata umožňující stáhnout zdrojový kód",
+        ],
     },
     {
         "icon": "file",
