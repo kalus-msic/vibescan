@@ -345,6 +345,123 @@ SECURITY_CHECKLIST = [
 ]
 
 
+REVIEW_STEPS = [
+    {
+        "title": "1. Secrets & klíče",
+        "time": "10 min",
+        "description": "Najdi přihlašovací údaje, které může kdokoliv s přístupem ke kódu nebo frontendu ukrást.",
+        "check_items": [
+            "Hardcoded API klíče (Stripe, OpenAI, AWS, Supabase) v kódu",
+            "Databázové credentials přímo v source code",
+            "JWT secrets, session klíče, encryption klíče",
+            "Secrets ve frontend kódu nebo bundlech (viditelné v prohlížeči)",
+            "Credentials v komentářích (// TODO: remove test key)",
+            "Testovací credentials, které fungují v produkci",
+        ],
+        "bad_example": 'const OPENAI_API_KEY = "sk-proj-abc123...";\nconst supabase = createClient(URL, "eyJhbGci...");',
+        "good_example": "Secrets v .env souboru (v .gitignore)\nPřístup přes process.env / os.getenv()\n.env.example s placeholder hodnotami",
+    },
+    {
+        "title": "2. Autentizace & autorizace",
+        "time": "20 min",
+        "description": "Najdi cesty, jak se přihlásit jako někdo jiný nebo eskalovat na admina.",
+        "check_items": [
+            "User ID z URL parametrů místo ze session (IDOR)",
+            "Role/admin status z request body bez serverové validace",
+            "Autorizace pouze na frontendu (API stále přístupné)",
+            "JWT bez expirace nebo bez ověření podpisu",
+            "Session cookies bez HttpOnly, Secure, SameSite",
+            "Admin routy bez serverové kontroly role",
+            "Password reset s predikovatelnými tokeny",
+        ],
+        "bad_example": '// User ID z URL — útočník ho změní!\napp.get("/api/profile", (req, res) => {\n  const userId = req.query.userId;\n  return db.getProfile(userId);\n});',
+        "good_example": "// User ID vždy ze session\napp.get(\"/api/profile\", (req, res) => {\n  const userId = req.session.userId;\n  return db.getProfile(userId);\n});",
+    },
+    {
+        "title": "3. Přístup k cizím datům",
+        "time": "20 min",
+        "description": "Najdi endpointy kde změna ID v URL vrátí data jiného uživatele.",
+        "check_items": [
+            "API routy přijímající record ID bez kontroly vlastnictví",
+            "ORM dotazy filtrující jen podle ID, ne podle přihlášeného uživatele",
+            "List endpointy bez filtrování na aktuálního uživatele",
+            "GraphQL resolvery bez ownership kontroly",
+            "Veřejné endpointy vracející citlivá data (PII, finance, zdraví)",
+        ],
+        "bad_example": '# Vrací JAKOUKOLIV objednávku, ne jen uživatelovu!\n@app.get("/api/orders/{order_id}")\ndef get_order(order_id):\n    return db.query(Order).filter(Order.id == order_id).first()',
+        "good_example": '# Ověří vlastnictví záznamu\n@app.get("/api/orders/{order_id}")\ndef get_order(order_id, user=Depends(get_current_user)):\n    return db.query(Order).filter(\n        Order.id == order_id,\n        Order.user_id == user.id\n    ).first()',
+    },
+    {
+        "title": "4. Injection & spuštění kódu",
+        "time": "20 min",
+        "description": "Najdi SQL injection, XSS, prompt injection a RCE zranitelnosti.",
+        "check_items": [
+            "String concatenation v SQL dotazech (f-stringy, template literals)",
+            ".raw() nebo .execute() s user inputem",
+            "innerHTML, dangerouslySetInnerHTML s uživatelskými daty",
+            "Template filtry |safe nebo |raw na user obsahu",
+            "eval(), exec(), Function() s uživatelským vstupem",
+            "subprocess/shell commands s user inputem",
+            "Uživatelský vstup v system promptech LLM (prompt injection)",
+            "Unsafe deserializace (pickle, unserialize, yaml.load)",
+        ],
+        "bad_example": '# SQL injection\nquery = f"SELECT * FROM users WHERE name = \'{username}\'"\n\n# XSS\nelement.innerHTML = userInput\n\n# RCE\nos.system(f"convert {user_filename} output.jpg")',
+        "good_example": "# Parametrizované dotazy\ndb.execute(\"SELECT * FROM users WHERE name = %s\", (username,))\n\n# Bezpečný text\nelement.textContent = userInput\n\n# Bez shell injection\nsubprocess.run(['convert', user_filename, 'output.jpg'])",
+    },
+    {
+        "title": "5. Upload souborů",
+        "time": "10 min",
+        "description": "Najdi možnosti uploadu vedoucí ke spuštění kódu nebo XSS.",
+        "check_items": [
+            "Žádná validace typu souboru (přijímá .php, .exe, .sh)",
+            "Validace pouze na frontendu (obejitelná)",
+            "Soubory uložené v executable adresáři",
+            "Originální názvy souborů (directory traversal: ../../../etc/passwd)",
+            "Žádné limity velikosti (DoS přes obrovské soubory)",
+            "Chybí ověření obsahu (magic bytes) — spoléhání jen na příponu",
+        ],
+        "bad_example": '// Žádná validace — útočník uploadne shell.php\napp.post("/upload", upload.single("file"), (req, res) => {\n  fs.writeFileSync(`./public/${file.originalname}`, file.buffer);\n});',
+        "good_example": "Allowlist přípon: ['.jpg', '.png', '.pdf']\nOvěření obsahu přes magic bytes\nPřejmenování na UUID\nUložení mimo web root nebo cloud storage\nLimity velikosti",
+    },
+    {
+        "title": "6. Test vs. produkce",
+        "time": "10 min",
+        "description": "Najdi testovací backdoory a debug funkce ponechané v produkci.",
+        "check_items": [
+            "Testovací účty fungující v produkci (admin@test.com / test123)",
+            "Debug mode zapnutý (stack traces, SQL dotazy viditelné)",
+            "Debug routy nebo flagy aktivní v produkci",
+            "Verbose error messages prozrazující internals",
+            "Mock authentication bypass stále aktivní",
+            "Logování citlivých dat (hesla, tokeny, PII)",
+        ],
+        "bad_example": '# Backdoor účet fungující v produkci!\nif username == "admin@test.com" and password == "test123":\n    return create_admin_session()\n\n# Debug mode vždy zapnutý\nDEBUG = True',
+        "good_example": "DEBUG řízený env proměnnou (False v produkci)\nVlastní error stránky bez stack traces\nŽádné testovací credentials v kódu\nSeparátní DB pro test a produkci",
+    },
+    {
+        "title": "7. Základní hygiena",
+        "time": "5 min",
+        "description": "Zkontroluj security headers, CORS, rate limiting a HTTPS.",
+        "check_items": [
+            "CORS: Access-Control-Allow-Origin: * s credentials",
+            "Chybí CSRF ochrana na state-changing operacích",
+            "Login endpoint bez rate limitingu (brute force)",
+            "HTTP místo HTTPS v produkci",
+            "Chybí security headers (CSP, X-Frame-Options, HSTS)",
+            "Chybí security middleware (helmet, SecurityMiddleware)",
+        ],
+        "bad_example": '// Wide-open CORS\napp.use(cors({ origin: "*", credentials: true }));\n\n// Login bez rate limitingu\napp.post("/login", (req, res) => {\n  checkPassword(req.body.username, req.body.password);\n});',
+        "good_example": "CORS: pouze konkrétní domény\nCSRF tokeny na formulářích\nRate limiting na auth endpointech\nSecurity middleware (helmet / SecurityMiddleware)\nHTTPS vynucené",
+    },
+]
+
+
+def review(request):
+    return render(request, "pages/review.html", {
+        "steps": REVIEW_STEPS,
+    })
+
+
 def security_txt(request):
     return HttpResponse(SECURITY_TXT, content_type="text/plain")
 
