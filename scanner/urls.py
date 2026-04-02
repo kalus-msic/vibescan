@@ -7,4 +7,5 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("scan/<uuid:pk>/", views.scan_detail, name="scan_detail"),
     path("scan/<uuid:pk>/status/", views.scan_status, name="scan_status"),
+    path("scan/<uuid:pk>/rescan/", views.scan_rescan, name="scan_rescan"),
 ]

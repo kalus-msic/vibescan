@@ -22,6 +22,15 @@ def scan_detail(request, pk):
     return render(request, "scanner/scan.html", {"scan": scan})
 
 
+@ratelimit(key="ip", rate="10/h", method="POST", block=True)
+@require_http_methods(["POST"])
+def scan_rescan(request, pk):
+    original = get_object_or_404(ScanResult, pk=pk)
+    scan = ScanResult.objects.create(url=original.url)
+    run_scan.delay(str(scan.id))
+    return redirect("scanner:scan_detail", pk=scan.id)
+
+
 def scan_status(request, pk):
     scan = get_object_or_404(ScanResult, pk=pk)
     if scan.status == ScanStatus.DONE:
