@@ -3,7 +3,7 @@ class SecurityHeadersMiddleware:
 
     CSP = (
         "default-src 'self'; "
-        "script-src 'self' https://cdn.tailwindcss.com https://unpkg.com; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
         "img-src 'self' data:; "
@@ -18,7 +18,8 @@ class SecurityHeadersMiddleware:
 
     def __call__(self, request):
         response = self.get_response(request)
-        response["Content-Security-Policy"] = self.CSP
+        # CSP temporarily in report-only mode to debug HTMX polling issue
+        response["Content-Security-Policy-Report-Only"] = self.CSP
         response["Permissions-Policy"] = (
             "geolocation=(), camera=(), microphone=(), "
             "display-capture=(), accelerometer=(), gyroscope=()"
