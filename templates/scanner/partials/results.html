@@ -2,6 +2,17 @@
 <div id="scan-content">
 
   {% with category=scan.vibe_score|score_category %}
+  {% if scan.ephemeral %}
+  <div class="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-6 text-xs text-amber-700">
+    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <span class="font-medium">Jednorázový sken — po opuštění stránky nebudou výsledky dostupné.</span>
+  </div>
+  <div class="flex items-center gap-3 mb-6 text-sm">
+    <span class="text-slate-400 text-xs">{{ scan.completed_at|date:"j. n. Y H:i" }}</span>
+    <span class="text-slate-300">·</span>
+    <a href="{% url 'scanner:home' %}" class="text-slate-500 hover:text-slate-900 font-medium transition-colors">Nový sken</a>
+  </div>
+  {% else %}
   <div class="flex items-center gap-3 mb-6 text-sm flex-wrap">
     <span class="text-slate-400 text-xs">{{ scan.completed_at|date:"j. n. Y H:i" }}</span>
     <span class="text-slate-300">·</span>
@@ -15,6 +26,7 @@
       <button type="submit" class="text-blue-600 hover:text-blue-800 font-medium transition-colors cursor-pointer">Otestovat znovu</button>
     </form>
   </div>
+  {% endif %}
 
   <!-- Score + summary cards -->
   <div class="flex items-stretch gap-4 mb-6">
@@ -45,7 +57,7 @@
     {% endwith %}
   </div>
 
-  {% with critical=scan.findings|by_severity:"critical" warnings=scan.findings|by_severity:"warning" ok=scan.findings|by_severity:"ok" %}
+  {% with critical=scan.findings|by_severity:"critical" warnings=scan.findings|by_severity:"warning" infos=scan.findings|by_severity:"info" ok=scan.findings|by_severity:"ok" %}
   <div class="space-y-4">
 
     <!-- V pořádku -->
@@ -118,6 +130,34 @@
             {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 inline-block">{{ f.detail }}</code>{% endif %}
           </div>
           <a href="{{ f.fix_url }}" class="text-xs text-blue-600 hover:underline flex-shrink-0 font-semibold mt-0.5">Opravit →</a>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Upozornění (INFO) -->
+    {% if infos %}
+    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+      <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 bg-blue-50/50">
+        <div class="w-2 h-2 rounded-full bg-blue-400"></div>
+        <span class="text-sm font-bold text-blue-600">Upozornění</span>
+          <span class="text-xs font-mono text-blue-400 ml-auto">−{{ infos|total_penalty }}</span>
+      </div>
+      <div class="divide-y divide-slate-100">
+        {% for f in infos %}
+        <div class="px-5 py-4 flex gap-3">
+          <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="font-semibold text-sm text-slate-900">{{ f.title }}</span>
+              <span class="text-xs font-mono text-blue-400">−{{ f|penalty }}</span>
+            </div>
+            <div class="text-xs text-slate-500 leading-relaxed">{{ f.description }}</div>
+            {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 inline-block">{{ f.detail }}</code>{% endif %}
+          </div>
         </div>
         {% endfor %}
       </div>

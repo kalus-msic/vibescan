@@ -23,6 +23,7 @@ def finding_counts(findings):
     return {
         "critical": sum(1 for f in findings if f.get("severity") == "critical"),
         "warning": sum(1 for f in findings if f.get("severity") == "warning"),
+        "info": sum(1 for f in findings if f.get("severity") == "info"),
         "ok": sum(1 for f in findings if f.get("severity") == "ok"),
     }
 
