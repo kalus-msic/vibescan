@@ -6,7 +6,15 @@ from .forms import ScanForm
 from .tasks import run_scan
 
 
-@ratelimit(key="ip", rate="10/h", method="POST", block=True)
+def _session_key(group, request):
+    """Rate limit key based on session — each browser gets its own limit."""
+    if not request.session.session_key:
+        request.session.create()
+    return request.session.session_key
+
+
+@ratelimit(key="ip", rate="60/h", method="POST", block=True, group="scan-ip")
+@ratelimit(key=_session_key, rate="10/h", method="POST", block=True, group="scan-session")
 @require_http_methods(["GET", "POST"])
 def home(request):
     form = ScanForm(request.POST or None)
@@ -22,7 +30,8 @@ def scan_detail(request, pk):
     return render(request, "scanner/scan.html", {"scan": scan})
 
 
-@ratelimit(key="ip", rate="10/h", method="POST", block=True)
+@ratelimit(key="ip", rate="60/h", method="POST", block=True, group="scan-ip")
+@ratelimit(key=_session_key, rate="10/h", method="POST", block=True, group="scan-session")
 @require_http_methods(["POST"])
 def scan_rescan(request, pk):
     original = get_object_or_404(ScanResult, pk=pk)
