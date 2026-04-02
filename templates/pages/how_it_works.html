@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Jak to funguje — Vibescan{% endblock %}
+
+{% block content %}
+<section class="max-w-3xl mx-auto px-6 py-20">
+
+  <!-- Intro -->
+  <div class="mb-12">
+    <h1 class="text-3xl font-extrabold mb-4">Jak Vibescan funguje</h1>
+    <p class="text-slate-500 leading-relaxed mb-4">
+      Spousta lidí dnes staví aplikace přes "vibe coding" — píšeš AI co chceš a ono to napíše za tebe. Je to skvělý způsob, jak rychle prototypovat. Problém je, že AI často zapomíná na bezpečnost. A ty nevíš, co ti chybí, protože jsi to nikdy nemusel řešit.
+    </p>
+    <p class="text-slate-500 leading-relaxed">
+      Vibescan ti dá rychlý přehled o tom, co je viditelné zvenčí — bez nutnosti přístupu ke kódu.
+    </p>
+  </div>
+
+  <!-- Co Vibescan je / není -->
+  <div class="grid grid-cols-2 gap-4 mb-12">
+    <div class="bg-green-50 border border-green-200 rounded-2xl p-5">
+      <div class="font-bold text-sm text-green-700 mb-3">Co Vibescan dělá</div>
+      <ul class="text-sm text-slate-700 space-y-2">
+        <li class="flex gap-2">
+          <svg class="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+          Pasivní audit veřejně dostupných informací
+        </li>
+        <li class="flex gap-2">
+          <svg class="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+          Kontrola HTTP hlaviček, SSL, DNS a HTML
+        </li>
+        <li class="flex gap-2">
+          <svg class="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+          Konkrétní skóre a návody na opravu
+        </li>
+        <li class="flex gap-2">
+          <svg class="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+          Sdílitelný odkaz na výsledky
+        </li>
+      </ul>
+    </div>
+    <div class="bg-red-50 border border-red-200 rounded-2xl p-5">
+      <div class="font-bold text-sm text-red-700 mb-3">Co Vibescan nedělá</div>
+      <ul class="text-sm text-slate-700 space-y-2">
+        <li class="flex gap-2">
+          <svg class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          Nejedná se o penetrační test
+        </li>
+        <li class="flex gap-2">
+          <svg class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          Nekontrolujeme zdrojový kód aplikace
+        </li>
+        <li class="flex gap-2">
+          <svg class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          Netestujeme SQL injection, XSS ani IDOR
+        </li>
+        <li class="flex gap-2">
+          <svg class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          Nezaručujeme 100% bezpečnost
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Co konkrétně kontrolujeme -->
+  <div class="mb-12">
+    <h2 class="text-2xl font-extrabold mb-6">Co konkrétně kontrolujeme</h2>
+    <div class="space-y-3">
+      {% for check in scan_checks %}
+      <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+        <div class="font-semibold text-sm text-slate-900 mb-1">{{ check.title }}</div>
+        <div class="text-sm text-slate-500 leading-relaxed">{{ check.description }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Bezpečnostní checklist -->
+  <div class="mb-12">
+    <h2 class="text-2xl font-extrabold mb-3">Co bys měl zkontrolovat sám</h2>
+    <p class="text-slate-500 leading-relaxed mb-6">
+      Vibescan kontroluje jen to, co je viditelné zvenčí. Následující věci musíš ověřit ve svém kódu. Pokud stavíš s AI (Claude Code, Cursor, Copilot), řekni mu ať to zkontroluje — ale pak to ověř sám.
+    </p>
+
+    <div class="space-y-6">
+      {% for group in security_checklist %}
+      <div>
+        <h3 class="font-bold text-sm text-slate-900 mb-3">{{ group.category }}</h3>
+        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+          <div class="divide-y divide-slate-100">
+            {% for item in group.items %}
+            <div class="px-5 py-3 flex gap-3 items-start">
+              <div class="w-5 h-5 rounded border border-slate-300 flex-shrink-0 mt-0.5"></div>
+              <span class="text-sm text-slate-600 leading-relaxed">{{ item }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Tip -->
+  <div class="bg-slate-900 text-white rounded-2xl p-6 mb-8">
+    <div class="font-bold text-sm mb-2">Tip pro vibecoded projekty</div>
+    <p class="text-sm text-slate-400 leading-relaxed mb-4">
+      Po každé větší implementaci commitni a pushni kód, aby proběhly automatizované kontroly (Snyk, Semgrep). Pak teprve pokračuj na další část. Měj minimálně dvě větve — development a main. Před commitem vždy spusť build a ověř, že vše funguje.
+    </p>
+    <div class="flex gap-3">
+      <a href="{% url 'scanner:home' %}" class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold py-2.5 px-5 rounded-lg transition-colors">
+        Spustit sken
+      </a>
+      <a href="{% url 'pages:guide' %}" class="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold py-2.5 px-5 rounded-lg transition-colors">
+        Průvodce prompty
+      </a>
+    </div>
+  </div>
+
+</section>
+{% endblock %}

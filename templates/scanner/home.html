@@ -32,7 +32,7 @@
       {% if form.url.errors %}
         <p class="text-sm text-red-600 mt-2">{{ form.url.errors|join:", " }}</p>
       {% endif %}
-      <p class="text-xs text-slate-400 mt-3">Skenujeme pouze veřejně dostupné informace. Žádná registrace není potřeba.</p>
+      <p class="text-xs text-slate-400 mt-3">Skenujeme pouze veřejně dostupné informace. Žádná registrace není potřeba. <a href="{% url 'pages:how_it_works' %}" class="text-blue-500 hover:underline">Jak to funguje?</a></p>
     </form>
   </div>
 
