@@ -76,7 +76,7 @@ def _fetch_url(url):
                 raise ValueError("Odpověď je příliš velká (> 5 MB)")
             chunks.append(chunk)
 
-        response.read()  # Ensure response is fully consumed for httpx
+        # Set content manually — stream is already consumed
         response._content = b"".join(chunks)
 
     return response
