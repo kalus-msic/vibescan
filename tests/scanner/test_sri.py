@@ -66,7 +66,7 @@ class TestSRIScanner:
         findings = self.scanner.run("https://mysite.com", resp)
         assert len(findings) == 0
 
-    def test_multiple_external_scripts(self):
+    def test_multiple_external_scripts_grouped(self):
         resp = _mock_response(
             '<script src="https://cdn1.com/a.js"></script>'
             '<script src="https://cdn2.com/b.js"></script>'
@@ -74,7 +74,10 @@ class TestSRIScanner:
         )
         findings = self.scanner.run("https://mysite.com", resp)
         warnings = [f for f in findings if f.severity == Severity.WARNING]
-        assert len(warnings) == 2
+        assert len(warnings) == 1
+        assert "(2×)" in warnings[0].title
+        assert "cdn1.com" in warnings[0].detail
+        assert "cdn2.com" in warnings[0].detail
 
     def test_no_scripts_returns_empty(self):
         resp = _mock_response('<html><body><p>No scripts</p></body></html>')

@@ -21,7 +21,7 @@ class TestTrackingConsentScanner:
         findings = self.scanner.run("https://example.com", resp)
         warnings = [f for f in findings if f.severity == Severity.WARNING]
         assert len(warnings) == 1
-        assert "googletagmanager" in warnings[0].detail
+        assert "Google Tag Manager" in warnings[0].detail
 
     def test_detects_google_analytics(self):
         resp = _mock_response(
@@ -47,7 +47,7 @@ class TestTrackingConsentScanner:
         warnings = [f for f in findings if f.severity == Severity.WARNING]
         assert len(warnings) == 1
 
-    def test_multiple_trackers_produce_multiple_findings(self):
+    def test_multiple_trackers_grouped_in_one_finding(self):
         resp = _mock_response(
             '<script src="https://www.googletagmanager.com/gtag/js?id=G-X"></script>'
             '<script src="https://connect.facebook.net/en_US/fbevents.js"></script>'
@@ -55,7 +55,11 @@ class TestTrackingConsentScanner:
         )
         findings = self.scanner.run("https://example.com", resp)
         warnings = [f for f in findings if f.severity == Severity.WARNING]
-        assert len(warnings) == 3
+        assert len(warnings) == 1
+        assert "(3×)" in warnings[0].title
+        assert "Google Tag Manager" in warnings[0].detail
+        assert "Facebook Pixel" in warnings[0].detail
+        assert "Hotjar" in warnings[0].detail
 
     def test_deduplicates_same_host(self):
         resp = _mock_response(

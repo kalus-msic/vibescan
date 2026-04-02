@@ -35,6 +35,7 @@ class SRIScanner(BaseScanModule):
         scan_host = urlparse(url).hostname
 
         # External scripts without integrity
+        missing_scripts = []
         for script in soup.find_all("script", src=True):
             src = script["src"]
             if not self._is_external(src, scan_host):
@@ -42,16 +43,20 @@ class SRIScanner(BaseScanModule):
             if self._is_dynamic(src):
                 continue
             if not script.get("integrity"):
-                findings.append(Finding(
-                    id="missing-sri-script",
-                    title="Externí script bez Subresource Integrity",
-                    description="Externí JavaScript nemá integrity atribut. Pokud CDN napadne útočník, může do stránky vložit škodlivý kód.",
-                    severity=Severity.WARNING,
-                    category="sri",
-                    detail=src,
-                ))
+                missing_scripts.append(src)
+
+        if missing_scripts:
+            findings.append(Finding(
+                id="missing-sri-script",
+                title=f"Externí scripty bez Subresource Integrity ({len(missing_scripts)}×)",
+                description="Externí JavaScript nemá integrity atribut. Pokud CDN napadne útočník, může do stránky vložit škodlivý kód.",
+                severity=Severity.WARNING,
+                category="sri",
+                detail="\n".join(missing_scripts[:5]) + (f"\n… a {len(missing_scripts) - 5} dalších" if len(missing_scripts) > 5 else ""),
+            ))
 
         # External stylesheets without integrity
+        missing_styles = []
         for link in soup.find_all("link", rel="stylesheet"):
             href = link.get("href", "")
             if not self._is_external(href, scan_host):
@@ -59,14 +64,17 @@ class SRIScanner(BaseScanModule):
             if self._is_dynamic(href):
                 continue
             if not link.get("integrity"):
-                findings.append(Finding(
-                    id="missing-sri-stylesheet",
-                    title="Externí stylesheet bez Subresource Integrity",
-                    description="Externí CSS nemá integrity atribut. Kompromitované CDN může změnit vzhled stránky nebo exfiltrovat data přes CSS.",
-                    severity=Severity.INFO,
-                    category="sri",
-                    detail=href,
-                ))
+                missing_styles.append(href)
+
+        if missing_styles:
+            findings.append(Finding(
+                id="missing-sri-stylesheet",
+                title=f"Externí styly bez Subresource Integrity ({len(missing_styles)}×)",
+                description="Externí CSS nemá integrity atribut. Kompromitované CDN může změnit vzhled stránky nebo exfiltrovat data přes CSS.",
+                severity=Severity.INFO,
+                category="sri",
+                detail="\n".join(missing_styles[:5]) + (f"\n… a {len(missing_styles) - 5} dalších" if len(missing_styles) > 5 else ""),
+            ))
 
         return findings
 

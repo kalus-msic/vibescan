@@ -74,19 +74,23 @@ class SecretLeakageScanner(BaseScanModule):
                     detail=_mask_value(value),
                 ))
 
+        generic_matches = []
         for label, pattern in GENERIC_PATTERNS.items():
             for match in re.finditer(pattern, text, re.IGNORECASE):
                 value = match.group()
                 if value in seen:
                     continue
                 seen.add(value)
-                findings.append(Finding(
-                    id="secret-hardcoded",
-                    title="Možný hardcoded secret v HTML",
-                    description="V HTML nebo inline JS byl nalezen řetězec, který vypadá jako heslo nebo API klíč.",
-                    severity=Severity.WARNING,
-                    category="secrets",
-                    detail=_mask_value(value),
-                ))
+                generic_matches.append(_mask_value(value))
+
+        if generic_matches:
+            findings.append(Finding(
+                id="secret-hardcoded",
+                title=f"Možné hardcoded secrets v HTML ({len(generic_matches)}×)",
+                description="V HTML nebo inline JS byly nalezeny řetězce, které vypadají jako hesla nebo API klíče.",
+                severity=Severity.WARNING,
+                category="secrets",
+                detail="\n".join(generic_matches[:5]) + (f"\n… a {len(generic_matches) - 5} dalších" if len(generic_matches) > 5 else ""),
+            ))
 
         return findings

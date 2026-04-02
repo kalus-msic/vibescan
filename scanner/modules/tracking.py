@@ -45,6 +45,7 @@ class TrackingConsentScanner(BaseScanModule):
         findings = []
         seen_hosts = set()
 
+        detected_services = []
         for script in soup.find_all("script", src=True):
             src = script["src"]
             if not src.startswith(("http://", "https://")):
@@ -55,15 +56,16 @@ class TrackingConsentScanner(BaseScanModule):
             if host in seen_hosts:
                 continue
             seen_hosts.add(host)
+            detected_services.append(TRACKING_NAMES.get(host, host))
 
-            service_name = TRACKING_NAMES.get(host, host)
+        if detected_services:
             findings.append(Finding(
-                id=f"tracking-no-consent-{host.replace('.', '-')}",
-                title=f"{service_name} se načítá bez cookie consent",
-                description=f"Tracking skript {service_name} se načítá přímo v HTML bez ohledu na souhlas uživatele. Skript by měl být načten až po udělení souhlasu přes cookie consent mechanismus (GDPR).",
+                id="tracking-no-consent",
+                title=f"Tracking bez cookie consent ({len(detected_services)}×)",
+                description="Tracking skripty se načítají přímo v HTML bez ohledu na souhlas uživatele. Měly by být načteny až po udělení souhlasu (GDPR).",
                 severity=Severity.WARNING,
                 category="tracking",
-                detail=src,
+                detail=", ".join(detected_services),
             ))
 
         return findings
