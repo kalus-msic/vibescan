@@ -46,14 +46,18 @@ SECURITY_BLOCKS = [
 
 1. Všechny secrets (API klíče, hesla, tokeny) patří do .env souboru, nikdy do kódu. Vytvoř .env.example s placeholder hodnotami.
 2. Nastav HTTP security headers: HSTS, Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.
-3. Každý POST formulář musí mít CSRF ochranu.
-4. Session cookies: HttpOnly=true, Secure=true, SameSite=Lax.
-5. Žádný debug mód v produkci. Vlastní error stránky pro 404 a 500 — nesmí prozrazovat stack trace.
-6. Vstup od uživatele vždy validuj a sanitizuj. Používej parametrizované dotazy, nikdy string concatenation v SQL.
-7. Rate limiting na login a citlivé endpointy.
-8. HTTPS vždy, HTTP přesměruj na HTTPS.
-9. Tracking skripty (Google Analytics, Facebook Pixel) načítej až po souhlasu uživatele (cookie consent).
-10. Externí skripty z CDN musí mít integrity atribut (Subresource Integrity) kde je to možné.""",
+3. Nastav CORS — povol pouze konkrétní domény, nikdy wildcard (*) v produkci.
+4. Použij security middleware (Django SecurityMiddleware, helmet pro Node.js, Rack::Protection pro Rails).
+5. Každý POST formulář musí mít CSRF ochranu.
+6. Session cookies: HttpOnly=true, Secure=true, SameSite=Lax. Hesla vždy hashuj (bcrypt/argon2), nikdy neukládej plain text.
+7. Žádný debug mód v produkci. Vlastní error stránky pro 404 a 500 — nesmí prozrazovat stack trace. Odstraň debug logy.
+8. Vstup od uživatele validuj na frontendu I backendu. Používej ORM nebo parametrizované dotazy — nikdy string concatenation v SQL.
+9. API endpointy: každý endpoint musí kontrolovat autentizaci I autorizaci. Nikdy neberi user ID z URL — vždy ze session (prevence IDOR). Odděluj CRUD routy od server actions.
+10. Rate limiting na login a citlivé endpointy. Pro veřejné API nastav IP block list proti zneužití.
+11. Nastav limity pro upload souborů (velikost, typ, počet).
+12. HTTPS vždy, HTTP přesměruj na HTTPS.
+13. Tracking skripty (Google Analytics, Facebook Pixel) načítej až po souhlasu uživatele (cookie consent).
+14. Externí skripty z CDN musí mít integrity atribut (Subresource Integrity) kde je to možné.""",
     },
     {
         "id": "rules-file",
@@ -73,20 +77,32 @@ SECURITY_BLOCKS = [
 - X-Content-Type-Options: nosniff
 - Referrer-Policy: strict-origin-when-cross-origin
 - Permissions-Policy: camera=(), microphone=(), geolocation=()
+- CORS: povol pouze konkrétní domény, nikdy wildcard (*) v produkci
+
+## Middleware
+- Použij security middleware svého frameworku (Django SecurityMiddleware, helmet pro Node.js, Rack::Protection pro Rails)
 
 ## Formuláře a vstup
 - Každý POST formulář má CSRF token
-- Uživatelský vstup vždy validuj na serveru (nikdy jen na frontendu)
+- Uživatelský vstup validuj na frontendu I backendu
 - SQL dotazy pouze přes ORM nebo parametrizované dotazy
+- Limity pro upload souborů (velikost, typ, počet)
 
-## Cookies a session
+## API & autorizace
+- Každý endpoint kontroluje autentizaci I autorizaci
+- Nikdy nebrat user ID z URL parametrů — vždy ze session (prevence IDOR)
+- CRUD routy oddělené od server actions
+- Rate limiting + IP block list na veřejné API endpointy
+
+## Cookies, session a hesla
 - HttpOnly=true, Secure=true, SameSite=Lax
 - Session regenerace po přihlášení
+- Hesla hashuj přes bcrypt nebo argon2, nikdy plain text
 
 ## Produkce
 - DEBUG=false, vlastní error stránky (404, 500)
 - ALLOWED_HOSTS nastaveny explicitně
-- Rate limiting na POST endpointy
+- Odstraň debug logy a console.log
 
 ## Před každým commitem
 - Zkontroluj, že v kódu nejsou hardcoded secrets
@@ -98,14 +114,17 @@ SECURITY_BLOCKS = [
         "subtitle": "Zadej poté co AI vygeneruje kód. Výzkum ukazuje, že self-review snižuje zranitelnosti až 10×.",
         "content": """Zkontroluj kód, který jsi právě vygeneroval. Projdi ho z pohledu OWASP Top 10:
 
-1. Jsou všechny vstupy od uživatele validované na serveru?
-2. Jsou SQL dotazy parametrizované (žádná string concatenation)?
+1. Jsou všechny vstupy od uživatele validované na frontendu I backendu?
+2. Jsou SQL dotazy parametrizované nebo přes ORM (žádná string concatenation)?
 3. Jsou formuláře chráněné CSRF tokenem?
 4. Nejsou v kódu hardcoded secrets (API klíče, hesla, tokeny)?
-5. Jsou error stránky bezpečné (neprozrazují stack trace ani interní cesty)?
+5. Jsou error stránky bezpečné (neprozrazují stack trace)? Jsou debug logy odstraněny?
 6. Jsou cookies nastaveny s HttpOnly, Secure a SameSite?
-7. Mají endpointy kontrolu oprávnění (autorizaci, nejen autentizaci)?
-8. Je rate limiting na citlivých endpointech?
+7. Jsou hesla hashovaná (bcrypt/argon2), nikdy plain text?
+8. Mají endpointy kontrolu autentizace I autorizace? Není možný IDOR (přístup k cizím datům přes ID v URL)?
+9. Je rate limiting na citlivých endpointech? Je nastaven CORS?
+10. Jsou limity pro upload souborů (velikost, typ)?
+11. Je security middleware aktivní?
 
 Pokud najdeš problém, oprav ho a vysvětli co jsi změnil.""",
     },
