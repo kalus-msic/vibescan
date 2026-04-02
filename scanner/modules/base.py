@@ -22,8 +22,10 @@ class Finding:
     detail: Optional[str] = None
 
     def to_dict(self) -> dict:
+        from scanner.score import SEVERITY_PENALTY
         d = asdict(self)
         d["severity"] = self.severity.value
+        d["penalty"] = SEVERITY_PENALTY[self.severity]
         return d
 
 
