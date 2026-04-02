@@ -11,8 +11,11 @@ from .models import ScanResult, ScanStatus
 from .modules.headers import HeaderScanner
 from .modules.ssl_check import SSLScanner
 from .modules.html_check import HTMLScanner
+from .modules.secrets import SecretLeakageScanner
+from .modules.forms import FormScanner
+from .modules.sri import SRIScanner
+from .modules.meta import MetaTagScanner
 from .modules.dns_check import DNSScanner
-from .modules.tech import TechLeakageScanner
 from .score import calculate_vibe_score
 from .validator import validate_resolved_ip, validate_scan_url, SSRFError
 
@@ -26,8 +29,12 @@ SCAN_MODULES = [
     HeaderScanner(),
     SSLScanner(),
     HTMLScanner(),
+    SecretLeakageScanner(),
+    FormScanner(),
+    SRIScanner(),
+    MetaTagScanner(),
     DNSScanner(),
-    TechLeakageScanner(),
+    # TechLeakageScanner — disabled, requires domain verification (Phase 3)
 ]
 
 
@@ -116,7 +123,7 @@ def run_scan(self, scan_id: str):
 
         try:
             # Skip HTML parsing modules for non-HTML responses
-            if not is_html and module.name in ("html",):
+            if not is_html and module.name in ("html", "secrets", "forms", "sri", "meta"):
                 progress[i]["status"] = "done"
                 continue
             findings = module.run(scan.url, response)
