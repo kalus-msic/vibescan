@@ -4,6 +4,10 @@ from scanner.modules.base import Severity
 import dns.resolver
 
 
+def _mock_resolve_no_answer(*args, **kwargs):
+    raise dns.resolver.NoAnswer
+
+
 def test_missing_spf_is_warning():
     with patch("scanner.modules.dns_check.dns.resolver.resolve") as mock_resolve:
         mock_resolve.side_effect = dns.resolver.NoAnswer
@@ -13,12 +17,79 @@ def test_missing_spf_is_warning():
         assert "missing-spf" in ids
 
 
-def test_security_txt_missing_is_info():
-    with patch("scanner.modules.dns_check.httpx.get") as mock_get:
-        mock_get.return_value.status_code = 404
-        scanner = DNSScanner()
-        findings = scanner.run("https://example.com", MagicMock())
-        ids = [f.id for f in findings]
-        assert "missing-security-txt" in ids
-        f = next(x for x in findings if x.id == "missing-security-txt")
-        assert f.severity == Severity.WARNING
+def test_dmarc_case_insensitive():
+    """DMARC tag is case-insensitive per RFC 7489 — v=dmarc1 must match."""
+    rdata = MagicMock()
+    rdata.strings = [b"v=dmarc1; p=none"]
+
+    def mock_resolve(qname, rdtype):
+        if "_dmarc" in qname:
+            return [rdata]
+        raise dns.resolver.NoAnswer
+
+    with patch("scanner.modules.dns_check.dns.resolver.resolve", side_effect=mock_resolve):
+        with patch("scanner.modules.dns_check.httpx.get") as mock_get:
+            mock_get.return_value.status_code = 404
+            scanner = DNSScanner()
+            findings = scanner.run("https://example.com", MagicMock())
+            ids = [f.id for f in findings]
+            assert "dmarc-ok" in ids
+
+
+def test_dkim_found_via_txt():
+    """DKIM found when TXT record exists for a common selector."""
+    rdata = MagicMock()
+    rdata.strings = [b"v=DKIM1; k=rsa; p=MIGf..."]
+
+    def mock_resolve(qname, rdtype):
+        if "selector1._domainkey" in qname and rdtype == "TXT":
+            return [rdata]
+        raise dns.resolver.NXDOMAIN
+
+    with patch("scanner.modules.dns_check.dns.resolver.resolve", side_effect=mock_resolve):
+        with patch("scanner.modules.dns_check.httpx.get") as mock_get:
+            mock_get.return_value.status_code = 404
+            scanner = DNSScanner()
+            findings = scanner.run("https://example.com", MagicMock())
+            f = next(x for x in findings if x.id == "dkim-ok")
+            assert f.severity == Severity.OK
+            assert "selector1" in f.detail
+
+
+def test_dkim_found_via_cname():
+    """DKIM found when CNAME record exists (e.g. Microsoft 365)."""
+    def mock_resolve(qname, rdtype):
+        if "selector1._domainkey" in qname and rdtype == "CNAME":
+            return [MagicMock()]
+        raise dns.resolver.NXDOMAIN
+
+    with patch("scanner.modules.dns_check.dns.resolver.resolve", side_effect=mock_resolve):
+        with patch("scanner.modules.dns_check.httpx.get") as mock_get:
+            mock_get.return_value.status_code = 404
+            scanner = DNSScanner()
+            findings = scanner.run("https://example.com", MagicMock())
+            f = next(x for x in findings if x.id == "dkim-ok")
+            assert f.severity == Severity.OK
+
+
+def test_dkim_not_found_is_info():
+    """DKIM not found with common selectors — INFO severity, not WARNING."""
+    with patch("scanner.modules.dns_check.dns.resolver.resolve") as mock_resolve:
+        mock_resolve.side_effect = dns.resolver.NXDOMAIN
+        with patch("scanner.modules.dns_check.httpx.get") as mock_get:
+            mock_get.return_value.status_code = 404
+            scanner = DNSScanner()
+            findings = scanner.run("https://example.com", MagicMock())
+            f = next(x for x in findings if x.id == "dkim-not-found")
+            assert f.severity == Severity.INFO
+
+
+def test_security_txt_missing_is_warning():
+    with patch("scanner.modules.dns_check.dns.resolver.resolve") as mock_resolve:
+        mock_resolve.side_effect = dns.resolver.NoAnswer
+        with patch("scanner.modules.dns_check.httpx.get") as mock_get:
+            mock_get.return_value.status_code = 404
+            scanner = DNSScanner()
+            findings = scanner.run("https://example.com", MagicMock())
+            f = next(x for x in findings if x.id == "missing-security-txt")
+            assert f.severity == Severity.WARNING

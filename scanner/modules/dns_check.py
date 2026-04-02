@@ -4,9 +4,14 @@ from urllib.parse import urlparse
 from .base import BaseScanModule, Finding, Severity
 
 
+COMMON_DKIM_SELECTORS = [
+    "default", "google", "selector1", "selector2", "k1", "mail", "dkim",
+]
+
+
 class DNSScanner(BaseScanModule):
     name = "dns"
-    step_label = "DNS záznamy (SPF, DMARC, CAA)"
+    step_label = "DNS záznamy (SPF, DMARC, DKIM)"
 
     def run(self, url: str, response=None) -> list[Finding]:
         findings = []
@@ -17,6 +22,9 @@ class DNSScanner(BaseScanModule):
 
         # DMARC
         findings.append(self._check_dmarc(domain))
+
+        # DKIM
+        findings.append(self._check_dkim(domain))
 
         # security.txt
         findings.append(self._check_security_txt(url))
@@ -51,7 +59,7 @@ class DNSScanner(BaseScanModule):
             answers = dns.resolver.resolve(f"_dmarc.{domain}", "TXT")
             for rdata in answers:
                 for txt in rdata.strings:
-                    if txt.decode("utf-8", errors="ignore").startswith("v=DMARC1"):
+                    if txt.decode("utf-8", errors="ignore").lower().startswith("v=dmarc1"):
                         return Finding(
                             id="dmarc-ok",
                             title="DMARC záznam nalezen",
@@ -66,6 +74,36 @@ class DNSScanner(BaseScanModule):
             title="Chybí DMARC záznam",
             description="DMARC záznam pomáhá předcházet phishingovým útokům přes tvou doménu.",
             severity=Severity.WARNING,
+            category="dns",
+        )
+
+    def _check_dkim(self, domain: str) -> Finding:
+        found_selectors = []
+        for selector in COMMON_DKIM_SELECTORS:
+            try:
+                dns.resolver.resolve(f"{selector}._domainkey.{domain}", "TXT")
+                found_selectors.append(selector)
+            except Exception:
+                try:
+                    dns.resolver.resolve(f"{selector}._domainkey.{domain}", "CNAME")
+                    found_selectors.append(selector)
+                except Exception:
+                    pass
+
+        if found_selectors:
+            return Finding(
+                id="dkim-ok",
+                title=f"DKIM nalezen ({', '.join(found_selectors)})",
+                description="Doména má nastaven DKIM pro ověřování emailů.",
+                severity=Severity.OK,
+                category="dns",
+                detail=f"Nalezené selektory: {', '.join(found_selectors)}",
+            )
+        return Finding(
+            id="dkim-not-found",
+            title="DKIM nebyl nalezen (základní kontrola)",
+            description="Kontrolujeme jen běžné selektory (google, selector1, default…). DKIM může být nastaven s jiným selektorem.",
+            severity=Severity.INFO,
             category="dns",
         )
 
