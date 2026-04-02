@@ -45,7 +45,7 @@ class TestSRIScanner:
 
     def test_detects_external_stylesheet_without_integrity(self):
         resp = _mock_response(
-            '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter">'
+            '<link rel="stylesheet" href="https://cdn.example.com/styles.css">'
         )
         findings = self.scanner.run("https://mysite.com", resp)
         info = [f for f in findings if f.severity == Severity.INFO]
@@ -87,5 +87,40 @@ class TestSRIScanner:
 
     def test_inline_script_ignored(self):
         resp = _mock_response('<script>console.log("hello")</script>')
+        findings = self.scanner.run("https://mysite.com", resp)
+        assert len(findings) == 0
+
+    def test_skips_google_tag_manager(self):
+        resp = _mock_response(
+            '<script src="https://www.googletagmanager.com/gtag/js?id=G-XXXXX"></script>'
+        )
+        findings = self.scanner.run("https://mysite.com", resp)
+        assert len(findings) == 0
+
+    def test_skips_google_analytics(self):
+        resp = _mock_response(
+            '<script src="https://www.google-analytics.com/analytics.js"></script>'
+        )
+        findings = self.scanner.run("https://mysite.com", resp)
+        assert len(findings) == 0
+
+    def test_skips_facebook_sdk(self):
+        resp = _mock_response(
+            '<script src="https://connect.facebook.net/en_US/sdk.js"></script>'
+        )
+        findings = self.scanner.run("https://mysite.com", resp)
+        assert len(findings) == 0
+
+    def test_skips_google_fonts_stylesheet(self):
+        resp = _mock_response(
+            '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter">'
+        )
+        findings = self.scanner.run("https://mysite.com", resp)
+        assert len(findings) == 0
+
+    def test_skips_stripe_js(self):
+        resp = _mock_response(
+            '<script src="https://js.stripe.com/v3/"></script>'
+        )
         findings = self.scanner.run("https://mysite.com", resp)
         assert len(findings) == 0

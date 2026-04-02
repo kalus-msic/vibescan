@@ -2,6 +2,24 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from .base import BaseScanModule, Finding, Severity
 
+# Dynamic CDNs where SRI cannot be applied (content changes per config/request)
+DYNAMIC_HOSTS = {
+    "www.googletagmanager.com",
+    "googletagmanager.com",
+    "www.google-analytics.com",
+    "google-analytics.com",
+    "connect.facebook.net",
+    "platform.twitter.com",
+    "platform.x.com",
+    "snap.licdn.com",
+    "sc-static.net",
+    "widget.intercom.io",
+    "js.stripe.com",
+    "cdn.segment.com",
+    "fonts.googleapis.com",
+    "fonts.gstatic.com",
+}
+
 
 class SRIScanner(BaseScanModule):
     name = "sri"
@@ -21,6 +39,8 @@ class SRIScanner(BaseScanModule):
             src = script["src"]
             if not self._is_external(src, scan_host):
                 continue
+            if self._is_dynamic(src):
+                continue
             if not script.get("integrity"):
                 findings.append(Finding(
                     id="missing-sri-script",
@@ -35,6 +55,8 @@ class SRIScanner(BaseScanModule):
         for link in soup.find_all("link", rel="stylesheet"):
             href = link.get("href", "")
             if not self._is_external(href, scan_host):
+                continue
+            if self._is_dynamic(href):
                 continue
             if not link.get("integrity"):
                 findings.append(Finding(
@@ -55,3 +77,9 @@ class SRIScanner(BaseScanModule):
             return False
         src_host = urlparse(src).hostname
         return src_host is not None and src_host != scan_host
+
+    @staticmethod
+    def _is_dynamic(src: str) -> bool:
+        """Return True if src points to a dynamic CDN where SRI cannot be applied."""
+        host = urlparse(src).hostname
+        return host in DYNAMIC_HOSTS if host else False
