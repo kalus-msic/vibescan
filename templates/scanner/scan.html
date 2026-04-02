@@ -12,18 +12,13 @@
       </h2>
     </div>
 
-    <div id="scan-content"
-      hx-get="{% url 'scanner:scan_status' scan.id %}"
-      hx-trigger="{% if scan.status != 'done' and scan.status != 'failed' %}every 2s{% endif %}"
-      hx-swap="outerHTML">
-      {% if scan.status == "done" %}
-        {% include "scanner/partials/results.html" %}
-      {% elif scan.status == "failed" %}
-        {% include "scanner/partials/failed.html" %}
-      {% else %}
-        {% include "scanner/partials/progress.html" %}
-      {% endif %}
-    </div>
+    {% if scan.status == "done" %}
+      {% include "scanner/partials/results.html" %}
+    {% elif scan.status == "failed" %}
+      {% include "scanner/partials/failed.html" %}
+    {% else %}
+      {% include "scanner/partials/progress.html" %}
+    {% endif %}
   </div>
 </section>
 {% endblock %}
