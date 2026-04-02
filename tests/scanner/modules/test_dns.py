@@ -103,6 +103,43 @@ def test_dkim_not_found_is_info():
             assert f.severity == Severity.INFO
 
 
+def test_subdomain_missing_dmarc_is_info():
+    """Missing DMARC on a subdomain should be INFO, not WARNING."""
+    with patch("scanner.modules.dns_check.dns.resolver.resolve") as mock_resolve:
+        mock_resolve.side_effect = dns.resolver.NoAnswer
+        with patch("scanner.modules.dns_check.httpx.get") as mock_get:
+            mock_get.return_value.status_code = 404
+            scanner = DNSScanner()
+            findings = scanner.run("https://app.example.com", MagicMock())
+            f = next(x for x in findings if x.id == "missing-dmarc")
+            assert f.severity == Severity.INFO
+            assert "root" in f.description.lower()
+
+
+def test_subdomain_missing_spf_is_info():
+    """Missing SPF on a subdomain should be INFO, not WARNING."""
+    with patch("scanner.modules.dns_check.dns.resolver.resolve") as mock_resolve:
+        mock_resolve.side_effect = dns.resolver.NoAnswer
+        with patch("scanner.modules.dns_check.httpx.get") as mock_get:
+            mock_get.return_value.status_code = 404
+            scanner = DNSScanner()
+            findings = scanner.run("https://app.example.com", MagicMock())
+            f = next(x for x in findings if x.id == "missing-spf")
+            assert f.severity == Severity.INFO
+
+
+def test_root_domain_missing_dmarc_is_warning():
+    """Missing DMARC on root domain should remain WARNING."""
+    with patch("scanner.modules.dns_check.dns.resolver.resolve") as mock_resolve:
+        mock_resolve.side_effect = dns.resolver.NoAnswer
+        with patch("scanner.modules.dns_check.httpx.get") as mock_get:
+            mock_get.return_value.status_code = 404
+            scanner = DNSScanner()
+            findings = scanner.run("https://example.com", MagicMock())
+            f = next(x for x in findings if x.id == "missing-dmarc")
+            assert f.severity == Severity.WARNING
+
+
 def test_security_txt_missing_is_warning():
     with patch("scanner.modules.dns_check.dns.resolver.resolve") as mock_resolve:
         mock_resolve.side_effect = dns.resolver.NoAnswer

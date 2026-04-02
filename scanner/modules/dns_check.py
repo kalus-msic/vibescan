@@ -9,6 +9,21 @@ COMMON_DKIM_SELECTORS = [
 ]
 
 
+def _is_subdomain(domain: str) -> bool:
+    """Check if domain is a subdomain (has more than 2 parts, ignoring co.uk etc.)."""
+    parts = domain.rstrip(".").split(".")
+    # Simple heuristic: more than 2 parts = subdomain
+    # Handles: app.example.com (True), example.com (False), example.co.uk (False)
+    if len(parts) <= 2:
+        return False
+    # Common two-part TLDs
+    two_part_tlds = {"co.uk", "co.cz", "com.br", "com.au", "co.jp", "org.uk", "net.au"}
+    tld = ".".join(parts[-2:])
+    if tld in two_part_tlds:
+        return len(parts) > 3
+    return True
+
+
 class DNSScanner(BaseScanModule):
     name = "dns"
     step_label = "DNS záznamy (SPF, DMARC, DKIM)"
@@ -16,22 +31,23 @@ class DNSScanner(BaseScanModule):
     def run(self, url: str, response=None) -> list[Finding]:
         findings = []
         domain = urlparse(url).hostname or ""
+        is_sub = _is_subdomain(domain)
 
         # SPF
-        findings.append(self._check_spf(domain))
+        findings.append(self._check_spf(domain, is_sub))
 
         # DMARC
-        findings.append(self._check_dmarc(domain))
+        findings.append(self._check_dmarc(domain, is_sub))
 
         # DKIM
-        findings.append(self._check_dkim(domain))
+        findings.append(self._check_dkim(domain, is_sub))
 
         # security.txt
         findings.append(self._check_security_txt(url))
 
         return findings
 
-    def _check_spf(self, domain: str) -> Finding:
+    def _check_spf(self, domain: str, is_sub: bool = False) -> Finding:
         try:
             answers = dns.resolver.resolve(domain, "TXT")
             for rdata in answers:
@@ -46,15 +62,16 @@ class DNSScanner(BaseScanModule):
                         )
         except Exception:
             pass
+        sub_note = " SPF se obvykle nastavuje na root doméně." if is_sub else ""
         return Finding(
             id="missing-spf",
             title="Chybí SPF záznam",
-            description="SPF záznam chrání doménu před email spoofingem. Není nastaven.",
-            severity=Severity.WARNING,
+            description=f"SPF záznam chrání doménu před email spoofingem. Není nastaven.{sub_note}",
+            severity=Severity.INFO if is_sub else Severity.WARNING,
             category="dns",
         )
 
-    def _check_dmarc(self, domain: str) -> Finding:
+    def _check_dmarc(self, domain: str, is_sub: bool = False) -> Finding:
         try:
             answers = dns.resolver.resolve(f"_dmarc.{domain}", "TXT")
             for rdata in answers:
@@ -71,7 +88,7 @@ class DNSScanner(BaseScanModule):
                                 id="dmarc-weak",
                                 title="DMARC záznam nalezen, ale politika je p=none",
                                 description="DMARC existuje, ale p=none nezabraňuje zneužití domény. Doporučujeme p=quarantine nebo p=reject.",
-                                severity=Severity.WARNING,
+                                severity=Severity.INFO if is_sub else Severity.WARNING,
                                 category="dns",
                                 detail=raw,
                             )
@@ -83,27 +100,27 @@ class DNSScanner(BaseScanModule):
                             category="dns",
                             detail=raw,
                         )
-                    # TXT record exists at _dmarc but doesn't start with v=DMARC1
                     if "dmarc" in raw.lower():
                         return Finding(
                             id="dmarc-invalid",
                             title="DMARC záznam nalezen, ale má neplatný formát",
                             description='Záznam na _dmarc existuje, ale nezačíná "v=DMARC1". Zkontrolujte formát podle RFC 7489.',
-                            severity=Severity.WARNING,
+                            severity=Severity.INFO if is_sub else Severity.WARNING,
                             category="dns",
                             detail=raw,
                         )
         except Exception:
             pass
+        sub_note = " DMARC se obvykle nastavuje na root doméně." if is_sub else ""
         return Finding(
             id="missing-dmarc",
             title="Chybí DMARC záznam",
-            description="DMARC záznam pomáhá předcházet phishingovým útokům přes tvou doménu.",
-            severity=Severity.WARNING,
+            description=f"DMARC záznam pomáhá předcházet phishingovým útokům přes tvou doménu.{sub_note}",
+            severity=Severity.INFO if is_sub else Severity.WARNING,
             category="dns",
         )
 
-    def _check_dkim(self, domain: str) -> Finding:
+    def _check_dkim(self, domain: str, is_sub: bool = False) -> Finding:
         found_selectors = []
         for selector in COMMON_DKIM_SELECTORS:
             try:
