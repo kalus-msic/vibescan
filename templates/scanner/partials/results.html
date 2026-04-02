@@ -72,6 +72,7 @@
       <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 bg-red-50/50">
         <div class="w-2 h-2 rounded-full bg-red-500"></div>
         <span class="text-sm font-bold text-red-600">Kritické problémy</span>
+          <span class="text-xs font-mono text-red-400 ml-auto">−{{ critical|total_penalty }}</span>
       </div>
       <div class="divide-y divide-slate-100">
         {% for f in critical %}
@@ -100,6 +101,7 @@
       <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 bg-amber-50/50">
         <div class="w-2 h-2 rounded-full bg-amber-400"></div>
         <span class="text-sm font-bold text-amber-600">Varování</span>
+          <span class="text-xs font-mono text-amber-400 ml-auto">−{{ warnings|total_penalty }}</span>
       </div>
       <div class="divide-y divide-slate-100">
         {% for f in warnings %}

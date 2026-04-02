@@ -32,3 +32,9 @@ def penalty(finding):
     """Return penalty points for a finding based on its severity."""
     severity = finding.get("severity", "") if isinstance(finding, dict) else ""
     return SEVERITY_PENALTY_MAP.get(severity, 0)
+
+
+@register.filter
+def total_penalty(findings):
+    """Return sum of penalty points for a list of findings."""
+    return sum(SEVERITY_PENALTY_MAP.get(f.get("severity", ""), 0) for f in findings)
