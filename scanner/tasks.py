@@ -1,5 +1,6 @@
 import httpx
 from datetime import datetime, timezone
+from urllib.parse import urlparse
 from celery import shared_task
 from .models import ScanResult, ScanStatus
 from .modules.headers import HeaderScanner
@@ -8,7 +9,13 @@ from .modules.html_check import HTMLScanner
 from .modules.dns_check import DNSScanner
 from .modules.tech import TechLeakageScanner
 from .score import calculate_vibe_score
+from .validator import validate_resolved_ip, SSRFError
 
+# Max response size we're willing to process (5 MB)
+MAX_RESPONSE_SIZE = 5 * 1024 * 1024
+
+# Content types we'll parse — skip binaries
+ALLOWED_CONTENT_TYPES = ("text/html", "text/plain", "application/xhtml+xml")
 
 SCAN_MODULES = [
     HeaderScanner(),
@@ -26,6 +33,47 @@ def _initial_progress() -> list:
     ]
 
 
+def _fail_scan(scan, message):
+    scan.status = ScanStatus.FAILED
+    scan.error_message = message
+    scan.completed_at = datetime.now(timezone.utc)
+    scan.save(update_fields=["status", "error_message", "completed_at"])
+
+
+def _fetch_url(url):
+    """Fetch URL with safety checks: size limit, content-type, SSRF on redirects."""
+    with httpx.stream(
+        "GET",
+        url,
+        timeout=10,
+        follow_redirects=True,
+        headers={"User-Agent": "Vibescan/1.0 (security audit; https://vibescan.io)"},
+    ) as response:
+        # Check final URL after redirects — prevent SSRF bypass via redirect
+        final_host = urlparse(str(response.url)).hostname
+        if final_host:
+            validate_resolved_ip(final_host)
+
+        # Check content length before reading body
+        content_length = response.headers.get("content-length")
+        if content_length and int(content_length) > MAX_RESPONSE_SIZE:
+            raise ValueError(f"Odpověď je příliš velká ({int(content_length) // 1024 // 1024} MB)")
+
+        # Read body with size limit
+        chunks = []
+        size = 0
+        for chunk in response.iter_bytes(chunk_size=8192):
+            size += len(chunk)
+            if size > MAX_RESPONSE_SIZE:
+                raise ValueError("Odpověď je příliš velká (> 5 MB)")
+            chunks.append(chunk)
+
+        response.read()  # Ensure response is fully consumed for httpx
+        response._content = b"".join(chunks)
+
+    return response
+
+
 @shared_task(bind=True)
 def run_scan(self, scan_id: str):
     try:
@@ -38,18 +86,17 @@ def run_scan(self, scan_id: str):
     scan.save(update_fields=["status", "progress"])
 
     try:
-        response = httpx.get(
-            scan.url,
-            timeout=10,
-            follow_redirects=True,
-            headers={"User-Agent": "Vibescan/1.0 (security audit; https://vibescan.io)"},
-        )
-    except httpx.RequestError as e:
-        scan.status = ScanStatus.FAILED
-        scan.error_message = str(e)
-        scan.completed_at = datetime.now(timezone.utc)
-        scan.save(update_fields=["status", "error_message", "completed_at"])
+        response = _fetch_url(scan.url)
+    except SSRFError as e:
+        _fail_scan(scan, str(e))
         return
+    except (httpx.RequestError, ValueError) as e:
+        _fail_scan(scan, str(e))
+        return
+
+    # Check content type — only parse HTML-like responses
+    content_type = response.headers.get("content-type", "").lower().split(";")[0].strip()
+    is_html = content_type in ALLOWED_CONTENT_TYPES
 
     all_findings = []
     progress = _initial_progress()
@@ -60,6 +107,10 @@ def run_scan(self, scan_id: str):
         scan.save(update_fields=["progress"])
 
         try:
+            # Skip HTML parsing modules for non-HTML responses
+            if not is_html and module.name in ("html",):
+                progress[i]["status"] = "done"
+                continue
             findings = module.run(scan.url, response)
             all_findings.extend(findings)
         except Exception:

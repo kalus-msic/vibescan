@@ -44,3 +44,18 @@ def validate_scan_url(url: str) -> str:
             raise SSRFError(f"Skenování privátní IP adresy není povoleno: {ip}")
 
     return url
+
+
+def validate_resolved_ip(hostname: str) -> None:
+    """Check that a hostname doesn't resolve to a private IP.
+
+    Used after redirects to prevent SSRF bypass via redirect to internal IP.
+    """
+    try:
+        ip = ipaddress.ip_address(socket.gethostbyname(hostname))
+    except (socket.gaierror, ValueError):
+        return  # Can't resolve — let the caller handle the connection error
+
+    for network in PRIVATE_RANGES:
+        if ip in network:
+            raise SSRFError(f"Redirect na privátní IP adresu zablokován: {ip}")
