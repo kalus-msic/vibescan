@@ -1,1 +1,5 @@
-<div id="scan-content">failed {{ scan.error_message }}</div>
+<div id="scan-content" class="bg-white border border-red-200 rounded-2xl p-8 text-center shadow-sm">
+  <div class="text-red-500 font-bold text-lg mb-2">Sken selhal</div>
+  <p class="text-slate-500 text-sm mb-4">{{ scan.error_message }}</p>
+  <a href="{% url 'scanner:home' %}" class="bg-blue-600 text-white font-semibold px-5 py-2.5 rounded-xl text-sm">Zkusit znovu</a>
+</div>

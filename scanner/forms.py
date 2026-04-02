@@ -10,6 +10,7 @@ class ScanForm(forms.Form):
             "autofocus": True,
         }),
         label="URL adresa webu",
+        error_messages={"invalid": "URL musí začínat s http:// nebo https://"},
     )
 
     def clean_url(self):

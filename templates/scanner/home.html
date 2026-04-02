@@ -1,4 +1,73 @@
-<!DOCTYPE html><html><body>
-{% if form.url.errors %}URL musí začínat s http{% endif %}
-{{ form.url }}
-</body></html>
+{% extends "base.html" %}
+{% block title %}Vibescan — bezpečnostní audit{% endblock %}
+
+{% block content %}
+<section class="max-w-5xl mx-auto px-6 pt-20 pb-24">
+
+  <div class="text-center mb-12">
+    <div class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-3 py-1 text-xs font-semibold mb-5">
+      Bezpečnostní audit pro AI-asistované projekty
+    </div>
+    <h1 class="text-5xl font-extrabold leading-tight mb-4 tracking-tight">
+      Víš, co jsi<br>zapomněl zabezpečit?
+    </h1>
+    <p class="text-slate-500 text-lg leading-relaxed max-w-2xl mx-auto">
+      Vibescan zkontroluje HTTP hlavičky, SSL, DNS záznamy a tech leakage. Dostaneš konkrétní skóre a návod, co opravit.
+    </p>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-2xl p-6 mb-10 shadow-sm">
+    <form method="post" action="{% url 'scanner:home' %}">
+      {% csrf_token %}
+      <label class="block text-sm font-semibold text-slate-700 mb-2">URL adresa webu</label>
+      <div class="flex gap-3">
+        <div class="flex-1 flex items-center border border-slate-300 rounded-xl px-4 py-3 gap-2 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all bg-white">
+          <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/></svg>
+          {{ form.url }}
+        </div>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl whitespace-nowrap transition-colors text-sm cursor-pointer">
+          Spustit sken
+        </button>
+      </div>
+      {% if form.url.errors %}
+        <p class="text-sm text-red-600 mt-2">{{ form.url.errors|join:", " }}</p>
+      {% endif %}
+      <p class="text-xs text-slate-400 mt-3">Skenujeme pouze veřejně dostupné informace. Žádná registrace není potřeba.</p>
+    </form>
+  </div>
+
+  <div class="grid grid-cols-3 gap-4 mb-8">
+    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+      <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center mb-3">
+        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+      </div>
+      <div class="font-semibold text-sm mb-1">HTTP hlavičky</div>
+      <div class="text-xs text-slate-500 leading-relaxed">HSTS, CSP, X-Frame-Options a další security headers</div>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+      <div class="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center mb-3">
+        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803A7.5 7.5 0 0015.803 15.803z"/></svg>
+      </div>
+      <div class="font-semibold text-sm mb-1">Info leakage</div>
+      <div class="text-xs text-slate-500 leading-relaxed">Exponované soubory, tech stack, komentáře v kódu</div>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+      <div class="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center mb-3">
+        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <div class="font-semibold text-sm mb-1">SSL & DNS</div>
+      <div class="text-xs text-slate-500 leading-relaxed">Certifikát, HTTPS redirect, SPF, DMARC, CAA</div>
+    </div>
+  </div>
+
+  <div class="mt-8 bg-slate-900 text-white rounded-xl p-5 text-center">
+    <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center mx-auto mb-3">
+      <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+    </div>
+    <div class="font-semibold text-sm mb-1">Stavíš s Claude Code nebo Cursor?</div>
+    <p class="text-sm text-slate-400">Zjisti, co mu říct, aby tvůj projekt byl bezpečný od začátku.<br>
+      <a href="{% url 'pages:guide' %}" class="text-blue-400 hover:underline font-medium">Průvodce pro vibecoded projekty →</a></p>
+  </div>
+
+</section>
+{% endblock %}

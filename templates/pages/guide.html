@@ -1,1 +1,28 @@
-<!DOCTYPE html><html><body>guide</body></html>
+{% extends "base.html" %}
+{% block title %}Průvodce — co říkat Claude Code{% endblock %}
+
+{% block content %}
+<section class="max-w-5xl mx-auto px-6 py-20">
+  <div class="max-w-2xl mb-10">
+    <h1 class="text-3xl font-extrabold mb-3">Co říkat Claude Code</h1>
+    <p class="text-slate-500 leading-relaxed">Prompty a instrukce, které zabezpečí tvůj vibecoded projekt. Kopíruj přímo do Claude Code nebo Cursor.</p>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+
+    {% for prompt in prompts %}
+    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <span class="font-semibold text-sm">{{ prompt.title }}</span>
+        <button onclick="navigator.clipboard.writeText(this.closest('.bg-white').querySelector('pre').textContent.trim())"
+          class="text-xs text-slate-400 hover:text-blue-600 font-medium transition-colors cursor-pointer">Kopírovat</button>
+      </div>
+      <div class="p-5">
+        <pre class="text-xs text-slate-700 bg-slate-50 rounded-lg p-4 leading-relaxed whitespace-pre-wrap font-mono border border-slate-100">{{ prompt.content }}</pre>
+      </div>
+    </div>
+    {% endfor %}
+
+  </div>
+</section>
+{% endblock %}
