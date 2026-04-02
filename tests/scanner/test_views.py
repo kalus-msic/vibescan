@@ -19,9 +19,17 @@ class HomeViewTest(TestCase):
         mock_delay.assert_called_once_with(str(scan.id))
 
     def test_invalid_url_shows_form_error(self):
-        response = self.client.post(reverse("scanner:home"), {"url": "not-a-url"})
+        response = self.client.post(reverse("scanner:home"), {"url": "not a valid hostname!!"})
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "URL musí začínat")
+        self.assertContains(response, "Nelze přeložit hostname")
+
+    @patch("scanner.views.run_scan.delay")
+    def test_url_without_scheme_works(self, mock_delay):
+        response = self.client.post(reverse("scanner:home"), {"url": "example.com"})
+        self.assertEqual(ScanResult.objects.count(), 1)
+        scan = ScanResult.objects.first()
+        self.assertEqual(scan.url, "https://example.com")
+        self.assertRedirects(response, reverse("scanner:scan_detail", args=[scan.id]))
 
 
 class ScanDetailViewTest(TestCase):

@@ -3,14 +3,13 @@ from .validator import validate_scan_url, SSRFError
 
 
 class ScanForm(forms.Form):
-    url = forms.URLField(
-        widget=forms.URLInput(attrs={
-            "placeholder": "https://tvujweb.cz",
+    url = forms.CharField(
+        widget=forms.TextInput(attrs={
+            "placeholder": "tvujweb.cz",
             "class": "bg-transparent flex-1 outline-none text-slate-900 placeholder-slate-400 text-sm font-medium",
             "autofocus": True,
         }),
         label="URL adresa webu",
-        error_messages={"invalid": "URL musí začínat s http:// nebo https://"},
     )
 
     def clean_url(self):

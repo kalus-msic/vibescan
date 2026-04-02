@@ -22,6 +22,10 @@ def validate_scan_url(url: str) -> str:
     if not url:
         raise ValueError("URL nesmí být prázdná.")
 
+    # Auto-prefix scheme if missing
+    if not url.startswith(("http://", "https://")):
+        url = f"https://{url}"
+
     parsed = urlparse(url)
     if parsed.scheme not in ("http", "https"):
         raise ValueError("URL musí začínat http:// nebo https://")

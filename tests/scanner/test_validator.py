@@ -36,9 +36,12 @@ def test_172_16_range_blocked():
         validate_scan_url("http://172.16.0.1")
 
 
-def test_missing_scheme_raises():
-    with pytest.raises(ValueError):
-        validate_scan_url("example.com")
+def test_missing_scheme_adds_https():
+    assert validate_scan_url("example.com") == "https://example.com"
+
+
+def test_missing_scheme_with_path():
+    assert validate_scan_url("example.com/page") == "https://example.com/page"
 
 
 def test_empty_url_raises():
