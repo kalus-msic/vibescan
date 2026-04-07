@@ -49,9 +49,10 @@ class SRIScanner(BaseScanModule):
             findings.append(Finding(
                 id="missing-sri-script",
                 title=f"Externí scripty bez Subresource Integrity ({len(missing_scripts)}×)",
-                description="Externí JavaScript nemá integrity atribut. Pokud CDN napadne útočník, může do stránky vložit škodlivý kód.",
+                description="Externí JavaScript nemá integrity atribut. Pokud útočník napadne CDN, může změnit obsah skriptu a vložit malware do každé stránky, která ho načítá. SRI hash zajistí, že prohlížeč spustí jen nezměněný soubor.",
                 severity=Severity.WARNING,
                 category="sri",
+                doc_url="https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity",
                 detail="\n".join(missing_scripts[:5]) + (f"\n… a {len(missing_scripts) - 5} dalších" if len(missing_scripts) > 5 else ""),
             ))
 
@@ -70,9 +71,10 @@ class SRIScanner(BaseScanModule):
             findings.append(Finding(
                 id="missing-sri-stylesheet",
                 title=f"Externí styly bez Subresource Integrity ({len(missing_styles)}×)",
-                description="Externí CSS nemá integrity atribut. Kompromitované CDN může změnit vzhled stránky nebo exfiltrovat data přes CSS.",
+                description="Externí CSS nemá integrity atribut. Kompromitované CDN může změnit vzhled stránky nebo exfiltrovat data přes CSS selektory (CSS exfiltration).",
                 severity=Severity.INFO,
                 category="sri",
+                doc_url="https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity",
                 detail="\n".join(missing_styles[:5]) + (f"\n… a {len(missing_styles) - 5} dalších" if len(missing_styles) > 5 else ""),
             ))
 

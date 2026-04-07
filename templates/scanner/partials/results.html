@@ -71,7 +71,10 @@
         {% for f in ok %}
         <div class="px-5 py-3 flex items-center gap-2.5">
           <svg class="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-          <span class="text-sm text-slate-600 font-medium">{{ f.title }}</span>
+          <span class="text-sm text-slate-600 font-medium flex-1">{{ f.title }}</span>
+          {% if f.fix_url and f.fix_url != "/guide/" %}
+            <a href="{{ f.fix_url }}" class="text-xs text-slate-400 hover:text-blue-600 transition-colors flex-shrink-0">Co testujeme →</a>
+          {% endif %}
         </div>
         {% endfor %}
       </div>
@@ -98,7 +101,8 @@
               <span class="text-xs font-mono text-red-500">−{{ f|penalty }}</span>
             </div>
             <div class="text-xs text-slate-500 leading-relaxed">{{ f.description }}</div>
-            {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 inline-block">{{ f.detail }}</code>{% endif %}
+            {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 inline-block whitespace-pre-wrap">{{ f.detail }}</code>{% endif %}
+            {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 inline-block">Dokumentace (MDN) →</a>{% endif %}
           </div>
           <a href="{{ f.fix_url }}" class="text-xs text-blue-600 hover:underline flex-shrink-0 font-semibold mt-0.5">Opravit →</a>
         </div>
@@ -127,7 +131,8 @@
               <span class="text-xs font-mono text-amber-500">−{{ f|penalty }}</span>
             </div>
             <div class="text-xs text-slate-500 leading-relaxed">{{ f.description }}</div>
-            {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 inline-block">{{ f.detail }}</code>{% endif %}
+            {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 inline-block whitespace-pre-wrap">{{ f.detail }}</code>{% endif %}
+            {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 inline-block">Dokumentace (MDN) →</a>{% endif %}
           </div>
           <a href="{{ f.fix_url }}" class="text-xs text-blue-600 hover:underline flex-shrink-0 font-semibold mt-0.5">Opravit →</a>
         </div>

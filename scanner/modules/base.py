@@ -20,6 +20,7 @@ class Finding:
     category: str
     fix_url: str = "/guide/"
     detail: Optional[str] = None
+    doc_url: Optional[str] = None
 
     def to_dict(self) -> dict:
         from scanner.score import SEVERITY_PENALTY

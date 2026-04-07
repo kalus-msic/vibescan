@@ -28,9 +28,10 @@ class HTMLScanner(BaseScanModule):
             findings.append(Finding(
                 id="missing-noopener",
                 title=f'target="_blank" bez rel="noopener" ({len(bad_links)}×)',
-                description='Externí odkazy bez rel="noopener noreferrer" umožňují reverse tabnabbing útok.',
+                description='Odkaz s target="_blank" bez rel="noopener" umožňuje otevřené stránce přistoupit k window.opener. Útočník může přesměrovat původní záložku na phishing stránku (reverse tabnabbing).',
                 severity=Severity.WARNING,
                 category="html",
+                doc_url="https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noopener",
                 detail=", ".join(bad_links[:3]),
             ))
 
@@ -45,7 +46,7 @@ class HTMLScanner(BaseScanModule):
             findings.append(Finding(
                 id="html-comments",
                 title=f"Citlivé HTML komentáře ({len(flagged_comments)}×)",
-                description="HTML komentáře obsahují klíčová slova jako TODO, password nebo api_key.",
+                description="HTML komentáře obsahují klíčová slova jako TODO, password nebo api_key. Komentáře jsou viditelné v zdrojovém kódu stránky — mohou prozradit interní informace, testovací účty nebo zapomenuté API klíče.",
                 severity=Severity.WARNING,
                 category="html",
                 detail=flagged_comments[0],

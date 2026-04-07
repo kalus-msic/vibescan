@@ -23,9 +23,10 @@ class SSLScanner(BaseScanModule):
             findings.append(Finding(
                 id="missing-https-redirect",
                 title="Chybí HTTPS redirect",
-                description="Web nepřesměrovává HTTP požadavky na HTTPS. Komunikace může být nešifrovaná.",
+                description="Web nepřesměrovává HTTP na HTTPS. Veškerá komunikace (hesla, formuláře, cookies) jde přes nešifrované spojení. Na veřejné Wi-Fi může kdokoliv zachytit přenášená data.",
                 severity=Severity.CRITICAL,
                 category="ssl",
+                doc_url="https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/TLS",
             ))
         else:
             findings.append(Finding(
