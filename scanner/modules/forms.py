@@ -37,9 +37,11 @@ class FormScanner(BaseScanModule):
                 findings.append(Finding(
                     id="missing-csrf-token",
                     title="POST formulář bez CSRF ochrany",
-                    description="Formulář odesílá data metodou POST, ale neobsahuje CSRF token. Útočník může vytvořit stránku, která odešle formulář za přihlášeného uživatele.",
+                    description="Formulář odesílá POST bez CSRF tokenu. Útočník vytvoří stránku s neviditelným formulářem, který se automaticky odešle na váš server — prohlížeč přiloží cookies a akce proběhne za přihlášeného uživatele (např. změna hesla, platba).",
                     severity=Severity.WARNING,
                     category="forms",
+                    fix_url="/guide/#csrf-forms",
+                    doc_url="https://owasp.org/www-community/attacks/csrf",
                     detail=action,
                 ))
 

@@ -53,9 +53,11 @@ class SecretLeakageScanner(BaseScanModule):
                 findings.append(Finding(
                     id=f"secret-{label.lower().replace(' ', '-')}",
                     title=f"{label} nalezen v HTML",
-                    description=f"V HTML stránky byl nalezen {label}. Klíč musí být uložen na serveru, nikdy v klientském kódu.",
+                    description=f"V HTML stránky byl nalezen {label}. Kdokoliv může otevřít zdrojový kód stránky (Ctrl+U) a klíč zkopírovat. Přesuňte na server a použijte environment variables.",
                     severity=Severity.CRITICAL,
                     category="secrets",
+                    fix_url="/guide/#secrets-env",
+                    doc_url="https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_credentials",
                     detail=_mask_value(value),
                 ))
 
@@ -68,9 +70,11 @@ class SecretLeakageScanner(BaseScanModule):
                 findings.append(Finding(
                     id=f"secret-{label.lower().replace(' ', '-')}",
                     title=f"{label} nalezen v HTML",
-                    description=f"V HTML stránky byl nalezen HS256 JWT token — může jít o Supabase klíč. Ověřte, zda nejde o service_role key.",
+                    description=f"V HTML stránky byl nalezen HS256 JWT token — může jít o Supabase anon key (to je ok) nebo service_role key (kritické — plný přístup k DB). Ověřte který klíč to je.",
                     severity=Severity.WARNING,
                     category="secrets",
+                    fix_url="/guide/#secrets-env",
+                    doc_url="https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_credentials",
                     detail=_mask_value(value),
                 ))
 
@@ -87,9 +91,11 @@ class SecretLeakageScanner(BaseScanModule):
             findings.append(Finding(
                 id="secret-hardcoded",
                 title=f"Možné hardcoded secrets v HTML ({len(generic_matches)}×)",
-                description="V HTML nebo inline JS byly nalezeny řetězce, které vypadají jako hesla nebo API klíče.",
+                description="V HTML nebo inline JS byly nalezeny řetězce typu password='...', secret='...' nebo apikey='...'. I pokud jde o testovací hodnoty, nemají být v klientském kódu.",
                 severity=Severity.WARNING,
                 category="secrets",
+                fix_url="/guide/#secrets-env",
+                doc_url="https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_credentials",
                 detail="\n".join(generic_matches[:5]) + (f"\n… a {len(generic_matches) - 5} dalších" if len(generic_matches) > 5 else ""),
             ))
 

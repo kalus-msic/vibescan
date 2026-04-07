@@ -90,9 +90,10 @@ class DNSScanner(BaseScanModule):
         return Finding(
             id="missing-spf",
             title="Chybí SPF záznam",
-            description=f"SPF záznam chrání doménu před email spoofingem. Není nastaven.{sub_note}",
+            description=f"Bez SPF může kdokoliv posílat emaily jako by šly z vaší domény (email spoofing). Útočník pošle phishing email z vasi-domena.cz a příjemce ho považuje za legitimní.{sub_note}",
             severity=Severity.INFO if is_sub else Severity.WARNING,
             category="dns",
+            doc_url="https://www.cloudflare.com/learning/dns/dns-records/dns-spf-record/",
         )
 
     def _check_dmarc(self, domain: str, is_sub: bool = False) -> Finding:
@@ -111,7 +112,7 @@ class DNSScanner(BaseScanModule):
                             return Finding(
                                 id="dmarc-weak",
                                 title="DMARC záznam nalezen, ale politika je p=none",
-                                description="DMARC existuje, ale p=none nezabraňuje zneužití domény. Doporučujeme p=quarantine nebo p=reject.",
+                                description="DMARC existuje, ale p=none jen monitoruje — nezabraňuje doručení podvržených emailů. Doporučujeme p=quarantine (spam) nebo p=reject (odmítnutí).",
                                 severity=Severity.INFO if is_sub else Severity.WARNING,
                                 category="dns",
                                 detail=raw,
@@ -139,9 +140,10 @@ class DNSScanner(BaseScanModule):
         return Finding(
             id="missing-dmarc",
             title="Chybí DMARC záznam",
-            description=f"DMARC záznam pomáhá předcházet phishingovým útokům přes tvou doménu.{sub_note}",
+            description=f"Bez DMARC nemá příjemce emailu jak ověřit, zda email skutečně pochází z vaší domény. Útočník může posílat phishingové emaily vaším jménem.{sub_note}",
             severity=Severity.INFO if is_sub else Severity.WARNING,
             category="dns",
+            doc_url="https://www.cloudflare.com/learning/dns/dns-records/dns-dmarc-record/",
         )
 
     def _check_dkim(self, domain: str, is_sub: bool = False) -> Finding:
@@ -286,7 +288,8 @@ class DNSScanner(BaseScanModule):
         return Finding(
             id="missing-security-txt",
             title="Chybí security.txt",
-            description="Bezpečnostní výzkumníci nemají kam hlásit zranitelnosti (RFC 9116).",
+            description="Bezpečnostní výzkumníci nemají kam hlásit nalezené zranitelnosti. Soubor security.txt (RFC 9116) na /.well-known/security.txt obsahuje kontaktní email pro zodpovědné hlášení.",
             severity=Severity.WARNING,
             category="dns",
+            doc_url="https://securitytxt.org/",
         )

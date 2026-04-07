@@ -32,9 +32,10 @@ class MetaTagScanner(BaseScanModule):
             findings.append(Finding(
                 id="meta-generator-version",
                 title="CMS verze odhalena v meta tagu",
-                description=f"Meta tag generator obsahuje '{content}'. Verze software pomáhá útočníkovi najít známé zranitelnosti.",
+                description=f"Meta tag generator obsahuje '{content}'. Útočník vyhledá v CVE databázi známé zranitelnosti pro tuto verzi a zneužije je automatizovaným nástrojem.",
                 severity=Severity.WARNING,
                 category="meta",
+                doc_url="https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/01-Information_Gathering/08-Fingerprint_Web_Application_Framework",
                 detail=content,
             ))
         else:

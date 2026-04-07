@@ -62,9 +62,10 @@ class TrackingConsentScanner(BaseScanModule):
             findings.append(Finding(
                 id="tracking-no-consent",
                 title=f"Tracking bez cookie consent ({len(detected_services)}×)",
-                description="Tracking skripty se načítají přímo v HTML bez ohledu na souhlas uživatele. Měly by být načteny až po udělení souhlasu (GDPR).",
+                description="Tracking skripty se načítají přímo v HTML bez ohledu na souhlas uživatele. Podle GDPR musí být analytické a marketingové cookies načteny až po udělení souhlasu. Pokuta za nedodržení může být až 4 % ročního obratu.",
                 severity=Severity.WARNING,
                 category="tracking",
+                doc_url="https://gdpr.eu/cookies/",
                 detail=", ".join(detected_services),
             ))
 
