@@ -25,6 +25,16 @@
       {% csrf_token %}
       <button type="submit" class="text-blue-600 hover:text-blue-800 font-medium transition-colors cursor-pointer">Otestovat znovu</button>
     </form>
+    <span class="text-slate-300">·</span>
+    <a href="{% url 'scanner:export_pdf' scan.id %}" class="text-slate-500 hover:text-slate-900 font-medium transition-colors inline-flex items-center gap-1">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+      PDF report
+    </a>
+    <span class="text-slate-300">·</span>
+    <a href="{% url 'scanner:export_txt' scan.id %}" class="text-slate-500 hover:text-slate-900 font-medium transition-colors inline-flex items-center gap-1">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/></svg>
+      Export pro AI
+    </a>
   </div>
   {% endif %}
 
