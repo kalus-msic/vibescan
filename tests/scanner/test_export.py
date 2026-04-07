@@ -105,3 +105,34 @@ class TxtExportTest(TestCase):
             reverse("scanner:export_txt", args=[uuid.uuid4()])
         )
         self.assertEqual(response.status_code, 404)
+
+
+class PdfExportTest(TestCase):
+
+    def test_pdf_export_returns_200_with_pdf_content_type(self):
+        scan = _create_done_scan()
+        response = self.client.get(reverse("scanner:export_pdf", args=[scan.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+
+    def test_pdf_export_has_download_filename(self):
+        scan = _create_done_scan()
+        response = self.client.get(reverse("scanner:export_pdf", args=[scan.id]))
+        self.assertIn("vibescan-report-example.com.pdf", response["Content-Disposition"])
+
+    def test_pdf_export_starts_with_pdf_magic_bytes(self):
+        scan = _create_done_scan()
+        response = self.client.get(reverse("scanner:export_pdf", args=[scan.id]))
+        self.assertTrue(response.content[:5] == b"%PDF-")
+
+    def test_pdf_export_404_for_pending_scan(self):
+        scan = ScanResult.objects.create(url="https://example.com", status=ScanStatus.PENDING)
+        response = self.client.get(reverse("scanner:export_pdf", args=[scan.id]))
+        self.assertEqual(response.status_code, 404)
+
+    def test_pdf_export_404_for_nonexistent_scan(self):
+        import uuid
+        response = self.client.get(
+            reverse("scanner:export_pdf", args=[uuid.uuid4()])
+        )
+        self.assertEqual(response.status_code, 404)

@@ -1,0 +1,161 @@
+{% load scan_tags %}
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 2cm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 11px; color: #1e293b; line-height: 1.5; }
+
+  .header { text-align: center; margin-bottom: 24px; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; }
+  .header h1 { font-size: 22px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+  .header .url { font-size: 13px; color: #64748b; word-break: break-all; }
+  .header .date { font-size: 10px; color: #94a3b8; margin-top: 4px; }
+
+  .score-box { text-align: center; margin: 24px auto; padding: 20px; border: 2px solid #e2e8f0; border-radius: 12px; width: 200px; }
+  .score-number { font-size: 56px; font-weight: 800; line-height: 1; }
+  .score-max { font-size: 18px; color: #94a3b8; font-weight: 600; }
+  .score-label { display: inline-block; margin-top: 8px; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+
+  .color-green { color: #22c55e; }
+  .color-blue { color: #3b82f6; }
+  .color-amber { color: #f59e0b; }
+  .color-red { color: #ef4444; }
+  .bg-green { background: #f0fdf4; color: #16a34a; }
+  .bg-blue { background: #eff6ff; color: #2563eb; }
+  .bg-amber { background: #fffbeb; color: #d97706; }
+  .bg-red { background: #fef2f2; color: #dc2626; }
+
+  .summary { display: flex; justify-content: center; gap: 16px; margin: 20px 0; }
+  .summary-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 20px; text-align: center; min-width: 100px; }
+  .summary-card .count { font-size: 24px; font-weight: 800; }
+  .summary-card .label { font-size: 10px; color: #64748b; font-weight: 600; }
+
+  .section { margin-top: 20px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; page-break-inside: avoid; }
+  .section-header { padding: 8px 14px; font-size: 12px; font-weight: 700; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 6px; }
+  .section-header .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .section-header .penalty-total { margin-left: auto; font-family: monospace; font-size: 10px; }
+
+  .finding { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
+  .finding:last-child { border-bottom: none; }
+  .finding-title { font-size: 11px; font-weight: 600; }
+  .finding-penalty { font-family: monospace; font-size: 10px; margin-left: 6px; }
+  .finding-desc { font-size: 10px; color: #64748b; margin-top: 2px; }
+  .finding-detail { font-family: monospace; font-size: 9px; background: #f1f5f9; padding: 3px 6px; border-radius: 3px; margin-top: 4px; display: inline-block; }
+  .finding-link { font-size: 9px; color: #64748b; margin-top: 2px; }
+
+  .ok-finding { padding: 6px 14px; border-bottom: 1px solid #f1f5f9; font-size: 11px; color: #475569; }
+  .ok-finding:last-child { border-bottom: none; }
+  .ok-check { color: #22c55e; font-weight: bold; margin-right: 4px; }
+
+  .footer { margin-top: 30px; padding-top: 12px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 9px; color: #94a3b8; }
+</style>
+</head>
+<body>
+
+{% with category=scan.vibe_score|score_category counts=scan.findings|finding_counts %}
+
+<div class="header">
+  <h1>Vibescan – Bezpečnostní report</h1>
+  <div class="url">{{ scan.url }}</div>
+  <div class="date">{{ scan.completed_at|date:"j. n. Y H:i" }}</div>
+</div>
+
+<div class="score-box">
+  <span class="score-number color-{{ category.color }}">{{ scan.vibe_score }}</span><span class="score-max">/100</span>
+  <br>
+  <span class="score-label bg-{{ category.color }}">{{ category.label }}</span>
+</div>
+
+<div class="summary">
+  <div class="summary-card">
+    <div class="count color-red">{{ counts.critical }}</div>
+    <div class="label">Kritické</div>
+  </div>
+  <div class="summary-card">
+    <div class="count color-amber">{{ counts.warning }}</div>
+    <div class="label">Varování</div>
+  </div>
+  <div class="summary-card">
+    <div class="count color-green">{{ counts.ok }}</div>
+    <div class="label">V pořádku</div>
+  </div>
+</div>
+
+{% with ok=scan.findings|by_severity:"ok" critical=scan.findings|by_severity:"critical" warnings=scan.findings|by_severity:"warning" infos=scan.findings|by_severity:"info" %}
+
+{% if ok %}
+<div class="section">
+  <div class="section-header" style="background: #f0fdf4;">
+    <span class="dot" style="background: #22c55e;"></span>
+    <span style="color: #16a34a;">V pořádku</span>
+  </div>
+  {% for f in ok %}
+  <div class="ok-finding"><span class="ok-check">✓</span> {{ f.title }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if critical %}
+<div class="section">
+  <div class="section-header" style="background: #fef2f2;">
+    <span class="dot" style="background: #ef4444;"></span>
+    <span style="color: #dc2626;">Kritické problémy</span>
+    <span class="penalty-total" style="color: #fca5a5;">−{{ critical|total_penalty }}</span>
+  </div>
+  {% for f in critical %}
+  <div class="finding">
+    <div><span class="finding-title">{{ f.title }}</span><span class="finding-penalty color-red">−{{ f|penalty }}</span></div>
+    <div class="finding-desc">{{ f.description }}</div>
+    {% if f.detail %}<div class="finding-detail">{{ f.detail }}</div>{% endif %}
+    {% if f.doc_url %}<div class="finding-link">{{ f.doc_url }}</div>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if warnings %}
+<div class="section">
+  <div class="section-header" style="background: #fffbeb;">
+    <span class="dot" style="background: #f59e0b;"></span>
+    <span style="color: #d97706;">Varování</span>
+    <span class="penalty-total" style="color: #fcd34d;">−{{ warnings|total_penalty }}</span>
+  </div>
+  {% for f in warnings %}
+  <div class="finding">
+    <div><span class="finding-title">{{ f.title }}</span><span class="finding-penalty color-amber">−{{ f|penalty }}</span></div>
+    <div class="finding-desc">{{ f.description }}</div>
+    {% if f.detail %}<div class="finding-detail">{{ f.detail }}</div>{% endif %}
+    {% if f.doc_url %}<div class="finding-link">{{ f.doc_url }}</div>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if infos %}
+<div class="section">
+  <div class="section-header" style="background: #eff6ff;">
+    <span class="dot" style="background: #3b82f6;"></span>
+    <span style="color: #2563eb;">Upozornění</span>
+    <span class="penalty-total" style="color: #93c5fd;">−{{ infos|total_penalty }}</span>
+  </div>
+  {% for f in infos %}
+  <div class="finding">
+    <div><span class="finding-title">{{ f.title }}</span><span class="finding-penalty color-blue">−{{ f|penalty }}</span></div>
+    <div class="finding-desc">{{ f.description }}</div>
+    {% if f.detail %}<div class="finding-detail">{{ f.detail }}</div>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endwith %}
+
+<div class="footer">
+  Vygenerováno nástrojem Vibescan · {{ scan.completed_at|date:"j. n. Y H:i" }}
+</div>
+
+{% endwith %}
+</body>
+</html>
