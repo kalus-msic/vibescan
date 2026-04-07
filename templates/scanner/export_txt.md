@@ -1,4 +1,5 @@
-{% load scan_tags %}# Vibescan – Bezpečnostní report
+{% load scan_tags %}
+# Vibescan – Bezpečnostní report
 
 > Toto je výstup automatického bezpečnostního skeneru. Některé nálezy
 > nemusí být problém v kontextu konkrétního webu (např. chybějící MX

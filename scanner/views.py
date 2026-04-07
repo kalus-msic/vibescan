@@ -80,6 +80,7 @@ def scan_status(request, pk):
     return render(request, "scanner/partials/progress.html", {"scan": scan})
 
 
+@require_http_methods(["GET"])
 def scan_export_txt(request, pk):
     scan = get_object_or_404(ScanResult, pk=pk, status=ScanStatus.DONE)
     category = ScoreCategory.from_score(scan.vibe_score)
@@ -94,7 +95,7 @@ def scan_export_txt(request, pk):
     domain = urlparse(scan.url).hostname or "scan"
     content = render(request, "scanner/export_txt.md", {
         "scan": scan,
-        "category": {"label": category.value, "color": category.color},
+        "category": {"label": category.value},
         "findings_by_category": findings_by_category,
     }).content.decode("utf-8")
 
