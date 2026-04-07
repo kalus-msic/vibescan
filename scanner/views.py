@@ -7,7 +7,6 @@ from .models import ScanResult, ScanStatus
 from .forms import ScanForm
 from .tasks import run_scan
 from scanner.score import ScoreCategory
-import weasyprint
 
 
 def _session_key(group, request):
@@ -107,6 +106,7 @@ def scan_export_txt(request, pk):
 
 @require_http_methods(["GET"])
 def scan_export_pdf(request, pk):
+    import weasyprint
     scan = get_object_or_404(ScanResult, pk=pk, status=ScanStatus.DONE)
     html_string = render(request, "scanner/export_pdf.html", {"scan": scan}).content.decode("utf-8")
     pdf_bytes = weasyprint.HTML(string=html_string).write_pdf()
