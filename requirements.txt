@@ -12,3 +12,4 @@ python-dotenv==1.0
 whitenoise==6.8
 pytest==8.3
 pytest-django==4.9
+weasyprint==63.1
