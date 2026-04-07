@@ -1,9 +1,12 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_http_methods
+from django.http import HttpResponse
 from django_ratelimit.decorators import ratelimit
+from urllib.parse import urlparse
 from .models import ScanResult, ScanStatus
 from .forms import ScanForm
 from .tasks import run_scan
+from scanner.score import ScoreCategory
 
 
 def _session_key(group, request):
@@ -19,15 +22,26 @@ def _session_key(group, request):
 def home(request):
     form = ScanForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        scan = ScanResult.objects.create(url=form.cleaned_data["url"])
+        scan = ScanResult.objects.create(
+            url=form.cleaned_data["url"],
+            ephemeral=form.cleaned_data.get("ephemeral", False),
+        )
         run_scan.delay(str(scan.id))
         return redirect("scanner:scan_detail", pk=scan.id)
     return render(request, "scanner/home.html", {"form": form})
 
 
 def scan_detail(request, pk):
-    scan = get_object_or_404(ScanResult, pk=pk)
-    return render(request, "scanner/scan.html", {"scan": scan})
+    try:
+        scan = ScanResult.objects.get(pk=pk)
+    except ScanResult.DoesNotExist:
+        return render(request, "scanner/scan_expired.html", status=410)
+    ctx = {"scan": scan}
+    if scan.ephemeral and scan.status == ScanStatus.DONE:
+        response = render(request, "scanner/scan.html", ctx)
+        scan.delete()
+        return response
+    return render(request, "scanner/scan.html", ctx)
 
 
 @ratelimit(key="ip", rate="60/h", method="POST", block=True, group="scan-ip")
@@ -41,7 +55,10 @@ def scan_rescan(request, pk):
 
 
 def scan_status(request, pk):
-    scan = get_object_or_404(ScanResult, pk=pk)
+    try:
+        scan = ScanResult.objects.get(pk=pk)
+    except ScanResult.DoesNotExist:
+        return render(request, "scanner/partials/expired.html", status=410)
 
     # Detect stuck scans — if pending/running for more than 2 minutes, mark as failed
     if scan.status in (ScanStatus.PENDING, ScanStatus.RUNNING):
@@ -54,7 +71,33 @@ def scan_status(request, pk):
             scan.save(update_fields=["status", "error_message", "completed_at"])
 
     if scan.status == ScanStatus.DONE:
-        return render(request, "scanner/partials/results.html", {"scan": scan})
+        response = render(request, "scanner/partials/results.html", {"scan": scan})
+        if scan.ephemeral:
+            scan.delete()
+        return response
     if scan.status == ScanStatus.FAILED:
         return render(request, "scanner/partials/failed.html", {"scan": scan})
     return render(request, "scanner/partials/progress.html", {"scan": scan})
+
+
+def scan_export_txt(request, pk):
+    scan = get_object_or_404(ScanResult, pk=pk, status=ScanStatus.DONE)
+    category = ScoreCategory.from_score(scan.vibe_score)
+
+    # Group findings by category
+    categories = {}
+    for f in scan.findings:
+        cat = f.get("category", "other")
+        categories.setdefault(cat, []).append(f)
+    findings_by_category = sorted(categories.items())
+
+    domain = urlparse(scan.url).hostname or "scan"
+    content = render(request, "scanner/export_txt.md", {
+        "scan": scan,
+        "category": {"label": category.value, "color": category.color},
+        "findings_by_category": findings_by_category,
+    }).content.decode("utf-8")
+
+    response = HttpResponse(content, content_type="text/plain; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="vibescan-report-{domain}.txt"'
+    return response
