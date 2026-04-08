@@ -39,3 +39,29 @@ def penalty(finding):
 def total_penalty(findings):
     """Return sum of penalty points for a list of findings."""
     return sum(SEVERITY_PENALTY_MAP.get(f.get("severity", ""), 0) for f in findings)
+
+
+DISMISS_REASON_LABELS = {
+    "not_applicable": "Nepoužívám tuto funkci",
+    "solved_differently": "Řeším jinak",
+    "false_positive": "Falešný poplach",
+    "other": "Jiný důvod",
+}
+
+
+@register.filter
+def active_findings(findings):
+    """Return findings that are not dismissed."""
+    return [f for f in findings if not f.get("dismissed")]
+
+
+@register.filter
+def dismissed_findings(findings):
+    """Return only dismissed findings."""
+    return [f for f in findings if f.get("dismissed")]
+
+
+@register.filter
+def dismiss_reason_label(reason):
+    """Translate dismiss reason value to Czech label."""
+    return DISMISS_REASON_LABELS.get(reason, reason)

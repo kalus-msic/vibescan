@@ -99,3 +99,41 @@ class RecalculateScoreTest(TestCase):
             f["dismiss_reason"] = "other"
         score = recalculate_from_findings_dicts(findings)
         self.assertEqual(score, 100)
+
+
+from scanner.templatetags.scan_tags import active_findings, dismissed_findings, dismiss_reason_label
+
+
+class TemplateFilterTest(TestCase):
+
+    def test_active_findings_excludes_dismissed(self):
+        findings = copy.deepcopy(SAMPLE_FINDINGS)
+        findings[0]["dismissed"] = True
+        result = active_findings(findings)
+        self.assertEqual(len(result), 3)
+        self.assertTrue(all(f["id"] != "missing-csp" for f in result))
+
+    def test_active_findings_returns_all_when_none_dismissed(self):
+        result = active_findings(SAMPLE_FINDINGS)
+        self.assertEqual(len(result), 4)
+
+    def test_dismissed_findings_returns_only_dismissed(self):
+        findings = copy.deepcopy(SAMPLE_FINDINGS)
+        findings[0]["dismissed"] = True
+        findings[0]["dismiss_reason"] = "false_positive"
+        result = dismissed_findings(findings)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["id"], "missing-csp")
+
+    def test_dismissed_findings_returns_empty_when_none_dismissed(self):
+        result = dismissed_findings(SAMPLE_FINDINGS)
+        self.assertEqual(len(result), 0)
+
+    def test_dismiss_reason_label_translates_reasons(self):
+        self.assertEqual(dismiss_reason_label("not_applicable"), "Nepoužívám tuto funkci")
+        self.assertEqual(dismiss_reason_label("solved_differently"), "Řeším jinak")
+        self.assertEqual(dismiss_reason_label("false_positive"), "Falešný poplach")
+        self.assertEqual(dismiss_reason_label("other"), "Jiný důvod")
+
+    def test_dismiss_reason_label_returns_value_for_unknown(self):
+        self.assertEqual(dismiss_reason_label("unknown_reason"), "unknown_reason")
