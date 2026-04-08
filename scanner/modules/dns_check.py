@@ -116,6 +116,7 @@ class DNSScanner(BaseScanModule):
                                 severity=Severity.INFO if is_sub else Severity.WARNING,
                                 category="dns",
                                 detail=raw,
+                                doc_url="https://developer.mozilla.org/en-US/docs/Glossary/DMARC",
                             )
                         return Finding(
                             id="dmarc-ok",
@@ -268,6 +269,7 @@ class DNSScanner(BaseScanModule):
             severity=Severity.WARNING,
             category="dns",
             detail=detail,
+            doc_url="https://developers.google.com/search/docs/crawling-indexing/robots/intro",
         )
 
     def _check_security_txt(self, url: str) -> Finding:

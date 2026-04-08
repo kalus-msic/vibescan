@@ -21,6 +21,7 @@ class ScanResult(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     error_message = models.TextField(blank=True, default="")
+    ephemeral = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["-created_at"]

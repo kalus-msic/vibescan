@@ -37,7 +37,7 @@ class FormScanner(BaseScanModule):
                 findings.append(Finding(
                     id="missing-csrf-token",
                     title="POST formulář bez CSRF ochrany",
-                    description="Formulář odesílá POST bez CSRF tokenu. Útočník vytvoří stránku s neviditelným formulářem, který se automaticky odešle na váš server — prohlížeč přiloží cookies a akce proběhne za přihlášeného uživatele (např. změna hesla, platba).",
+                    description="Formulář odesílá POST bez CSRF tokenu. Pokud formulář provádí citlivou akci (přihlášení, změna údajů, platba), útočník může vytvořit stránku s neviditelným formulářem, který se automaticky odešle — prohlížeč přiloží cookies a akce proběhne za přihlášeného uživatele. U veřejných formulářů (newsletter, vyhledávání) je riziko minimální.",
                     severity=Severity.WARNING,
                     category="forms",
                     fix_url="/guide/#csrf-forms",

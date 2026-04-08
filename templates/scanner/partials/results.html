@@ -31,9 +31,12 @@
       PDF report
     </a>
     <span class="text-slate-300">·</span>
-    <a href="{% url 'scanner:export_txt' scan.id %}" class="text-slate-500 hover:text-slate-900 font-medium transition-colors inline-flex items-center gap-1">
-      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/></svg>
-      Export pro AI
+    <a href="{% url 'scanner:export_txt' scan.id %}" class="text-slate-500 hover:text-slate-900 font-medium transition-colors inline-flex flex-col items-start" title="Celý report pro AI opravu">
+      <span class="inline-flex items-center gap-1">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/></svg>
+        Export pro AI
+      </span>
+      <span class="text-[10px] text-slate-400 font-normal">Celý report pro AI opravu</span>
     </a>
   </div>
   {% endif %}
@@ -67,6 +70,28 @@
     {% endwith %}
   </div>
 
+  <!-- Disclaimer -->
+  <div class="flex gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-4 text-xs text-slate-500 leading-relaxed">
+    <svg class="w-4 h-4 flex-shrink-0 text-slate-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+    <p>Vibescan kontroluje pouze veřejně viditelné signály. Neověřuje např. zda <code class="bg-slate-200/60 px-1 rounded">.env</code>, databázové zálohy nebo admin rozhraní nejsou vystaveny na internetu.
+      Projděte si <a href="{% url 'pages:guide' %}" class="text-slate-700 font-semibold hover:text-slate-900 underline underline-offset-2">ruční kontrolu v průvodci</a> a podívejte se, <a href="{% url 'pages:how_it_works' %}" class="text-slate-700 font-semibold hover:text-slate-900 underline underline-offset-2">co testujeme a co ne</a>.</p>
+  </div>
+
+  {% if scan.vibe_score < 100 %}
+  {% if not scan.ephemeral %}
+  <div class="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 mb-4 text-xs text-blue-600">
+    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"/></svg>
+    <span>Tip: Všechny nálezy můžeš exportovat naráz pro AI — bez kopírování krok za krokem.</span>
+    <a href="{% url 'scanner:export_txt' scan.id %}" class="font-semibold hover:text-blue-800 transition-colors whitespace-nowrap ml-auto">Exportovat pro AI →</a>
+  </div>
+  {% else %}
+  <div class="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-xl px-4 py-2.5 mb-4 text-xs text-amber-600">
+    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"/></svg>
+    <span>Pro export výsledků a opravu přes AI spusťte sken bez zaškrtnutí jednorázového režimu.</span>
+  </div>
+  {% endif %}
+  {% endif %}
+
   {% with critical=active|by_severity:"critical" warnings=active|by_severity:"warning" infos=active|by_severity:"info" ok=active|by_severity:"ok" %}
   <div class="space-y-4">
 
@@ -93,8 +118,8 @@
 
     <!-- Kritické problémy -->
     {% if critical %}
-    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-      <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 bg-red-50/50">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm">
+      <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 bg-red-50/50 rounded-t-2xl">
         <div class="w-2 h-2 rounded-full bg-red-500"></div>
         <span class="text-sm font-bold text-red-600">Kritické problémy</span>
           <span class="text-xs font-mono text-red-400 ml-auto">−{{ critical|total_penalty }}</span>
@@ -111,15 +136,15 @@
               <span class="text-xs font-mono text-red-500">−{{ f|penalty }}</span>
             </div>
             <div class="text-xs text-slate-500 leading-relaxed">{{ f.description }}</div>
-            {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 inline-block whitespace-pre-wrap">{{ f.detail }}</code>{% endif %}
-            {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 inline-block">Dokumentace (MDN) →</a>{% endif %}
+            {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 block whitespace-pre-wrap">{{ f.detail }}</code>{% endif %}
+            {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 block">Dokumentace (MDN) →</a>{% endif %}
           </div>
           <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
             <a href="{{ f.fix_url }}" class="text-xs text-blue-600 hover:underline font-semibold">Opravit →</a>
             {% if not scan.ephemeral %}
-            <div class="relative" x-data="{ open: false }">
+            <div class="relative" x-data="{ open: false, above: false }" x-init="$watch('open', v => { if(v){ let r=$el.getBoundingClientRect(); above=r.bottom+140>window.innerHeight } })">
               <button @click="open = !open" class="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">Není relevantní</button>
-              <div x-show="open" @click.outside="open = false" class="absolute right-0 top-6 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-52">
+              <div x-show="open" @click.outside="open = false" :class="above ? 'bottom-6' : 'top-6'" class="absolute right-0 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-52">
                 <form method="post" action="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-post="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-target="#scan-content" hx-swap="outerHTML">
                   {% csrf_token %}
                   <button type="submit" name="reason" value="not_applicable" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Nepoužívám tuto funkci</button>
@@ -139,8 +164,8 @@
 
     <!-- Varování -->
     {% if warnings %}
-    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-      <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 bg-amber-50/50">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm">
+      <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 bg-amber-50/50 rounded-t-2xl">
         <div class="w-2 h-2 rounded-full bg-amber-400"></div>
         <span class="text-sm font-bold text-amber-600">Varování</span>
           <span class="text-xs font-mono text-amber-400 ml-auto">−{{ warnings|total_penalty }}</span>
@@ -157,15 +182,15 @@
               <span class="text-xs font-mono text-amber-500">−{{ f|penalty }}</span>
             </div>
             <div class="text-xs text-slate-500 leading-relaxed">{{ f.description }}</div>
-            {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 inline-block whitespace-pre-wrap">{{ f.detail }}</code>{% endif %}
-            {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 inline-block">Dokumentace (MDN) →</a>{% endif %}
+            {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 block whitespace-pre-wrap">{{ f.detail }}</code>{% endif %}
+            {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 block">Dokumentace (MDN) →</a>{% endif %}
           </div>
           <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
             <a href="{{ f.fix_url }}" class="text-xs text-blue-600 hover:underline font-semibold">Opravit →</a>
             {% if not scan.ephemeral %}
-            <div class="relative" x-data="{ open: false }">
+            <div class="relative" x-data="{ open: false, above: false }" x-init="$watch('open', v => { if(v){ let r=$el.getBoundingClientRect(); above=r.bottom+140>window.innerHeight } })">
               <button @click="open = !open" class="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">Není relevantní</button>
-              <div x-show="open" @click.outside="open = false" class="absolute right-0 top-6 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-52">
+              <div x-show="open" @click.outside="open = false" :class="above ? 'bottom-6' : 'top-6'" class="absolute right-0 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-52">
                 <form method="post" action="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-post="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-target="#scan-content" hx-swap="outerHTML">
                   {% csrf_token %}
                   <button type="submit" name="reason" value="not_applicable" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Nepoužívám tuto funkci</button>
@@ -185,8 +210,8 @@
 
     <!-- Upozornění (INFO) -->
     {% if infos %}
-    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-      <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 bg-blue-50/50">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm">
+      <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 bg-blue-50/50 rounded-t-2xl">
         <div class="w-2 h-2 rounded-full bg-blue-400"></div>
         <span class="text-sm font-bold text-blue-600">Upozornění</span>
           <span class="text-xs font-mono text-blue-400 ml-auto">−{{ infos|total_penalty }}</span>
@@ -203,13 +228,13 @@
               <span class="text-xs font-mono text-blue-400">−{{ f|penalty }}</span>
             </div>
             <div class="text-xs text-slate-500 leading-relaxed">{{ f.description }}</div>
-            {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 inline-block">{{ f.detail }}</code>{% endif %}
+            {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 block">{{ f.detail }}</code>{% endif %}
           </div>
           {% if not scan.ephemeral %}
           <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
-            <div class="relative" x-data="{ open: false }">
+            <div class="relative" x-data="{ open: false, above: false }" x-init="$watch('open', v => { if(v){ let r=$el.getBoundingClientRect(); above=r.bottom+140>window.innerHeight } })">
               <button @click="open = !open" class="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">Není relevantní</button>
-              <div x-show="open" @click.outside="open = false" class="absolute right-0 top-6 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-52">
+              <div x-show="open" @click.outside="open = false" :class="above ? 'bottom-6' : 'top-6'" class="absolute right-0 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-52">
                 <form method="post" action="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-post="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-target="#scan-content" hx-swap="outerHTML">
                   {% csrf_token %}
                   <button type="submit" name="reason" value="not_applicable" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Nepoužívám tuto funkci</button>
@@ -261,11 +286,18 @@
       </div>
       <div class="flex-1">
         <div class="font-bold text-sm mb-0.5">Nevíš, jak to opravit?</div>
-        <p class="text-xs text-slate-400 leading-relaxed">Průvodce s copy-paste prompty pro Claude Code a Cursor.</p>
+        <p class="text-xs text-slate-400 leading-relaxed">Průvodce s copy-paste prompty pro Claude Code a Cursor.{% if not scan.ephemeral %} Nebo exportuj všechny nálezy naráz pro AI.{% endif %}</p>
       </div>
-      <a href="{% url 'pages:guide' %}" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-2.5 px-5 rounded-lg transition-colors whitespace-nowrap">
-        Průvodce opravami →
-      </a>
+      <div class="flex flex-col gap-2 flex-shrink-0">
+        <a href="{% url 'pages:guide' %}" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-2.5 px-5 rounded-lg transition-colors whitespace-nowrap text-center">
+          Průvodce opravami →
+        </a>
+        {% if not scan.ephemeral %}
+        <a href="{% url 'scanner:export_txt' scan.id %}" class="border border-white/20 hover:bg-white/10 text-white text-xs font-semibold py-2.5 px-5 rounded-lg transition-colors whitespace-nowrap text-center">
+          Exportovat pro AI →
+        </a>
+        {% endif %}
+      </div>
     </div>
 
   </div>
