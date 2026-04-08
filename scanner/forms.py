@@ -15,7 +15,7 @@ class ScanForm(forms.Form):
         required=False,
         label="Jednorázový sken",
         widget=forms.CheckboxInput(attrs={
-            "class": "rounded border-slate-300 text-blue-600 focus:ring-blue-500",
+            "class": "peer hidden",
         }),
     )
 
