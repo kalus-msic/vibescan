@@ -39,3 +39,16 @@ class ScoreCategory(str, Enum):
 def calculate_vibe_score(findings: list[Finding]) -> int:
     penalty = sum(SEVERITY_PENALTY[f.severity] for f in findings)
     return max(0, 100 - penalty)
+
+
+SEVERITY_PENALTY_MAP = {s.value: p for s, p in SEVERITY_PENALTY.items()}
+
+
+def recalculate_from_findings_dicts(findings: list[dict]) -> int:
+    """Recalculate vibe score from findings dicts (JSONField data), skipping dismissed."""
+    penalty = sum(
+        SEVERITY_PENALTY_MAP.get(f.get("severity", ""), 0)
+        for f in findings
+        if not f.get("dismissed")
+    )
+    return max(0, 100 - penalty)
