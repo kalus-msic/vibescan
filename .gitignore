@@ -21,6 +21,9 @@ build/
 staticfiles/
 mediafiles/
 
+# Tailwind build output
+static/css/
+
 # Docs & interní soubory (nenahrávat na GitHub)
 docs/
 CLAUDE.md
