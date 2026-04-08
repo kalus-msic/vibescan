@@ -35,16 +35,20 @@ class SRIScanner(BaseScanModule):
         scan_host = urlparse(url).hostname
         has_strong_csp = self._has_strong_csp(response)
 
-        # External scripts without integrity
+        # External scripts — check integrity
         missing_scripts = []
+        has_external_scripts = False
+        all_have_sri = True
         for script in soup.find_all("script", src=True):
             src = script["src"]
             if not self._is_external(src, scan_host):
                 continue
             if self._is_dynamic(src):
                 continue
+            has_external_scripts = True
             if not script.get("integrity"):
                 missing_scripts.append(src)
+                all_have_sri = False
 
         if missing_scripts:
             # CSP + SRI relationship:
@@ -74,6 +78,23 @@ class SRIScanner(BaseScanModule):
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity",
                 detail="\n".join(missing_scripts[:5]) + (f"\n… a {len(missing_scripts) - 5} dalších" if len(missing_scripts) > 5 else ""),
             ))
+        elif has_external_scripts and all_have_sri:
+            if has_strong_csp:
+                findings.append(Finding(
+                    id="sri-csp-ok",
+                    title="CSP s nonce + SRI na externích scriptech",
+                    description="Web má silné CSP (nonce/strict-dynamic) i SRI na externích scriptech — dvouvrstvá ochrana proti XSS i kompromitaci CDN.",
+                    severity=Severity.OK,
+                    category="sri",
+                ))
+            else:
+                findings.append(Finding(
+                    id="sri-ok",
+                    title="SRI na externích scriptech",
+                    description="Externí scripty mají integrity atribut — prohlížeč odmítne spustit změněný soubor.",
+                    severity=Severity.OK,
+                    category="sri",
+                ))
 
         # External stylesheets without integrity
         missing_styles = []

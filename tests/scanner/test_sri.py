@@ -30,7 +30,11 @@ class TestSRIScanner:
             'integrity="sha384-abc123" crossorigin="anonymous"></script>'
         )
         findings = self.scanner.run("https://mysite.com", resp)
-        assert len(findings) == 0
+        problems = [f for f in findings if f.severity not in (Severity.OK,)]
+        assert len(problems) == 0
+        ok = [f for f in findings if f.severity == Severity.OK]
+        assert len(ok) == 1
+        assert ok[0].id == "sri-ok"
 
     def test_ignores_same_origin_script(self):
         resp = _mock_response(
@@ -185,3 +189,15 @@ class TestSRIScanner:
         script_findings = [f for f in findings if f.id == "missing-sri-script"]
         assert len(script_findings) == 1
         assert script_findings[0].severity == Severity.INFO
+
+    def test_csp_nonce_plus_sri_is_best(self):
+        """CSP with nonce + SRI on all scripts → OK with dual-protection message."""
+        resp = _mock_response(
+            '<script src="https://cdn.example.com/lib.js" integrity="sha384-abc"></script>',
+            headers={"content-security-policy": "script-src 'nonce-abc123' 'strict-dynamic'"},
+        )
+        findings = self.scanner.run("https://mysite.com", resp)
+        ok = [f for f in findings if f.id == "sri-csp-ok"]
+        assert len(ok) == 1
+        assert ok[0].severity == Severity.OK
+        assert "dvouvrstvá" in ok[0].description
