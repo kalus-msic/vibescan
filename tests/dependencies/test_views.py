@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from django.test import RequestFactory
+from django.test import RequestFactory, Client
 from dependencies.views import check_dependencies
 from dependencies.osv_client import Vulnerability
 
@@ -96,3 +96,53 @@ class TestCheckDependenciesView:
         client = Client()
         response = client.get("/dependencies/check/")
         assert response.status_code == 405
+
+
+@pytest.mark.django_db
+class TestCheckDependenciesIntegration:
+    @patch("dependencies.views.check_vulnerabilities")
+    def test_full_flow_requirements_txt(self, mock_check):
+        mock_check.return_value = [
+            Vulnerability(
+                id="CVE-2024-1234",
+                summary="Remote code execution",
+                package_name="django",
+                package_version="4.2.0",
+                severity_score=9.8,
+                severity_label="Critical",
+                fixed_version="4.2.1",
+                osv_url="https://osv.dev/vulnerability/CVE-2024-1234",
+            )
+        ]
+
+        client = Client()
+        response = client.post("/dependencies/check/", {
+            "content": "django==4.2.0\nrequests==2.31.0"
+        })
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "CVE-2024-1234" in content
+        assert "django" in content
+        assert "Critical" in content
+        assert "4.2.1" in content
+
+    @patch("dependencies.views.check_vulnerabilities")
+    def test_full_flow_package_json(self, mock_check):
+        mock_check.return_value = []
+
+        client = Client()
+        response = client.post("/dependencies/check/", {
+            "content": '{"dependencies": {"express": "^4.18.2"}}'
+        })
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "zranitelnost" in content.lower() or "pořádku" in content.lower()
+
+    def test_full_flow_unknown_format(self):
+        client = Client()
+        response = client.post("/dependencies/check/", {
+            "content": "this is garbage input that is not a dep file"
+        })
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "rozpoznat" in content.lower() or "formát" in content.lower()
