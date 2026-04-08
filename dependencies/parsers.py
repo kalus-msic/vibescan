@@ -10,6 +10,11 @@ class Dependency:
     ecosystem: str
 
 
+class UnknownFormatError(Exception):
+    """Raised when the dependency file format cannot be detected."""
+    pass
+
+
 def parse_requirements_txt(content: str) -> list[Dependency]:
     """Parse requirements.txt content into a list of dependencies."""
     deps = []
@@ -92,3 +97,38 @@ def parse_composer_json(content: str) -> list[Dependency]:
             continue
         result.append(Dependency(name=name, version=version, ecosystem="Packagist"))
     return result
+
+
+def parse_dependencies(content: str) -> list[Dependency]:
+    """Auto-detect format and parse dependencies.
+
+    Returns list of dependencies. Raises UnknownFormatError if format
+    cannot be detected and no dependencies were found.
+    """
+    stripped = content.strip()
+
+    if stripped.startswith("{"):
+        try:
+            data = json.loads(stripped)
+        except (json.JSONDecodeError, ValueError):
+            raise UnknownFormatError()
+
+        if not isinstance(data, dict):
+            raise UnknownFormatError()
+
+        if "dependencies" in data or "devDependencies" in data:
+            return parse_package_json(stripped)
+        if "require" in data or "require-dev" in data:
+            return parse_composer_json(stripped)
+
+        return []
+
+    # Try requirements.txt
+    result = parse_requirements_txt(stripped)
+    if result:
+        return result
+
+    # Nothing matched
+    if stripped:
+        raise UnknownFormatError()
+    return []

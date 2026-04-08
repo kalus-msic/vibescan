@@ -1,5 +1,5 @@
 import pytest
-from dependencies.parsers import parse_requirements_txt, parse_package_json, parse_composer_json, Dependency
+from dependencies.parsers import parse_requirements_txt, parse_package_json, parse_composer_json, Dependency, parse_dependencies, UnknownFormatError
 
 
 class TestRequirementsTxtParser:
@@ -109,3 +109,33 @@ class TestComposerJsonParser:
 
     def test_empty(self):
         assert parse_composer_json('{"name": "my/app"}') == []
+
+
+class TestAutoDetection:
+    def test_detects_requirements_txt(self):
+        content = "django==4.2.0\nrequests>=2.31.0"
+        result = parse_dependencies(content)
+        assert len(result) > 0
+        assert result[0].ecosystem == "PyPI"
+
+    def test_detects_package_json(self):
+        content = '{"name": "myapp", "dependencies": {"express": "^4.18.2"}}'
+        result = parse_dependencies(content)
+        assert len(result) == 1
+        assert result[0].ecosystem == "npm"
+
+    def test_detects_composer_json(self):
+        content = '{"name": "my/app", "require": {"laravel/framework": "^10.0"}}'
+        result = parse_dependencies(content)
+        assert len(result) == 1
+        assert result[0].ecosystem == "Packagist"
+
+    def test_returns_empty_for_unknown_json(self):
+        content = '{"foo": "bar"}'
+        result = parse_dependencies(content)
+        assert result == []
+
+    def test_raises_for_garbage(self):
+        content = "this is not a dependency file at all"
+        with pytest.raises(UnknownFormatError):
+            parse_dependencies(content)
