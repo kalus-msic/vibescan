@@ -1,7 +1,7 @@
 {% load scan_tags %}
 <div id="scan-content">
 
-  {% with category=scan.vibe_score|score_category %}
+  {% with category=scan.vibe_score|score_category active=scan.findings|active_findings dismissed=scan.findings|dismissed_findings %}
   {% if scan.ephemeral %}
   <div class="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-6 text-xs text-amber-700">
     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -46,7 +46,7 @@
       <div class="mt-3 bg-{{ category.color }}-100 text-{{ category.color }}-700 text-xs font-semibold px-2.5 py-1 rounded-full">{{ category.label }}</div>
     </div>
 
-    {% with counts=scan.findings|finding_counts %}
+    {% with counts=active|finding_counts %}
     <div class="flex-1 grid grid-cols-3 gap-4">
       <div class="bg-white border border-red-200 rounded-2xl p-5 shadow-sm">
         <div class="text-3xl font-extrabold text-red-500 mb-1">{{ counts.critical }}</div>
@@ -67,7 +67,7 @@
     {% endwith %}
   </div>
 
-  {% with critical=scan.findings|by_severity:"critical" warnings=scan.findings|by_severity:"warning" infos=scan.findings|by_severity:"info" ok=scan.findings|by_severity:"ok" %}
+  {% with critical=active|by_severity:"critical" warnings=active|by_severity:"warning" infos=active|by_severity:"info" ok=active|by_severity:"ok" %}
   <div class="space-y-4">
 
     <!-- V pořádku -->
@@ -114,7 +114,23 @@
             {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 inline-block whitespace-pre-wrap">{{ f.detail }}</code>{% endif %}
             {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 inline-block">Dokumentace (MDN) →</a>{% endif %}
           </div>
-          <a href="{{ f.fix_url }}" class="text-xs text-blue-600 hover:underline flex-shrink-0 font-semibold mt-0.5">Opravit →</a>
+          <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
+            <a href="{{ f.fix_url }}" class="text-xs text-blue-600 hover:underline font-semibold">Opravit →</a>
+            {% if not scan.ephemeral %}
+            <div class="relative" x-data="{ open: false }">
+              <button @click="open = !open" class="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">Není relevantní</button>
+              <div x-show="open" @click.outside="open = false" class="absolute right-0 top-6 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-52">
+                <form method="post" action="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-post="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-target="#scan-content" hx-swap="outerHTML">
+                  {% csrf_token %}
+                  <button type="submit" name="reason" value="not_applicable" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Nepoužívám tuto funkci</button>
+                  <button type="submit" name="reason" value="solved_differently" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Řeším jinak</button>
+                  <button type="submit" name="reason" value="false_positive" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Falešný poplach</button>
+                  <button type="submit" name="reason" value="other" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Jiný důvod</button>
+                </form>
+              </div>
+            </div>
+            {% endif %}
+          </div>
         </div>
         {% endfor %}
       </div>
@@ -144,7 +160,23 @@
             {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 inline-block whitespace-pre-wrap">{{ f.detail }}</code>{% endif %}
             {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 inline-block">Dokumentace (MDN) →</a>{% endif %}
           </div>
-          <a href="{{ f.fix_url }}" class="text-xs text-blue-600 hover:underline flex-shrink-0 font-semibold mt-0.5">Opravit →</a>
+          <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
+            <a href="{{ f.fix_url }}" class="text-xs text-blue-600 hover:underline font-semibold">Opravit →</a>
+            {% if not scan.ephemeral %}
+            <div class="relative" x-data="{ open: false }">
+              <button @click="open = !open" class="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">Není relevantní</button>
+              <div x-show="open" @click.outside="open = false" class="absolute right-0 top-6 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-52">
+                <form method="post" action="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-post="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-target="#scan-content" hx-swap="outerHTML">
+                  {% csrf_token %}
+                  <button type="submit" name="reason" value="not_applicable" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Nepoužívám tuto funkci</button>
+                  <button type="submit" name="reason" value="solved_differently" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Řeším jinak</button>
+                  <button type="submit" name="reason" value="false_positive" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Falešný poplach</button>
+                  <button type="submit" name="reason" value="other" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Jiný důvod</button>
+                </form>
+              </div>
+            </div>
+            {% endif %}
+          </div>
         </div>
         {% endfor %}
       </div>
@@ -173,6 +205,49 @@
             <div class="text-xs text-slate-500 leading-relaxed">{{ f.description }}</div>
             {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 inline-block">{{ f.detail }}</code>{% endif %}
           </div>
+          {% if not scan.ephemeral %}
+          <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
+            <div class="relative" x-data="{ open: false }">
+              <button @click="open = !open" class="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">Není relevantní</button>
+              <div x-show="open" @click.outside="open = false" class="absolute right-0 top-6 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-52">
+                <form method="post" action="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-post="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-target="#scan-content" hx-swap="outerHTML">
+                  {% csrf_token %}
+                  <button type="submit" name="reason" value="not_applicable" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Nepoužívám tuto funkci</button>
+                  <button type="submit" name="reason" value="solved_differently" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Řeším jinak</button>
+                  <button type="submit" name="reason" value="false_positive" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Falešný poplach</button>
+                  <button type="submit" name="reason" value="other" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Jiný důvod</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Zamítnuté nálezy -->
+    {% if dismissed %}
+    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm opacity-60">
+      <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 bg-slate-50/50">
+        <div class="w-2 h-2 rounded-full bg-slate-300"></div>
+        <span class="text-sm font-bold text-slate-400">Zamítnuté nálezy</span>
+        <span class="text-xs text-slate-400 ml-auto">{{ dismissed|length }}</span>
+      </div>
+      <div class="divide-y divide-slate-100">
+        {% for f in dismissed %}
+        <div class="px-5 py-3 flex items-center gap-3">
+          <div class="flex-1 min-w-0">
+            <span class="text-sm text-slate-400 font-medium">{{ f.title }}</span>
+            <span class="text-xs text-slate-300 ml-2">Zamítnuto: {{ f.dismiss_reason|dismiss_reason_label }}</span>
+          </div>
+          {% if not scan.ephemeral %}
+          <form method="post" action="{% url 'scanner:restore_finding' scan.id f.id %}" hx-post="{% url 'scanner:restore_finding' scan.id f.id %}" hx-target="#scan-content" hx-swap="outerHTML" class="flex-shrink-0">
+            {% csrf_token %}
+            <button type="submit" class="text-xs text-blue-500 hover:text-blue-700 font-medium transition-colors cursor-pointer">Obnovit</button>
+          </form>
+          {% endif %}
         </div>
         {% endfor %}
       </div>
