@@ -50,11 +50,16 @@
   .ok-check { color: #22c55e; font-weight: bold; margin-right: 4px; }
 
   .footer { margin-top: 30px; padding-top: 12px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 9px; color: #94a3b8; }
+  .dismissed-section { opacity: 0.6; }
+  .dismissed-finding { padding: 6px 14px; border-bottom: 1px solid #f1f5f9; font-size: 10px; color: #94a3b8; }
+  .dismissed-finding:last-child { border-bottom: none; }
+  .dismissed-reason { font-size: 9px; color: #cbd5e1; margin-left: 8px; }
 </style>
 </head>
 <body>
 
-{% with category=scan.vibe_score|score_category counts=scan.findings|finding_counts %}
+{% with category=scan.vibe_score|score_category %}
+{% with active=scan.findings|active_findings dismissed=scan.findings|dismissed_findings counts=active|finding_counts %}
 
 <div class="header">
   <h1>Vibescan – Bezpečnostní report</h1>
@@ -83,7 +88,7 @@
   </div>
 </div>
 
-{% with ok=scan.findings|by_severity:"ok" critical=scan.findings|by_severity:"critical" warnings=scan.findings|by_severity:"warning" infos=scan.findings|by_severity:"info" %}
+{% with ok=active|by_severity:"ok" critical=active|by_severity:"critical" warnings=active|by_severity:"warning" infos=active|by_severity:"info" %}
 
 {% if ok %}
 <div class="section">
@@ -150,12 +155,28 @@
 </div>
 {% endif %}
 
+{% if dismissed %}
+<div class="section dismissed-section">
+  <div class="section-header" style="background: #f8fafc;">
+    <span class="dot" style="background: #cbd5e1;"></span>
+    <span style="color: #94a3b8;">Zamítnuté nálezy</span>
+    <span class="penalty-total" style="color: #cbd5e1;">{{ dismissed|length }}</span>
+  </div>
+  {% for f in dismissed %}
+  <div class="dismissed-finding">
+    {{ f.title }}<span class="dismissed-reason">Zamítnuto: {{ f.dismiss_reason|dismiss_reason_label }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 {% endwith %}
 
 <div class="footer">
   Vygenerováno nástrojem Vibescan · {{ scan.completed_at|date:"j. n. Y H:i" }}
 </div>
 
+{% endwith %}
 {% endwith %}
 </body>
 </html>

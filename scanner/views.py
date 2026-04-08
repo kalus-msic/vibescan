@@ -85,9 +85,12 @@ def scan_export_txt(request, pk):
     scan = get_object_or_404(ScanResult, pk=pk, status=ScanStatus.DONE)
     category = ScoreCategory.from_score(scan.vibe_score)
 
-    # Group findings by category
+    active = [f for f in scan.findings if not f.get("dismissed")]
+    dismissed = [f for f in scan.findings if f.get("dismissed")]
+
+    # Group active findings by category
     categories = {}
-    for f in scan.findings:
+    for f in active:
         cat = f.get("category", "other")
         categories.setdefault(cat, []).append(f)
     findings_by_category = sorted(categories.items())
@@ -97,6 +100,7 @@ def scan_export_txt(request, pk):
         "scan": scan,
         "category": {"label": category.value},
         "findings_by_category": findings_by_category,
+        "dismissed": dismissed,
     }).content.decode("utf-8")
 
     response = HttpResponse(content, content_type="text/plain; charset=utf-8")
