@@ -4,9 +4,10 @@ from scanner.modules.sri import SRIScanner
 from scanner.modules.base import Severity
 
 
-def _mock_response(text):
+def _mock_response(text, headers=None):
     resp = MagicMock()
     resp.text = text
+    resp.headers = headers or {}
     return resp
 
 
@@ -127,3 +128,60 @@ class TestSRIScanner:
         )
         findings = self.scanner.run("https://mysite.com", resp)
         assert len(findings) == 0
+
+    def test_no_csp_missing_sri_is_warning(self):
+        """No CSP + no SRI → WARNING (no protection at all)."""
+        resp = _mock_response(
+            '<script src="https://cdn.example.com/lib.js"></script>',
+            headers={},
+        )
+        findings = self.scanner.run("https://mysite.com", resp)
+        script_findings = [f for f in findings if f.id == "missing-sri-script"]
+        assert len(script_findings) == 1
+        assert script_findings[0].severity == Severity.WARNING
+        assert "nemá silné CSP" in script_findings[0].description
+
+    def test_strong_csp_nonce_missing_sri_is_info(self):
+        """CSP with nonce + no SRI → INFO (CSP is primary, SRI is bonus)."""
+        resp = _mock_response(
+            '<script src="https://cdn.example.com/lib.js"></script>',
+            headers={"content-security-policy": "script-src 'nonce-abc123' 'strict-dynamic'"},
+        )
+        findings = self.scanner.run("https://mysite.com", resp)
+        script_findings = [f for f in findings if f.id == "missing-sri-script"]
+        assert len(script_findings) == 1
+        assert script_findings[0].severity == Severity.INFO
+        assert "CSP s nonce" in script_findings[0].description
+
+    def test_strict_dynamic_csp_missing_sri_is_info(self):
+        """CSP with strict-dynamic + no SRI → INFO."""
+        resp = _mock_response(
+            '<script src="https://cdn.example.com/lib.js"></script>',
+            headers={"content-security-policy": "script-src 'strict-dynamic' https:"},
+        )
+        findings = self.scanner.run("https://mysite.com", resp)
+        script_findings = [f for f in findings if f.id == "missing-sri-script"]
+        assert len(script_findings) == 1
+        assert script_findings[0].severity == Severity.INFO
+
+    def test_weak_csp_without_nonce_missing_sri_is_warning(self):
+        """CSP without nonce/strict-dynamic + no SRI → still WARNING."""
+        resp = _mock_response(
+            '<script src="https://cdn.example.com/lib.js"></script>',
+            headers={"content-security-policy": "script-src 'self' https://cdn.example.com"},
+        )
+        findings = self.scanner.run("https://mysite.com", resp)
+        script_findings = [f for f in findings if f.id == "missing-sri-script"]
+        assert len(script_findings) == 1
+        assert script_findings[0].severity == Severity.WARNING
+
+    def test_csp_report_only_with_nonce_counts(self):
+        """CSP-Report-Only with nonce also counts as strong CSP."""
+        resp = _mock_response(
+            '<script src="https://cdn.example.com/lib.js"></script>',
+            headers={"content-security-policy-report-only": "script-src 'nonce-xyz'"},
+        )
+        findings = self.scanner.run("https://mysite.com", resp)
+        script_findings = [f for f in findings if f.id == "missing-sri-script"]
+        assert len(script_findings) == 1
+        assert script_findings[0].severity == Severity.INFO

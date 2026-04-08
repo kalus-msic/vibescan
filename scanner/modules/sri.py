@@ -33,6 +33,7 @@ class SRIScanner(BaseScanModule):
         soup = BeautifulSoup(html, "html.parser")
         findings = []
         scan_host = urlparse(url).hostname
+        has_strong_csp = self._has_strong_csp(response)
 
         # External scripts without integrity
         missing_scripts = []
@@ -46,11 +47,29 @@ class SRIScanner(BaseScanModule):
                 missing_scripts.append(src)
 
         if missing_scripts:
+            # CSP + SRI relationship:
+            # - No CSP + No SRI → WARNING (CDN compromise not protected)
+            # - Strong CSP + No SRI → INFO (CSP is primary protection, SRI is bonus)
+            if has_strong_csp:
+                severity = Severity.INFO
+                desc = (
+                    f"Externí JavaScript ({len(missing_scripts)}×) nemá integrity atribut. "
+                    "CSP s nonce/strict-dynamic poskytuje hlavní ochranu proti XSS, ale SRI by přidal druhou vrstvu — "
+                    "při kompromitaci CDN prohlížeč odmítne spustit změněný soubor."
+                )
+            else:
+                severity = Severity.WARNING
+                desc = (
+                    f"Externí JavaScript ({len(missing_scripts)}×) nemá integrity atribut a web nemá silné CSP. "
+                    "Bez obou ochran může útočník napadnout CDN a vložit malware do každé stránky. "
+                    "Přidejte SRI hash nebo CSP s nonce/strict-dynamic."
+                )
+
             findings.append(Finding(
                 id="missing-sri-script",
                 title=f"Externí scripty bez Subresource Integrity ({len(missing_scripts)}×)",
-                description="Externí JavaScript nemá integrity atribut. Pokud útočník napadne CDN, může změnit obsah skriptu a vložit malware do každé stránky, která ho načítá. SRI hash zajistí, že prohlížeč spustí jen nezměněný soubor.",
-                severity=Severity.WARNING,
+                description=desc,
+                severity=severity,
                 category="sri",
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity",
                 detail="\n".join(missing_scripts[:5]) + (f"\n… a {len(missing_scripts) - 5} dalších" if len(missing_scripts) > 5 else ""),
@@ -79,6 +98,19 @@ class SRIScanner(BaseScanModule):
             ))
 
         return findings
+
+    @staticmethod
+    def _has_strong_csp(response) -> bool:
+        """Check if response has CSP with nonce or strict-dynamic (strong XSS protection)."""
+        csp = ""
+        for header in ("content-security-policy", "content-security-policy-report-only"):
+            val = response.headers.get(header, "")
+            if val:
+                csp = val.lower()
+                break
+        if not csp:
+            return False
+        return "'nonce-" in csp or "'strict-dynamic'" in csp
 
     @staticmethod
     def _is_external(src: str, scan_host: str) -> bool:
