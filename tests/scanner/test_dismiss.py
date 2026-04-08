@@ -137,3 +137,143 @@ class TemplateFilterTest(TestCase):
 
     def test_dismiss_reason_label_returns_value_for_unknown(self):
         self.assertEqual(dismiss_reason_label("unknown_reason"), "unknown_reason")
+
+
+class DismissFindingTest(TestCase):
+
+    def test_dismiss_sets_dismissed_and_reason(self):
+        scan = _create_done_scan()
+        response = self.client.post(
+            reverse("scanner:dismiss_finding", args=[scan.id, "missing-csp"]),
+            {"reason": "false_positive"},
+        )
+        self.assertEqual(response.status_code, 200)
+        scan.refresh_from_db()
+        finding = next(f for f in scan.findings if f["id"] == "missing-csp")
+        self.assertTrue(finding["dismissed"])
+        self.assertEqual(finding["dismiss_reason"], "false_positive")
+
+    def test_dismiss_recalculates_vibe_score(self):
+        scan = _create_done_scan()
+        self.assertEqual(scan.vibe_score, 70)
+        self.client.post(
+            reverse("scanner:dismiss_finding", args=[scan.id, "missing-csp"]),
+            {"reason": "not_applicable"},
+        )
+        scan.refresh_from_db()
+        # 100 - 8 (warning) - 2 (info) = 90 (critical dismissed)
+        self.assertEqual(scan.vibe_score, 90)
+
+    def test_dismiss_returns_htmx_partial(self):
+        scan = _create_done_scan()
+        response = self.client.post(
+            reverse("scanner:dismiss_finding", args=[scan.id, "missing-csp"]),
+            {"reason": "other"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "scan-content")
+
+    def test_dismiss_requires_valid_reason(self):
+        scan = _create_done_scan()
+        response = self.client.post(
+            reverse("scanner:dismiss_finding", args=[scan.id, "missing-csp"]),
+            {"reason": "invalid_reason"},
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_dismiss_requires_reason_field(self):
+        scan = _create_done_scan()
+        response = self.client.post(
+            reverse("scanner:dismiss_finding", args=[scan.id, "missing-csp"]),
+            {},
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_dismiss_404_for_nonexistent_finding(self):
+        scan = _create_done_scan()
+        response = self.client.post(
+            reverse("scanner:dismiss_finding", args=[scan.id, "nonexistent-id"]),
+            {"reason": "other"},
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_dismiss_404_for_ephemeral_scan(self):
+        scan = _create_done_scan(ephemeral=True)
+        response = self.client.post(
+            reverse("scanner:dismiss_finding", args=[scan.id, "missing-csp"]),
+            {"reason": "other"},
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_dismiss_404_for_pending_scan(self):
+        scan = ScanResult.objects.create(url="https://example.com", status=ScanStatus.PENDING)
+        response = self.client.post(
+            reverse("scanner:dismiss_finding", args=[scan.id, "missing-csp"]),
+            {"reason": "other"},
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_dismiss_all_valid_reasons(self):
+        for reason in VALID_REASONS:
+            scan = _create_done_scan()
+            response = self.client.post(
+                reverse("scanner:dismiss_finding", args=[scan.id, "missing-csp"]),
+                {"reason": reason},
+            )
+            self.assertEqual(response.status_code, 200, f"Failed for reason: {reason}")
+
+
+class RestoreFindingTest(TestCase):
+
+    def _dismiss_finding(self, scan, finding_id, reason="other"):
+        for f in scan.findings:
+            if f["id"] == finding_id:
+                f["dismissed"] = True
+                f["dismiss_reason"] = reason
+        scan.save(update_fields=["findings"])
+
+    def test_restore_removes_dismissed_keys(self):
+        scan = _create_done_scan()
+        self._dismiss_finding(scan, "missing-csp")
+        response = self.client.post(
+            reverse("scanner:restore_finding", args=[scan.id, "missing-csp"]),
+        )
+        self.assertEqual(response.status_code, 200)
+        scan.refresh_from_db()
+        finding = next(f for f in scan.findings if f["id"] == "missing-csp")
+        self.assertNotIn("dismissed", finding)
+        self.assertNotIn("dismiss_reason", finding)
+
+    def test_restore_recalculates_vibe_score(self):
+        scan = _create_done_scan(vibe_score=90)
+        self._dismiss_finding(scan, "missing-csp")
+        self.client.post(
+            reverse("scanner:restore_finding", args=[scan.id, "missing-csp"]),
+        )
+        scan.refresh_from_db()
+        # Back to original: 100 - 20 - 8 - 2 = 70
+        self.assertEqual(scan.vibe_score, 70)
+
+    def test_restore_returns_htmx_partial(self):
+        scan = _create_done_scan()
+        self._dismiss_finding(scan, "missing-csp")
+        response = self.client.post(
+            reverse("scanner:restore_finding", args=[scan.id, "missing-csp"]),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "scan-content")
+
+    def test_restore_404_for_nonexistent_finding(self):
+        scan = _create_done_scan()
+        response = self.client.post(
+            reverse("scanner:restore_finding", args=[scan.id, "nonexistent-id"]),
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_restore_404_for_ephemeral_scan(self):
+        scan = _create_done_scan(ephemeral=True)
+        self._dismiss_finding(scan, "missing-csp")
+        response = self.client.post(
+            reverse("scanner:restore_finding", args=[scan.id, "missing-csp"]),
+        )
+        self.assertEqual(response.status_code, 404)

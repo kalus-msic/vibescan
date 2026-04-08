@@ -1,12 +1,12 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_http_methods
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest, Http404
 from django_ratelimit.decorators import ratelimit
 from urllib.parse import urlparse
 from .models import ScanResult, ScanStatus
 from .forms import ScanForm
 from .tasks import run_scan
-from scanner.score import ScoreCategory
+from scanner.score import ScoreCategory, recalculate_from_findings_dicts
 
 
 def _session_key(group, request):
@@ -115,3 +115,51 @@ def scan_export_pdf(request, pk):
     response = HttpResponse(pdf_bytes, content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="vibescan-report-{domain}.pdf"'
     return response
+
+
+VALID_DISMISS_REASONS = {"not_applicable", "solved_differently", "false_positive", "other"}
+
+
+@require_http_methods(["POST"])
+def dismiss_finding(request, pk, finding_id):
+    scan = get_object_or_404(
+        ScanResult, pk=pk, status=ScanStatus.DONE, ephemeral=False
+    )
+    reason = request.POST.get("reason", "")
+    if reason not in VALID_DISMISS_REASONS:
+        return HttpResponseBadRequest("Invalid reason")
+
+    finding = None
+    for f in scan.findings:
+        if f.get("id") == finding_id:
+            finding = f
+            break
+    if finding is None:
+        raise Http404("Finding not found")
+
+    finding["dismissed"] = True
+    finding["dismiss_reason"] = reason
+    scan.vibe_score = recalculate_from_findings_dicts(scan.findings)
+    scan.save(update_fields=["findings", "vibe_score"])
+    return render(request, "scanner/partials/results.html", {"scan": scan})
+
+
+@require_http_methods(["POST"])
+def restore_finding(request, pk, finding_id):
+    scan = get_object_or_404(
+        ScanResult, pk=pk, status=ScanStatus.DONE, ephemeral=False
+    )
+
+    finding = None
+    for f in scan.findings:
+        if f.get("id") == finding_id:
+            finding = f
+            break
+    if finding is None:
+        raise Http404("Finding not found")
+
+    finding.pop("dismissed", None)
+    finding.pop("dismiss_reason", None)
+    scan.vibe_score = recalculate_from_findings_dicts(scan.findings)
+    scan.save(update_fields=["findings", "vibe_score"])
+    return render(request, "scanner/partials/results.html", {"scan": scan})
