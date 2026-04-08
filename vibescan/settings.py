@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     "django_celery_results",
     "scanner",
     "pages",
+    "dependencies",
 ]
 
 MIDDLEWARE = [
