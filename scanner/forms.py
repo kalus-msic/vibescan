@@ -6,10 +6,17 @@ class ScanForm(forms.Form):
     url = forms.CharField(
         widget=forms.TextInput(attrs={
             "placeholder": "tvujweb.cz",
-            "class": "bg-transparent flex-1 outline-none text-slate-900 placeholder-slate-400 text-sm font-medium",
+            "class": "bg-transparent flex-1 outline-none focus:ring-0 border-none text-slate-900 placeholder-slate-400 text-sm font-medium",
             "autofocus": True,
         }),
         label="URL adresa webu",
+    )
+    ephemeral = forms.BooleanField(
+        required=False,
+        label="Jednorázový sken",
+        widget=forms.CheckboxInput(attrs={
+            "class": "rounded border-slate-300 text-blue-600 focus:ring-blue-500",
+        }),
     )
 
     def clean_url(self):
