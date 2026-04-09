@@ -287,6 +287,12 @@ SCAN_CHECKS = [
         "title": "security.txt",
         "description": "Kontrolujeme přítomnost souboru security.txt (RFC 9116) na /.well-known/security.txt. Tento soubor říká bezpečnostním výzkumníkům, kam hlásit nalezené zranitelnosti.",
     },
+    {
+        "id": "dependency-check",
+        "icon": "package",
+        "title": "Kontrola závislostí (CVE)",
+        "description": "Vložte obsah souboru se závislostmi (requirements.txt, package.json nebo composer.json) a zkontrolujeme je proti databázi OSV.dev — agregátoru zranitelností z NVD, GitHub Advisory, PyPI, npm a dalších zdrojů. Pro každou zranitelnost zobrazíme CVE/GHSA identifikátor, CVSS závažnost, popis a opravenou verzi. Data OSV.dev se aktualizují průběžně, ale u některých zranitelností může být zpoždění — datum poslední aktualizace zobrazujeme u výsledků.",
+    },
 ]
 
 SECURITY_CHECKLIST = [

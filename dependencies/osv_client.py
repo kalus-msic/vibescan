@@ -73,10 +73,16 @@ def _extract_fixed_version(vuln_data: dict) -> str | None:
     return None
 
 
-def check_vulnerabilities(deps: list[Dependency]) -> list[Vulnerability]:
+@dataclass
+class CheckResult:
+    vulnerabilities: list[Vulnerability]
+    last_modified: str | None  # ISO date of most recently modified vuln
+
+
+def check_vulnerabilities(deps: list[Dependency]) -> CheckResult:
     """Query OSV.dev for vulnerabilities in the given dependencies."""
     if not deps:
-        return []
+        return CheckResult(vulnerabilities=[], last_modified=None)
 
     queries = [
         {"package": {"name": d.name, "ecosystem": d.ecosystem}, "version": d.version}
@@ -95,6 +101,7 @@ def check_vulnerabilities(deps: list[Dependency]) -> list[Vulnerability]:
     results = batch_data.get("results", [])
 
     vuln_packages: dict[str, Dependency] = {}
+    modified_dates: list[str] = []
     for i, result in enumerate(results):
         if i >= len(deps):
             break
@@ -102,9 +109,14 @@ def check_vulnerabilities(deps: list[Dependency]) -> list[Vulnerability]:
             vuln_id = vuln.get("id")
             if vuln_id and vuln_id not in vuln_packages:
                 vuln_packages[vuln_id] = deps[i]
+            modified = vuln.get("modified")
+            if modified:
+                modified_dates.append(modified)
+
+    last_modified = max(modified_dates)[:10] if modified_dates else None
 
     if not vuln_packages:
-        return []
+        return CheckResult(vulnerabilities=[], last_modified=last_modified)
 
     vulnerabilities = []
     for vuln_id, dep in vuln_packages.items():
@@ -131,4 +143,4 @@ def check_vulnerabilities(deps: list[Dependency]) -> list[Vulnerability]:
         ))
 
     vulnerabilities.sort(key=lambda v: (v.severity_score is None, -(v.severity_score or 0)))
-    return vulnerabilities
+    return CheckResult(vulnerabilities=vulnerabilities, last_modified=last_modified)

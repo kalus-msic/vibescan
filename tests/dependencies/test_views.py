@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from django.test import RequestFactory, Client
 from dependencies.views import check_dependencies
-from dependencies.osv_client import Vulnerability
+from dependencies.osv_client import Vulnerability, CheckResult
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ class TestCheckDependenciesView:
     def test_valid_input_no_vulns(self, mock_parse, mock_check, rf):
         from dependencies.parsers import Dependency
         mock_parse.return_value = [Dependency("django", "4.2.0", "PyPI")]
-        mock_check.return_value = []
+        mock_check.return_value = CheckResult(vulnerabilities=[], last_modified=None)
 
         request = rf.post("/dependencies/check/", {"content": "django==4.2.0"})
         request.session = _make_session()
@@ -44,7 +44,7 @@ class TestCheckDependenciesView:
     def test_valid_input_with_vulns(self, mock_parse, mock_check, rf):
         from dependencies.parsers import Dependency
         mock_parse.return_value = [Dependency("django", "4.2.0", "PyPI")]
-        mock_check.return_value = [
+        mock_check.return_value = CheckResult(vulnerabilities=[
             Vulnerability(
                 id="GHSA-1234",
                 summary="SQL injection",
@@ -55,7 +55,7 @@ class TestCheckDependenciesView:
                 fixed_version="4.2.1",
                 osv_url="https://osv.dev/vulnerability/GHSA-1234",
             )
-        ]
+        ], last_modified="2024-01-01")
 
         request = rf.post("/dependencies/check/", {"content": "django==4.2.0"})
         request.session = _make_session()
@@ -102,7 +102,7 @@ class TestCheckDependenciesView:
 class TestCheckDependenciesIntegration:
     @patch("dependencies.views.check_vulnerabilities")
     def test_full_flow_requirements_txt(self, mock_check):
-        mock_check.return_value = [
+        mock_check.return_value = CheckResult(vulnerabilities=[
             Vulnerability(
                 id="CVE-2024-1234",
                 summary="Remote code execution",
@@ -113,7 +113,7 @@ class TestCheckDependenciesIntegration:
                 fixed_version="4.2.1",
                 osv_url="https://osv.dev/vulnerability/CVE-2024-1234",
             )
-        ]
+        ], last_modified="2024-06-15")
 
         client = Client()
         response = client.post("/dependencies/check/", {
@@ -128,7 +128,7 @@ class TestCheckDependenciesIntegration:
 
     @patch("dependencies.views.check_vulnerabilities")
     def test_full_flow_package_json(self, mock_check):
-        mock_check.return_value = []
+        mock_check.return_value = CheckResult(vulnerabilities=[], last_modified=None)
 
         client = Client()
         response = client.post("/dependencies/check/", {

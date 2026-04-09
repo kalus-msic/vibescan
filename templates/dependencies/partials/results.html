@@ -4,6 +4,9 @@
     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
     <span>Žádné známé zranitelnosti nenalezeny v {{ total_deps }} zkontrolovaných balíčcích.</span>
   </div>
+  {% if last_modified %}
+  <p class="text-xs text-slate-400 mt-2">Data z databáze <a href="https://osv.dev" target="_blank" rel="noopener noreferrer" class="hover:text-slate-600 underline underline-offset-2">OSV.dev</a> — poslední aktualizace CVE: {{ last_modified }}</p>
+  {% endif %}
   {% else %}
   <div class="space-y-4">
     <div class="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
@@ -50,5 +53,8 @@
       </table>
     </div>
   </div>
+  {% if last_modified %}
+  <p class="text-xs text-slate-400 mt-2">Data z databáze <a href="https://osv.dev" target="_blank" rel="noopener noreferrer" class="hover:text-slate-600 underline underline-offset-2">OSV.dev</a> — poslední aktualizace CVE: {{ last_modified }}</p>
+  {% endif %}
   {% endif %}
 </div>

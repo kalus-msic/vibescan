@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from dependencies.parsers import Dependency
-from dependencies.osv_client import check_vulnerabilities, Vulnerability, OsvError
+from dependencies.osv_client import check_vulnerabilities, Vulnerability, OsvError, CheckResult
 
 
 class TestOsvClient:
@@ -43,12 +43,13 @@ class TestOsvClient:
             Dependency(name="requests", version="2.31.0", ecosystem="PyPI"),
         ]
         result = check_vulnerabilities(deps)
-        assert result == []
+        assert result.vulnerabilities == []
+        assert result.last_modified is None
 
     @patch("dependencies.osv_client.httpx")
     def test_with_vulnerabilities(self, mock_httpx):
         batch_resp = self._mock_batch_response([
-            {"vulns": [{"id": "GHSA-1234", "modified": "2024-01-01"}]},
+            {"vulns": [{"id": "GHSA-1234", "modified": "2024-01-01T00:00:00Z"}]},
             {"vulns": []},
         ])
         vuln_resp = self._mock_vuln_response(
@@ -62,15 +63,17 @@ class TestOsvClient:
             Dependency(name="requests", version="2.31.0", ecosystem="PyPI"),
         ]
         result = check_vulnerabilities(deps)
-        assert len(result) == 1
-        assert result[0].id == "GHSA-1234"
-        assert result[0].summary == "SQL injection in Django"
-        assert result[0].package_name == "django"
+        assert len(result.vulnerabilities) == 1
+        assert result.vulnerabilities[0].id == "GHSA-1234"
+        assert result.vulnerabilities[0].summary == "SQL injection in Django"
+        assert result.vulnerabilities[0].package_name == "django"
+        assert result.last_modified == "2024-01-01"
 
     @patch("dependencies.osv_client.httpx")
     def test_empty_deps_list(self, mock_httpx):
         result = check_vulnerabilities([])
-        assert result == []
+        assert result.vulnerabilities == []
+        assert result.last_modified is None
         mock_httpx.post.assert_not_called()
 
     @patch("dependencies.osv_client.httpx")

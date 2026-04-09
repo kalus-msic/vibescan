@@ -6,7 +6,7 @@ from django_ratelimit.decorators import ratelimit
 
 from .forms import DependencyCheckForm
 from .parsers import parse_dependencies, UnknownFormatError
-from .osv_client import check_vulnerabilities, OsvError
+from .osv_client import check_vulnerabilities, OsvError, CheckResult
 
 logger = logging.getLogger(__name__)
 
@@ -42,13 +42,14 @@ def check_dependencies(request):
         })
 
     try:
-        vulns = check_vulnerabilities(deps)
+        result = check_vulnerabilities(deps)
     except OsvError as e:
         return render(request, "dependencies/partials/error.html", {"error": str(e)})
 
     return render(request, "dependencies/partials/results.html", {
-        "vulnerabilities": vulns,
+        "vulnerabilities": result.vulnerabilities,
         "total_deps": len(deps),
-        "affected_count": len({v.package_name for v in vulns}),
-        "vuln_count": len(vulns),
+        "affected_count": len({v.package_name for v in result.vulnerabilities}),
+        "vuln_count": len(result.vulnerabilities),
+        "last_modified": result.last_modified,
     })
