@@ -74,11 +74,13 @@
           {% for item in check.detail_list %}
           <li class="flex gap-2 text-xs text-slate-500 leading-relaxed">
             <span class="text-slate-300 flex-shrink-0">·</span>
-            <code class="font-mono">{{ item }}</code>
+            {% if check.detail_mono %}<code class="font-mono">{{ item }}</code>{% else %}<span>{{ item }}</span>{% endif %}
           </li>
           {% endfor %}
         </ul>
-        <p class="text-xs text-slate-400 mt-3 leading-relaxed">Toto není vyčerpávající seznam — pokrývá nejčastější chyby vibecoded projektů. Pro kompletní audit doporučujeme profesionální penetrační test.</p>
+        {% if check.detail_footer %}
+        <p class="text-xs text-slate-400 mt-3 leading-relaxed">{{ check.detail_footer }}</p>
+        {% endif %}
         {% endif %}
       </div>
       {% endfor %}

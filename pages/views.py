@@ -271,6 +271,8 @@ SCAN_CHECKS = [
         "icon": "folder",
         "title": "Citlivé soubory",
         "description": "Kontrolujeme veřejnou dostupnost souborů, které by neměly být přístupné zvenčí. Testujeme pouze existenci (HTTP HEAD, status code) — obsah souborů nečteme.",
+        "detail_mono": True,
+        "detail_footer": "Toto není vyčerpávající seznam — pokrývá nejčastější chyby vibecoded projektů. Pro kompletní audit doporučujeme profesionální penetrační test.",
         "detail_list": [
             ".env — proměnné prostředí (hesla, API klíče, DB credentials)",
             ".env.backup — záloha .env se stejnými secrets",
@@ -291,7 +293,16 @@ SCAN_CHECKS = [
         "id": "dependency-check",
         "icon": "package",
         "title": "Kontrola závislostí (CVE)",
-        "description": "Vložte obsah souboru se závislostmi (requirements.txt, package.json nebo composer.json) a zkontrolujeme je proti databázi OSV.dev — agregátoru zranitelností z NVD, GitHub Advisory, PyPI, npm a dalších zdrojů. Pro každou zranitelnost zobrazíme CVE/GHSA identifikátor, CVSS závažnost, popis a opravenou verzi. Data OSV.dev se aktualizují průběžně, ale u některých zranitelností může být zpoždění — datum poslední aktualizace zobrazujeme u výsledků.",
+        "description": "Vložte obsah souboru se závislostmi a zkontrolujeme každý balíček proti databázi známých zranitelností. Automaticky rozpoznáme formát souboru (requirements.txt, package.json, composer.json), extrahujeme názvy a verze balíčků a dotážeme se OSV.dev API. Pro každou nalezenou zranitelnost zobrazíme identifikátor, závažnost podle CVSS skóre, popis a opravenou verzi — pokud existuje.",
+        "detail_list": [
+            "Databáze: OSV.dev (osv.dev) — open-source agregátor zranitelností provozovaný Googlem",
+            "Zdroje dat: NVD (NIST), GitHub Security Advisories, PyPI Advisory, npm Advisory, RustSec, Go Vulnerability Database a další",
+            "Ekosystémy: PyPI (Python), npm (Node.js), Packagist (PHP) — další plánujeme",
+            "API: OSV.dev querybatch endpoint — jeden hromadný dotaz na všechny závislosti najednou",
+            "Závažnost: CVSS v3 skóre — Critical (≥9.0), High (≥7.0), Medium (≥4.0), Low (<4.0)",
+            "Aktuálnost: OSV.dev se aktualizuje průběžně, ale u některých CVE může být zpoždění — datum poslední aktualizace zobrazujeme u výsledků",
+            "Omezení: kontrolujeme pouze přímé závislosti s uvedenou verzí — tranzitivní závislosti (sub-dependencies) nezachytíme",
+        ],
     },
 ]
 
