@@ -42,3 +42,5 @@
 {{ f.description }}
 **Zamítnuto:** {{ f.dismiss_reason|dismiss_reason_label }}
 {% endfor %}{% endif %}
+---
+Vygenerováno nástrojem Vibescan.cz · {{ scan.completed_at|date:"j. n. Y H:i" }}
