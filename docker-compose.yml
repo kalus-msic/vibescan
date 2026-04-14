@@ -26,6 +26,7 @@ services:
       sh -c "mkdir -p static/css &&
              tailwindcss -i static/src/input.css -o static/css/style.css --minify &&
              python manage.py migrate &&
+             python manage.py createsuperuser --noinput 2>/dev/null || true &&
              python manage.py collectstatic --noinput &&
              gunicorn vibescan.wsgi:application --bind 0.0.0.0:8000"
     volumes:

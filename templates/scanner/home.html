@@ -57,30 +57,52 @@
           <label for="id_ephemeral" class="text-xs text-slate-500 cursor-pointer select-none">Jednorázový sken — výsledky nebudou uloženy</label>
         </div>
         <p class="text-xs text-slate-400 mt-2">Skenujeme pouze veřejně dostupné informace. Žádná registrace není potřeba. <a href="{% url 'pages:how_it_works' %}" class="text-blue-500 hover:underline">Jak to funguje?</a></p>
+        <p class="text-xs text-slate-400 mt-1">Odesláním formuláře souhlasíte s <a href="{% url 'pages:terms' %}" class="text-blue-500 hover:underline">podmínkami použití</a>.</p>
       </form>
     </div>
 
     <!-- Tab 2: Dependency check -->
-    <div x-show="tab === 'deps'" x-cloak x-data="{ loading: false }" @htmx:before-request="loading = true" @htmx:after-request="loading = false">
-      <form hx-post="{% url 'dependencies:check' %}" hx-target="#dep-results" hx-swap="innerHTML">
+    <div x-show="tab === 'deps'" x-cloak x-data="{
+      loading: false,
+      pkgCount: 0,
+      countPackages() {
+        const txt = this.$refs.content.value.trim();
+        if (!txt) { this.pkgCount = 0; return; }
+        if (txt.startsWith('{')) {
+          const m = txt.match(/&quot;[^&quot;]+&quot;\s*:/g);
+          this.pkgCount = m ? m.length : 0;
+        } else {
+          this.pkgCount = txt.split('\n').filter(l => l.trim() && !l.trim().startsWith('#') && !l.trim().startsWith('-')).length;
+        }
+      }
+    }" @htmx:before-request="countPackages(); loading = true" @htmx:after-request="loading = false">
+      <form hx-post="{% url 'dependencies:check' %}" hx-target="#dep-results" hx-swap="innerHTML" @submit="
+        if (typeof htmx === 'undefined') {
+          $event.preventDefault();
+          alert('HTMX se nepodařilo načíst. Zkuste obnovit stránku.');
+        }
+      ">
         {% csrf_token %}
         <label class="block text-sm font-semibold text-slate-700 mb-2">Obsah souboru se závislostmi</label>
         <div class="relative">
           <div class="border border-slate-300 rounded-xl p-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all bg-white">
-            <textarea name="content"
+            <textarea name="content" x-ref="content"
               placeholder="Vložte obsah requirements.txt, package.json nebo composer.json"
               class="w-full h-48 bg-transparent outline-none focus:ring-0 border-none text-slate-900 placeholder-slate-400 text-sm font-mono resize-none"
               spellcheck="false"></textarea>
           </div>
           <!-- Loading overlay -->
-          <div x-show="loading" x-cloak class="absolute inset-0 bg-white/80 backdrop-blur-[1px] rounded-xl flex flex-col items-center justify-center gap-3">
+          <div x-show="loading" x-cloak class="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center gap-3 z-10">
             <svg class="animate-spin h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-            <span class="text-sm font-medium text-slate-600">Kontroluji závislosti proti OSV.dev...</span>
-            <span class="text-xs text-slate-400">Obvykle trvá 2–5 sekund</span>
+            <span class="text-sm font-medium text-slate-700" x-text="pkgCount > 0 ? `Kontroluji ${pkgCount} balíčků proti OSV.dev...` : 'Kontroluji závislosti proti OSV.dev...'"></span>
+            <span class="text-xs text-slate-400">Doba závisí na počtu balíčků</span>
           </div>
         </div>
         <div class="flex items-center justify-between mt-3">
-          <p class="text-xs text-slate-400">Podporujeme requirements.txt, package.json a composer.json. Data nejsou ukládána. <a href="{% url 'pages:how_it_works' %}#dependency-check" class="text-blue-500 hover:underline">Jak to funguje?</a></p>
+          <div>
+            <p class="text-xs text-slate-400">Podporujeme requirements.txt, package.json a composer.json. Data nejsou ukládána. <a href="{% url 'pages:how_it_works' %}#dependency-check" class="text-blue-500 hover:underline">Jak to funguje?</a></p>
+            <p class="text-xs text-slate-400 mt-1">Odesláním formuláře souhlasíte s <a href="{% url 'pages:terms' %}" class="text-blue-500 hover:underline">podmínkami použití</a>.</p>
+          </div>
           <button type="submit" :disabled="loading"
             :class="loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'"
             class="text-white font-semibold px-6 py-3 rounded-xl whitespace-nowrap transition-colors text-sm">
@@ -119,6 +141,11 @@
       <div class="text-xs text-slate-500 leading-relaxed">Certifikát, HTTPS redirect, SPF, DMARC, CAA</div>
     </div>
   </div>
+
+  <p class="text-xs text-slate-400 text-center leading-relaxed mt-6">
+    Vibescan provádí pasivní kontrolu veřejně dostupných informací. Nejedná se o penetrační test ani kompletní bezpečnostní audit.
+    Výsledky jsou orientační — <a href="{% url 'pages:terms' %}" class="underline hover:text-slate-600">více v podmínkách použití</a>.
+  </p>
 
   <div class="mt-8 bg-slate-900 text-white rounded-xl p-5 text-center">
     <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center mx-auto mb-3">

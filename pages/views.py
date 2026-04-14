@@ -6,6 +6,8 @@ from django_ratelimit.decorators import ratelimit
 from pages.forms import NewsletterForm
 from pages.models import Subscriber
 
+LEGAL_LAST_UPDATED = "14. dubna 2025"
+
 
 SECURITY_TXT = """\
 Contact: mailto:security@vibescan.io
@@ -44,6 +46,11 @@ GUIDE_PROMPTS = [
         "id": "autentizace-sessions",
         "title": "Autentizace & Sessions",
         "content": "Session cookies musí mít HttpOnly=True, Secure=True, SameSite=Strict. Přidej session_regenerate po každém přihlášení. Nikdy neberi user ID z URL parametrů — vždy ze session.",
+    },
+    {
+        "id": "zavislosti-cve",
+        "title": "Závislosti & CVE",
+        "content": "Zkontroluj závislosti projektu na známé zranitelnosti. Spusť příslušný audit příkaz pro svůj ekosystém:\n\n- Python: pip audit\n- Node.js: npm audit\n- PHP: composer audit\n\nAktualizuj balíčky s Critical a High CVE na opravenou verzi. Pokud aktualizace není možná (breaking changes), ověř zda se zranitelnost týká tvého use-case. Pokud ne, zdokumentuj důvod v komentáři. Nastav automatické kontroly závislostí v CI/CD (Dependabot, Renovate nebo Snyk).",
     },
     {
         "id": "pravni-dokumenty",
@@ -167,10 +174,16 @@ TOOL_CATEGORIES = [
                 "name": "Lovable",
                 "url": "lovable.dev",
                 "stack": "React + Vite + Tailwind + Supabase",
-                "hosting": "V ceně (nebo export na GitHub)",
+                "hosting": "V ceně — Lovable Cloud (GCP + Cloudflare), nebo export na GitHub",
                 "audience": "Úplní začátečníci, nontechnical founders",
                 "price": "Zdarma / od ~$20/měs",
-                "security_notes": "Auth přes Supabase (OAuth, email). Row-level security musíš nastavit sám. Žádné automatické security headers ani CSP.",
+                "security_notes": "Auth přes Supabase (OAuth, email). Row-level security musíš nastavit sám. HTTPS a HSTS automaticky. Na Lovable Cloud nelze nastavit vlastní security headers (CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy) ani přidat security.txt — pro plnou kontrolu exportuj na Netlify/Vercel.",
+                "vibescan_limits": [
+                    "CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy — nelze nastavit na Lovable Cloud",
+                    "security.txt — nelze přidat",
+                    "Rate limiting — platformový, nekonfigurovatelný pro tvou aplikaci",
+                    "CORS — řeší se kódem přes Supabase Edge Functions",
+                ],
                 "pros": ["Nejrychlejší cesta od nápadu k fungující aplikaci", "Hosting v ceně", "Supabase integrace pro auth a DB"],
                 "cons": ["Pouze React — žádné jiné frameworky", "Backend omezen na Supabase", "Složitější logika je problém"],
             },
@@ -181,7 +194,13 @@ TOOL_CATEGORIES = [
                 "hosting": "Deploy přes Netlify (jedním klikem)",
                 "audience": "Začátečníci až středně pokročilí",
                 "price": "Zdarma / od ~$20/měs",
-                "security_notes": "Žádné automatické zabezpečení. Bez security headers, rate limitingu nebo input sanitizace. Auth jen pokud si řekneš.",
+                "security_notes": "Žádné automatické zabezpečení. HTTPS přes Netlify automaticky. Security headers, rate limiting, cookie hardening ani security.txt negeneruje — musíš přidat ručně přes Netlify _headers soubor nebo netlify.toml.",
+                "vibescan_limits": [
+                    "Security headers — negeneruje se; přidej přes Netlify _headers soubor nebo netlify.toml",
+                    "security.txt — musíš vytvořit ručně",
+                    "Rate limiting — Netlify nenabízí; potřebuješ backend (Edge Functions) nebo externí službu",
+                    "Cookie hardening — musíš nastavit v kódu aplikace",
+                ],
                 "pros": ["Běží v prohlížeči — nic neinstaluješ", "Flexibilnější stack než Lovable", "Podporuje i backend (Express)"],
                 "cons": ["WebContainer má omezení (žádné nativní binárky)", "PostgreSQL/Redis složitější", "Velké projekty mohou být pomalé"],
             },
@@ -192,7 +211,11 @@ TOOL_CATEGORIES = [
                 "hosting": "Ne — integruje se do Vercel ekosystému",
                 "audience": "Vývojáři a designéři pro rychlé prototypování UI",
                 "price": "Zdarma / od ~$20/měs",
-                "security_notes": "Generuje pouze UI komponenty — žádný backend, auth ani security. Vše je na tobě.",
+                "security_notes": "Generuje pouze frontend komponenty — žádný backend, auth ani security. Při deployi na Vercel můžeš nastavit headers přes vercel.json nebo next.config.js, ale v0 to neudělá za tebe.",
+                "vibescan_limits": [
+                    "Security headers — v0 negeneruje; na Vercelu nastavíš přes vercel.json (headers) nebo next.config.js",
+                    "Backend, auth, cookies, rate limiting — v0 neřeší; je to čistě frontend nástroj",
+                ],
                 "pros": ["Výborné UI komponenty", "Tight integrace s Vercelem a Next.js"],
                 "cons": ["Není full-stack builder", "Pouze React/Next.js", "Nevhodné pro kompletní aplikace"],
             },
@@ -203,9 +226,33 @@ TOOL_CATEGORIES = [
                 "hosting": "V ceně (Replit Deployments)",
                 "audience": "Začátečníci, studenti, prototypování",
                 "price": "Zdarma / od ~$25/měs",
-                "security_notes": "Replit Secrets pro env vars. Sdílené kontejnery — ne pro produkční bezpečnost. Kód na free tieru může být veřejně viditelný.",
+                "security_notes": "Replit Secrets pro env vars. Sdílené kontejnery — ne pro produkční bezpečnost. Kód na free tieru může být veřejně viditelný. HTTPS automaticky. Security headers musíš nastavit v kódu aplikace.",
+                "vibescan_limits": [
+                    "Security headers (CSP, X-Frame-Options, Referrer-Policy…) — musíš nastavit v kódu aplikace",
+                    "security.txt — musíš vytvořit ručně v /public nebo servovat přes kód",
+                    "Rate limiting — žádný platformový; musíš implementovat v aplikaci",
+                    "Cookie hardening — musíš nastavit v kódu",
+                    "CORS — musíš nakonfigurovat v kódu serveru",
+                ],
                 "pros": ["Vše v jednom — editor, běh, deploy", "Podpora mnoha jazyků", "Nejmenší třecí plocha od nápadu k deploy"],
                 "cons": ["Výkon omezený (cold starts)", "Nevhodné pro produkci", "Omezené DB možnosti"],
+            },
+            {
+                "name": "Macaly",
+                "url": "macaly.com",
+                "stack": "React + Tailwind (vizuální builder s AI)",
+                "hosting": "V ceně — Macaly hosting (vlastní doména možná na placeném plánu)",
+                "audience": "Designéři, nontechnical founders, prototypování",
+                "price": "Zdarma / od ~$19/měs",
+                "security_notes": "Zaměřeno na design a prototypování. HTTPS automaticky. Platformový hosting bez možnosti nastavit vlastní security headers, security.txt ani server-side logiku. Pro produkční aplikaci exportuj kód a nasaď na vlastní hosting.",
+                "vibescan_limits": [
+                    "Security headers (CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy) — nelze nastavit na Macaly hostingu",
+                    "security.txt — nelze přidat",
+                    "Backend, auth, cookies — Macaly je frontend-only; musíš řešit externě",
+                    "Rate limiting — žádný; potřebuješ vlastní backend",
+                ],
+                "pros": ["Vizuální editor s AI — ideální pro design-first přístup", "Export kódu do Reactu", "Rychlé prototypování bez kódování"],
+                "cons": ["Pouze frontend — žádný backend ani databáze", "Menší komunita než Lovable/Bolt", "Omezené možnosti pro komplexní aplikace"],
             },
         ],
     },
@@ -337,6 +384,11 @@ SCAN_CHECKS = [
             "Aktuálnost: OSV.dev se aktualizuje průběžně, ale u některých CVE může být zpoždění — datum poslední aktualizace zobrazujeme u výsledků",
             "Omezení: kontrolujeme pouze přímé závislosti s uvedenou verzí — tranzitivní závislosti (sub-dependencies) nezachytíme",
         ],
+        "detail_footer": mark_safe(
+            'Našli jsme zranitelné balíčky? Podívejte se do '
+            '<a href="/guide/#zavislosti-cve" class="underline hover:text-slate-600">průvodce opravami</a> '
+            'pro konkrétní kroky jak je aktualizovat.'
+        ),
     },
 ]
 
@@ -580,14 +632,6 @@ ROADMAP_ITEMS = [
                 "description": "Diff view — co se zlepšilo a co zhoršilo mezi dvěma skeny.",
             },
             {
-                "title": "API pro CI/CD",
-                "description": "Integrace Vibescan do vašeho deployment pipeline.",
-            },
-            {
-                "title": "Badge pro README",
-                "description": "Shield.io styl badge s vaším Vibe Score pro GitHub repozitář.",
-            },
-            {
                 "title": "Multi-page scan",
                 "description": "Kontrola více URL na jedné doméně najednou.",
             },
@@ -612,3 +656,11 @@ def subscribe(request):
         Subscriber.objects.get_or_create(email=email)
         return render(request, "pages/partials/subscribe_success.html")
     return render(request, "pages/partials/subscribe_error.html", {"form": form})
+
+
+def privacy(request):
+    return render(request, "pages/privacy.html", {"last_updated": LEGAL_LAST_UPDATED})
+
+
+def terms(request):
+    return render(request, "pages/terms.html", {"last_updated": LEGAL_LAST_UPDATED})

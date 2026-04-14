@@ -96,6 +96,8 @@ def check_vulnerabilities(deps: list[Dependency]) -> CheckResult:
         raise OsvError("Služba OSV.dev neodpovídá, zkuste to prosím později.")
     except HTTPStatusError:
         raise OsvError("Služba OSV.dev vrátila chybu, zkuste to prosím později.")
+    except Exception:
+        raise OsvError("Nepodařilo se spojit s OSV.dev, zkuste to prosím později.")
 
     batch_data = batch_resp.json()
     results = batch_data.get("results", [])
@@ -131,8 +133,15 @@ def check_vulnerabilities(deps: list[Dependency]) -> CheckResult:
         score, label = _extract_severity(vuln_data)
         fixed = _extract_fixed_version(vuln_data)
 
+        # Prefer CVE-* ID over GHSA-* for display (sortable, standard)
+        display_id = vuln_id
+        for alias in vuln_data.get("aliases", []):
+            if alias.startswith("CVE-"):
+                display_id = alias
+                break
+
         vulnerabilities.append(Vulnerability(
-            id=vuln_id,
+            id=display_id,
             summary=vuln_data.get("summary", "Bez popisu"),
             package_name=dep.name,
             package_version=dep.version,
@@ -142,5 +151,7 @@ def check_vulnerabilities(deps: list[Dependency]) -> CheckResult:
             osv_url=f"https://osv.dev/vulnerability/{vuln_id}",
         ))
 
+    # Newest CVE first within same severity (stable sort: ID desc, then severity)
+    vulnerabilities.sort(key=lambda v: v.id, reverse=True)
     vulnerabilities.sort(key=lambda v: (v.severity_score is None, -(v.severity_score or 0)))
     return CheckResult(vulnerabilities=vulnerabilities, last_modified=last_modified)

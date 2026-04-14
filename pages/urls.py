@@ -10,4 +10,6 @@ urlpatterns = [
     path("roadmap/", views.roadmap, name="roadmap"),
     path("roadmap/subscribe/", views.subscribe, name="subscribe"),
     path(".well-known/security.txt", views.security_txt, name="security_txt"),
+    path("privacy/", views.privacy, name="privacy"),
+    path("terms/", views.terms, name="terms"),
 ]

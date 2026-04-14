@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Podmínky použití — Vibescan{% endblock %}
+
+{% block content %}
+<section class="max-w-3xl mx-auto px-6 py-20">
+
+  <div class="mb-12">
+    <h1 class="text-3xl font-extrabold mb-4">Podmínky použití</h1>
+    <p class="text-slate-500 leading-relaxed">
+      Poslední aktualizace: {{ last_updated }}
+    </p>
+  </div>
+
+  <div class="prose prose-slate max-w-none space-y-8">
+
+    <div>
+      <h2 class="text-xl font-bold mb-3">O službu</h2>
+      <p class="text-sm text-slate-600 leading-relaxed">
+        Vibescan je bezplatný online nástroj pro základní bezpečnostní audit veřejně dostupných webových stránek.
+        Provozovatelem je Michael Kalus. Služba je poskytována „tak jak je" (as-is) bez jakýchkoliv záruk.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold mb-3">Co Vibescan dělá a nedělá</h2>
+      <div class="bg-white border border-slate-200 rounded-xl p-5">
+        <ul class="space-y-2 text-sm text-slate-600">
+          <li class="flex gap-2">
+            <svg class="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+            Kontroluje veřejně dostupné informace (HTTP hlavičky, SSL, DNS, HTML)
+          </li>
+          <li class="flex gap-2">
+            <svg class="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+            Poskytuje orientační skóre a doporučení
+          </li>
+          <li class="flex gap-2">
+            <svg class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            Nejedná se o penetrační test ani komplexní bezpečnostní audit
+          </li>
+          <li class="flex gap-2">
+            <svg class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            Nezaručuje bezpečnost ani úplnost výsledků
+          </li>
+          <li class="flex gap-2">
+            <svg class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            Netestuje zranitelnosti typu SQL injection, XSS nebo IDOR
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold mb-3">Pravidla používání</h2>
+      <p class="text-sm text-slate-600 leading-relaxed mb-3">
+        Používáním Vibescan souhlasíte s následujícími pravidly:
+      </p>
+      <ul class="space-y-2 text-sm text-slate-600">
+        <li class="flex gap-2"><span class="text-slate-300 font-bold">1.</span> Skenujte pouze weby, ke kterým máte oprávnění nebo které jsou veřejně dostupné.</li>
+        <li class="flex gap-2"><span class="text-slate-300 font-bold">2.</span> Nepoužívejte službu k automatizovanému hromadnému skenování.</li>
+        <li class="flex gap-2"><span class="text-slate-300 font-bold">3.</span> Nepokoušejte se obejít rate limiting ani jiná bezpečnostní opatření.</li>
+        <li class="flex gap-2"><span class="text-slate-300 font-bold">4.</span> Výsledky skenu slouží jako orientační vodítko, nikoliv jako certifikace bezpečnosti.</li>
+      </ul>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold mb-3">Omezení odpovědnosti</h2>
+      <p class="text-sm text-slate-600 leading-relaxed">
+        Provozovatel nenese odpovědnost za škody vzniklé použitím nebo spoléháním na výsledky skenu.
+        Vibescan je orientační nástroj — pro kompletní bezpečnostní audit doporučujeme oslovit profesionální bezpečnostní firmu.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold mb-3">Dostupnost služby</h2>
+      <p class="text-sm text-slate-600 leading-relaxed">
+        Vibescan je hobby projekt a jeho dostupnost není garantována.
+        Provozovatel si vyhrazuje právo službu kdykoliv pozastavit, změnit nebo ukončit bez předchozího upozornění.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold mb-3">Kontakt</h2>
+      <p class="text-sm text-slate-600 leading-relaxed">
+        S dotazy ohledně podmínek se obraťte na
+        <a href="mailto:vibescan@michaelkalus.cz" class="text-blue-600 hover:underline">vibescan@michaelkalus.cz</a>.
+      </p>
+    </div>
+
+  </div>
+
+</section>
+{% endblock %}

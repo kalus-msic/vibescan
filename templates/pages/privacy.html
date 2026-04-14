@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Ochrana osobních údajů — Vibescan{% endblock %}
+
+{% block content %}
+<section class="max-w-3xl mx-auto px-6 py-20">
+
+  <div class="mb-12">
+    <h1 class="text-3xl font-extrabold mb-4">Ochrana osobních údajů</h1>
+    <p class="text-slate-500 leading-relaxed">
+      Poslední aktualizace: {{ last_updated }}
+    </p>
+  </div>
+
+  <div class="prose prose-slate max-w-none space-y-8">
+
+    <div>
+      <h2 class="text-xl font-bold mb-3">Provozovatel</h2>
+      <p class="text-sm text-slate-600 leading-relaxed">
+        Vibescan provozuje Michael Kalus jako osobní (hobby) projekt.
+        Kontakt: <a href="mailto:vibescan@michaelkalus.cz" class="text-blue-600 hover:underline">vibescan@michaelkalus.cz</a>
+      </p>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold mb-3">Jaká data sbíráme</h2>
+      <div class="space-y-4">
+        <div class="bg-white border border-slate-200 rounded-xl p-5">
+          <div class="font-semibold text-sm mb-2">Sken webu</div>
+          <p class="text-sm text-slate-600 leading-relaxed">
+            Ukládáme zadanou URL adresu a výsledky skenu. Neukládáme IP adresu ani jiné identifikátory uživatele.
+            U jednorázových skenů (ephemeral) se výsledky automaticky mažou.
+          </p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-5">
+          <div class="font-semibold text-sm mb-2">Kontrola závislostí</div>
+          <p class="text-sm text-slate-600 leading-relaxed">
+            Obsah vložený do formuláře se odesílá na API <a href="https://osv.dev" class="text-blue-600 hover:underline" rel="noopener">OSV.dev</a> ke kontrole.
+            Data nejsou na naší straně ukládána.
+          </p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-5">
+          <div class="font-semibold text-sm mb-2">Newsletter</div>
+          <p class="text-sm text-slate-600 leading-relaxed">
+            Pokud se přihlásíte k odběru novinek, ukládáme vaši e-mailovou adresu. Odhlásit se můžete
+            odpovědí na jakýkoliv newsletter e-mail nebo na adrese
+            <a href="mailto:vibescan@michaelkalus.cz" class="text-blue-600 hover:underline">vibescan@michaelkalus.cz</a>.
+          </p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-5">
+          <div class="font-semibold text-sm mb-2">Analytika (Google Tag Manager)</div>
+          <p class="text-sm text-slate-600 leading-relaxed">
+            Používáme Google Tag Manager pro anonymní analytiku návštěvnosti.
+            GTM se načítá <strong>pouze po vašem souhlasu</strong> s cookies.
+            Bez souhlasu žádné analytické cookies nevznikají.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold mb-3">Cookies</h2>
+      <p class="text-sm text-slate-600 leading-relaxed mb-3">
+        Vibescan používá následující cookies:
+      </p>
+      <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 border-b border-slate-200">
+            <tr>
+              <th class="text-left px-4 py-2.5 font-semibold text-slate-700">Cookie</th>
+              <th class="text-left px-4 py-2.5 font-semibold text-slate-700">Účel</th>
+              <th class="text-left px-4 py-2.5 font-semibold text-slate-700">Typ</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr>
+              <td class="px-4 py-2.5 font-mono text-xs">csrftoken</td>
+              <td class="px-4 py-2.5 text-slate-600">Ochrana proti CSRF útokům</td>
+              <td class="px-4 py-2.5"><span class="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Nezbytné</span></td>
+            </tr>
+            <tr>
+              <td class="px-4 py-2.5 font-mono text-xs">sessionid</td>
+              <td class="px-4 py-2.5 text-slate-600">Session a rate limiting</td>
+              <td class="px-4 py-2.5"><span class="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Nezbytné</span></td>
+            </tr>
+            <tr>
+              <td class="px-4 py-2.5 font-mono text-xs">cookie_consent</td>
+              <td class="px-4 py-2.5 text-slate-600">Zapamatování vašeho rozhodnutí o cookies</td>
+              <td class="px-4 py-2.5"><span class="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Nezbytné</span></td>
+            </tr>
+            <tr>
+              <td class="px-4 py-2.5 font-mono text-xs">_ga, _gid</td>
+              <td class="px-4 py-2.5 text-slate-600">Google Analytics (přes GTM)</td>
+              <td class="px-4 py-2.5"><span class="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">Analytické</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-sm text-slate-500 mt-3 leading-relaxed">
+        Analytické cookies se ukládají pouze po vašem souhlasu. Svůj souhlas můžete kdykoliv odvolat kliknutím na „Nastavení cookies" v patičce stránky.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold mb-3">Vaše práva</h2>
+      <p class="text-sm text-slate-600 leading-relaxed">
+        Máte právo na přístup ke svým údajům, jejich opravu, výmaz a přenositelnost.
+        Pro uplatnění těchto práv nás kontaktujte na
+        <a href="mailto:vibescan@michaelkalus.cz" class="text-blue-600 hover:underline">vibescan@michaelkalus.cz</a>.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold mb-3">Třetí strany</h2>
+      <p class="text-sm text-slate-600 leading-relaxed">
+        Data zpracovávají pouze tyto třetí strany:
+      </p>
+      <ul class="mt-2 space-y-1.5 text-sm text-slate-600">
+        <li class="flex gap-2"><span class="text-slate-300">·</span> Google Tag Manager / Google Analytics — analytika (pouze se souhlasem)</li>
+        <li class="flex gap-2"><span class="text-slate-300">·</span> OSV.dev (Google) — kontrola zranitelností závislostí</li>
+      </ul>
+    </div>
+
+  </div>
+
+</section>
+{% endblock %}

@@ -1,5 +1,4 @@
-<div id="dep-results">
-  {% if vuln_count == 0 %}
+{% if vuln_count == 0 %}
   <div class="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
     <span>Žádné známé zranitelnosti nenalezeny v {{ total_deps }} zkontrolovaných balíčcích.</span>
@@ -64,7 +63,7 @@
       lines.push('');
       lines.push('| Balíček | Verze | CVE | Závažnost | Popis | Opravená verze |');
       lines.push('|---------|-------|-----|-----------|-------|----------------|');
-      {% for v in vulnerabilities %}lines.push('| {{ v.package_name }} | {{ v.package_version }} | [{{ v.id }}]({{ v.osv_url }}) | {{ v.severity_label }} | {{ v.summary|truncatechars:80 }} | {{ v.fixed_version|default:\"—\" }} |');
+      {% for v in vulnerabilities %}lines.push('| {{ v.package_name }} | {{ v.package_version }} | [{{ v.id }}]({{ v.osv_url }}) | {{ v.severity_label }} | {{ v.summary|truncatechars:80 }} | {{ v.fixed_version|default:"—" }} |');
       {% endfor %}lines.push('');
       lines.push('Oprav zranitelné balíčky aktualizací na opravenou verzi. Pokud opravená verze neexistuje, zvažte alternativní balíček.');
       navigator.clipboard.writeText(lines.join('\n'));
@@ -80,4 +79,3 @@
   </div>
   {% endif %}
   {% endif %}
-</div>

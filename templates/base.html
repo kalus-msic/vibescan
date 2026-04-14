@@ -11,10 +11,29 @@
   <script src="https://unpkg.com/htmx.org@2.0.3/dist/htmx.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
   <style>[x-cloak] { display: none !important; }</style>
+  {% if gtm_id %}
+  <!-- GTM - loaded only after cookie consent (see cookie consent bar) -->
+  <script>
+  window.dataLayer = window.dataLayer || [];
+  function loadGTM() {
+    if (window._gtmLoaded) return;
+    window._gtmLoaded = true;
+    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','{{ gtm_id }}');
+  }
+  if (localStorage.getItem('cookie_consent') === 'accepted') { loadGTM(); }
+  </script>
+  {% endif %}
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen">
+  {% if gtm_id %}
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ gtm_id }}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  {% endif %}
 
-<nav class="bg-white border-b border-slate-200 px-6 sticky top-0 z-50">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:bg-white focus:text-blue-600 focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg focus:text-sm focus:font-semibold">
+  Přeskočit na obsah
+</a>
+
+<nav aria-label="Hlavní navigace" class="bg-white border-b border-slate-200 px-6 sticky top-0 z-50">
   <div class="max-w-5xl mx-auto flex items-center justify-between h-14">
     <a href="{% url 'scanner:home' %}" class="flex items-center gap-2">
       <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
@@ -30,13 +49,46 @@
   </div>
 </nav>
 
-<main>{% block content %}{% endblock %}</main>
+<main id="main">{% block content %}{% endblock %}</main>
 
-<footer class="border-t border-slate-200 bg-white px-6 py-6 mt-16">
-  <div class="max-w-5xl mx-auto text-center text-sm text-slate-400">
-    vibescan — bezpečnostní audit pro vibecoded projekty
+<footer aria-label="Patička" class="border-t border-slate-200 bg-white px-6 py-8 mt-16">
+  <div class="max-w-5xl mx-auto">
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-400">
+      <div>© 2026 Vibescan — <a href="https://github.com/kalus-msic" class="hover:text-slate-600 transition-colors" rel="noopener" target="_blank">Michael Kalus</a> | <a href="https://ms-ic.cz" class="hover:text-slate-600 transition-colors" rel="noopener" target="_blank">ms-ic.cz</a></div>
+      <div class="flex items-center gap-4">
+        <a href="{% url 'pages:privacy' %}" class="hover:text-slate-600 transition-colors">Ochrana osobních údajů</a>
+        <span class="text-slate-200">·</span>
+        <a href="{% url 'pages:terms' %}" class="hover:text-slate-600 transition-colors">Podmínky použití</a>
+        <span class="text-slate-200">·</span>
+        <button onclick="localStorage.removeItem('cookie_consent'); location.reload();" class="hover:text-slate-600 transition-colors cursor-pointer">Nastavení cookies</button>
+      </div>
+    </div>
   </div>
 </footer>
+
+<!-- Cookie consent bar -->
+<div x-data="{
+  show: false,
+  init() { this.show = !localStorage.getItem('cookie_consent'); }
+}" x-show="show" x-cloak x-transition.opacity
+  class="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 shadow-lg px-6 py-4">
+  <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center gap-4">
+    <p class="text-sm text-slate-600 flex-1">
+      Používáme cookies pro fungování webu. Analytické cookies (Google Analytics) zapneme jen s vaším souhlasem.
+      <a href="{% url 'pages:privacy' %}" class="text-blue-600 hover:underline">Více informací</a>
+    </p>
+    <div class="flex gap-2 flex-shrink-0">
+      <button @click="localStorage.setItem('cookie_consent', 'rejected'); show = false"
+        class="text-sm text-slate-500 hover:text-slate-700 font-medium px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer">
+        Odmítnout
+      </button>
+      <button @click="localStorage.setItem('cookie_consent', 'accepted'); show = false; if (typeof loadGTM === 'function') loadGTM();"
+        class="text-sm text-white font-semibold px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 transition-colors cursor-pointer">
+        Přijmout vše
+      </button>
+    </div>
+  </div>
+</div>
 
 <script>
 // Ensure HTMX processes elements after page load (fixes bfcache/redirect issues)
