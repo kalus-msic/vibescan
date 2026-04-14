@@ -1,6 +1,19 @@
 import pytest
+from django.test import RequestFactory
+from unittest.mock import MagicMock
 from pages.models import Subscriber
 from pages.forms import NewsletterForm
+
+
+@pytest.fixture
+def rf():
+    return RequestFactory()
+
+
+def _make_session():
+    session = MagicMock()
+    session.session_key = "test-session-key"
+    return session
 
 
 @pytest.mark.django_db
@@ -28,3 +41,45 @@ class TestNewsletterForm:
     def test_empty_email(self):
         form = NewsletterForm(data={"email": ""})
         assert not form.is_valid()
+
+
+@pytest.mark.django_db
+class TestSubscribeView:
+    def test_valid_email_creates_subscriber(self, rf):
+        from pages.views import subscribe
+        request = rf.post("/roadmap/subscribe/", {"email": "new@example.com"})
+        request.session = _make_session()
+        request.META["REMOTE_ADDR"] = "127.0.0.1"
+        response = subscribe(request)
+        assert response.status_code == 200
+        assert Subscriber.objects.filter(email="new@example.com").exists()
+        content = response.content.decode()
+        assert "vědět" in content.lower()
+
+    def test_duplicate_email_returns_success(self, rf):
+        from pages.views import subscribe
+        Subscriber.objects.create(email="dup@example.com")
+        request = rf.post("/roadmap/subscribe/", {"email": "dup@example.com"})
+        request.session = _make_session()
+        request.META["REMOTE_ADDR"] = "127.0.0.1"
+        response = subscribe(request)
+        assert response.status_code == 200
+        assert Subscriber.objects.filter(email="dup@example.com").count() == 1
+        content = response.content.decode()
+        assert "vědět" in content.lower()
+
+    def test_invalid_email_returns_error(self, rf):
+        from pages.views import subscribe
+        request = rf.post("/roadmap/subscribe/", {"email": "bad"})
+        request.session = _make_session()
+        request.META["REMOTE_ADDR"] = "127.0.0.1"
+        response = subscribe(request)
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "platný" in content.lower() or "email" in content.lower()
+
+    def test_get_not_allowed(self, rf):
+        from pages.views import subscribe
+        request = rf.get("/roadmap/subscribe/")
+        response = subscribe(request)
+        assert response.status_code == 405

@@ -1,5 +1,9 @@
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.views.decorators.http import require_POST
+from django_ratelimit.decorators import ratelimit
+from pages.forms import NewsletterForm
+from pages.models import Subscriber
 
 
 SECURITY_TXT = """\
@@ -39,6 +43,21 @@ GUIDE_PROMPTS = [
         "id": "autentizace-sessions",
         "title": "Autentizace & Sessions",
         "content": "Session cookies musí mít HttpOnly=True, Secure=True, SameSite=Strict. Přidej session_regenerate po každém přihlášení. Nikdy neberi user ID z URL parametrů — vždy ze session.",
+    },
+    {
+        "id": "pravni-dokumenty",
+        "title": "Právní dokumenty a přístupnost",
+        "content": """Vygeneruj právní dokumenty a základní prvky přístupnosti pro můj web:
+
+1. **Cookie consent lišta** — Zobraz lištu se souhlasem s cookies před načtením jakýchkoliv tracking skriptů. Tlačítka "Přijmout" a "Odmítnout" musí mít stejnou vizuální váhu (stejná velikost, stejný styl). Tracking skripty (GA, GTM, Facebook Pixel) se smí načíst až po souhlasu.
+
+2. **Stránka ochrany osobních údajů** — Vytvoř stránku /ochrana-osobnich-udaju/ s informacemi: kdo data zpracovává (název, IČO, adresa, kontakt), jaká data sbíráme, proč a na jakém právním základě (GDPR čl. 6), jak dlouho data uchováváme, práva návštěvníků (přístup, výmaz, přenositelnost, námitka), kontakt na DPO (pokud existuje), odkaz na podání stížnosti u ÚOOÚ.
+
+3. **Patička webu** — V patičce musí být: © rok a název provozovatele, odkaz na ochranu osobních údajů, IČO provozovatele.
+
+4. **Přístupnost** — Přidej odkaz pro přeskočení navigace (<a href="#main" class="sr-only focus:not-sr-only">Přeskočit na obsah</a>) jako první prvek v <body>. V CSS přidej @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } } pro uživatele s vestibulárními potížemi.
+
+Poznámka: Vygenerované texty jsou šablony — uprav je podle skutečných údajů o provozovateli a zpracování dat.""",
     },
 ]
 
@@ -290,6 +309,16 @@ SCAN_CHECKS = [
         "description": "Kontrolujeme přítomnost souboru security.txt (RFC 9116) na /.well-known/security.txt. Tento soubor říká bezpečnostním výzkumníkům, kam hlásit nalezené zranitelnosti.",
     },
     {
+        "icon": "accessibility",
+        "title": "Základní přístupnost",
+        "description": "Kontrolujeme vybrané signály přístupnosti webu: přítomnost odkazu pro přeskočení navigace (skip link) pro uživatele klávesnice a hlasových čteček, a respektování systémového nastavení prefers-reduced-motion pro uživatele s vestibulárními potížemi nebo epilepsií. Pokud tyto prvky nenajdeme, upozorníme — ale doporučujeme ověřit i další stránky webu.",
+    },
+    {
+        "icon": "legal",
+        "title": "Právní náležitosti",
+        "description": "Hledáme základní právní prvky vyžadované českým a evropským právem: mechanismus pro souhlas s cookies (cookie consent lišta), odkaz na stránku ochrany osobních údajů (GDPR) a copyright v patičce. Nekontrolujeme IČO ani adresu provozovatele — tyto údaje bývají na podstránkách, kam se pasivním skenem nedostaneme. Pokud něco nenajdeme, neznamená to porušení zákona — pouze doporučujeme zkontrolovat.",
+    },
+    {
         "id": "dependency-check",
         "icon": "package",
         "title": "Kontrola závislostí (CVE)",
@@ -494,3 +523,18 @@ def how_it_works(request):
         "scan_checks": SCAN_CHECKS,
         "security_checklist": SECURITY_CHECKLIST,
     })
+
+
+def roadmap(request):
+    return render(request, "pages/roadmap.html", {})
+
+
+@require_POST
+@ratelimit(key="ip", rate="10/h")
+def subscribe(request):
+    form = NewsletterForm(request.POST)
+    if form.is_valid():
+        email = form.cleaned_data["email"]
+        Subscriber.objects.get_or_create(email=email)
+        return render(request, "pages/partials/subscribe_success.html")
+    return render(request, "pages/partials/subscribe_error.html", {"form": form})
