@@ -152,5 +152,17 @@
     </div>
   </div>
 
+  <div class="bg-slate-900 text-white rounded-2xl p-6 mt-14">
+    <div class="font-bold text-sm mb-2">Ověř si, jak na tom jsi</div>
+    <p class="text-sm text-slate-400 leading-relaxed mb-4">
+      Použil jsi prompty a zabezpečil projekt? Spusť sken a zjisti, jestli ti ještě něco nechybí. Vibescan zkontroluje hlavičky, SSL, DNS a další oblasti během pár sekund.
+    </p>
+    <div class="flex gap-3">
+      <a href="{% url 'scanner:home' %}" class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold py-2.5 px-5 rounded-lg transition-colors">
+        Spustit sken
+      </a>
+    </div>
+  </div>
+
 </section>
 {% endblock %}
