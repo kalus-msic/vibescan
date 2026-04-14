@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 from django_ratelimit.decorators import ratelimit
 from pages.forms import NewsletterForm
@@ -291,7 +292,11 @@ SCAN_CHECKS = [
         "title": "Citlivé soubory",
         "description": "Kontrolujeme veřejnou dostupnost souborů, které by neměly být přístupné zvenčí. Testujeme pouze existenci (HTTP HEAD, status code) — obsah souborů nečteme.",
         "detail_mono": True,
-        "detail_footer": "Toto není vyčerpávající seznam — pokrývá nejčastější chyby vibecoded projektů. Pro kompletní audit doporučujeme profesionální penetrační test.",
+        "detail_footer": mark_safe(
+            'Toto není vyčerpávající seznam — pokrývá nejčastější chyby vibecoded projektů. '
+            'Připravujeme aktivní probing těchto souborů pro ověřené weby — '
+            '<a href="/roadmap/" class="underline hover:text-slate-600">podívejte se, co chystáme</a>.'
+        ),
         "detail_list": [
             ".env — proměnné prostředí (hesla, API klíče, DB credentials)",
             ".env.backup — záloha .env se stejnými secrets",

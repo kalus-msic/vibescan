@@ -79,7 +79,7 @@
           {% endfor %}
         </ul>
         {% if check.detail_footer %}
-        <p class="text-xs text-slate-400 mt-3 leading-relaxed">{{ check.detail_footer }}</p>
+        <p class="text-xs text-slate-400 mt-3 leading-relaxed">{{ check.detail_footer|safe }}</p>
         {% endif %}
         {% endif %}
       </div>

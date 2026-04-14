@@ -107,3 +107,20 @@ class TestRoadmapView:
         content = response.content.decode()
         assert "email" in content.lower()
         assert "subscribe" in content
+
+
+class TestHowItWorksSensitiveFiles:
+    def test_sensitive_files_links_to_roadmap(self):
+        client = Client()
+        response = client.get("/how-it-works/")
+        content = response.content.decode()
+        assert "/roadmap/" in content
+
+
+class TestNavigation:
+    def test_nav_contains_roadmap_link(self):
+        client = Client()
+        response = client.get("/")
+        content = response.content.decode()
+        assert "Roadmapa" in content
+        assert "/roadmap/" in content
