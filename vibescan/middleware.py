@@ -18,8 +18,7 @@ class SecurityHeadersMiddleware:
 
     def __call__(self, request):
         response = self.get_response(request)
-        # CSP temporarily in report-only mode to debug HTMX polling issue
-        response["Content-Security-Policy-Report-Only"] = self.CSP
+        response["Content-Security-Policy"] = self.CSP
         response["Permissions-Policy"] = (
             "geolocation=(), camera=(), microphone=(), "
             "display-capture=(), accelerometer=(), gyroscope=()"
