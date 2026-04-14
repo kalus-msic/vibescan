@@ -1,5 +1,4 @@
 import re
-from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from .base import BaseScanModule, Finding, Severity
 
@@ -7,7 +6,7 @@ from .base import BaseScanModule, Finding, Severity
 CONSENT_SCRIPT_PATTERNS = (
     "cookieconsent", "cookiebot", "onetrust", "klaro",
     "tarteaucitron", "cookie-notice", "cookie-script",
-    "complianz", "iubenda", "quantcast", "cookie-law",
+    "complianz", "iubenda", "quantcast",
 )
 
 CONSENT_ELEMENT_IDS = {
