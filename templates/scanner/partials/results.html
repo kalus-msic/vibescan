@@ -233,9 +233,7 @@
           </div>
           <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
             <a href="{{ f.fix_url }}" class="text-xs text-blue-600 hover:underline font-semibold">Opravit →</a>
-          </div>
-          {% if not scan.ephemeral %}
-          <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
+            {% if not scan.ephemeral %}
             <div class="relative" x-data="{ open: false, above: false }" x-init="$watch('open', v => { if(v){ let r=$el.getBoundingClientRect(); above=r.bottom+140>window.innerHeight } })">
               <button @click="open = !open" class="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">Není relevantní</button>
               <div x-show="open" @click.outside="open = false" :class="above ? 'bottom-6' : 'top-6'" class="absolute right-0 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-52">
@@ -248,8 +246,8 @@
                 </form>
               </div>
             </div>
+            {% endif %}
           </div>
-          {% endif %}
         </div>
         {% endfor %}
       </div>
