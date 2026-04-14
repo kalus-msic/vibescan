@@ -10,10 +10,10 @@ LEGAL_LAST_UPDATED = "14. dubna 2025"
 
 
 SECURITY_TXT = """\
-Contact: mailto:security@vibescan.io
+Contact: mailto:vibescan@michaelkalus.cz
 Expires: 2027-04-01T00:00:00.000Z
 Preferred-Languages: cs, en
-Canonical: https://vibescan.io/.well-known/security.txt
+Canonical: https://vibescan.cz/.well-known/security.txt
 """
 
 GUIDE_PROMPTS = [
