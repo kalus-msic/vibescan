@@ -140,7 +140,7 @@
             {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 block">Dokumentace →</a>{% endif %}
           </div>
           <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
-            <a href="{{ f.fix_url }}" class="text-xs text-blue-600 hover:underline font-semibold">Opravit →</a>
+            <a href="{{ f.fix_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-blue-600 hover:underline font-semibold">Opravit →</a>
             {% if not scan.ephemeral %}
             <div class="relative" x-data="{ open: false, above: false }" x-init="$watch('open', v => { if(v){ let r=$el.getBoundingClientRect(); above=r.bottom+140>window.innerHeight } })">
               <button @click="open = !open" class="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">Není relevantní</button>
@@ -186,7 +186,7 @@
             {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 block">Dokumentace →</a>{% endif %}
           </div>
           <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
-            <a href="{{ f.fix_url }}" class="text-xs text-blue-600 hover:underline font-semibold">Opravit →</a>
+            <a href="{{ f.fix_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-blue-600 hover:underline font-semibold">Opravit →</a>
             {% if not scan.ephemeral %}
             <div class="relative" x-data="{ open: false, above: false }" x-init="$watch('open', v => { if(v){ let r=$el.getBoundingClientRect(); above=r.bottom+140>window.innerHeight } })">
               <button @click="open = !open" class="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">Není relevantní</button>
@@ -232,7 +232,7 @@
             {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 inline-block">Dokumentace →</a>{% endif %}
           </div>
           <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
-            <a href="{{ f.fix_url }}" class="text-xs text-blue-600 hover:underline font-semibold">Opravit →</a>
+            <a href="{{ f.fix_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-blue-600 hover:underline font-semibold">Opravit →</a>
             {% if not scan.ephemeral %}
             <div class="relative" x-data="{ open: false, above: false }" x-init="$watch('open', v => { if(v){ let r=$el.getBoundingClientRect(); above=r.bottom+140>window.innerHeight } })">
               <button @click="open = !open" class="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">Není relevantní</button>
