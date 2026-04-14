@@ -124,3 +124,10 @@ class TestNavigation:
         content = response.content.decode()
         assert "Roadmapa" in content
         assert "/roadmap/" in content
+
+
+class TestContextProcessor:
+    def test_gtm_id_in_context(self):
+        client = Client()
+        response = client.get("/")
+        assert "gtm_id" in response.context
