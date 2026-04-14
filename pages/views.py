@@ -525,8 +525,77 @@ def how_it_works(request):
     })
 
 
+ROADMAP_ITEMS = [
+    {
+        "label": "Brzy",
+        "color": "blue",
+        "items": [
+            {
+                "title": "Registrace a uživatelské účty",
+                "description": "Přihlášení, historie skenů a správa projektů na jednom místě.",
+            },
+            {
+                "title": "Vlastní projekty",
+                "description": "Přehled závislostí a bezpečnostního stavu vašich projektů.",
+            },
+            {
+                "title": "Automatické hlídání závislostí",
+                "description": "Pravidelná kontrola zranitelností (denně, týdně nebo měsíčně) s email notifikací při nalezení nového CVE.",
+            },
+        ],
+    },
+    {
+        "label": "Připravujeme",
+        "color": "violet",
+        "items": [
+            {
+                "title": "Ověření vlastnictví webu",
+                "description": "DNS TXT záznam nebo upload souboru — odemkne aktivní bezpečnostní kontroly.",
+            },
+            {
+                "title": "Aktivní probing citlivých souborů",
+                "description": "Kontrola dostupnosti .env, .git/config, phpinfo.php, wp-config.php.bak a dalších souborů, které nemají být veřejné.",
+            },
+            {
+                "title": "Hloubkový audit JS bundlů",
+                "description": "Analýza JavaScript souborů na hardcoded API klíče, tokeny a secrets.",
+            },
+            {
+                "title": "Dashboard",
+                "description": "Přehled všech skenovaných webů a jejich bezpečnostního stavu na jednom místě.",
+            },
+        ],
+    },
+    {
+        "label": "Na horizontu",
+        "color": "slate",
+        "items": [
+            {
+                "title": "Porovnání skenů",
+                "description": "Diff view — co se zlepšilo a co zhoršilo mezi dvěma skeny.",
+            },
+            {
+                "title": "API pro CI/CD",
+                "description": "Integrace Vibescan do vašeho deployment pipeline.",
+            },
+            {
+                "title": "Badge pro README",
+                "description": "Shield.io styl badge s vaším Vibe Score pro GitHub repozitář.",
+            },
+            {
+                "title": "Multi-page scan",
+                "description": "Kontrola více URL na jedné doméně najednou.",
+            },
+        ],
+    },
+]
+
+
 def roadmap(request):
-    return render(request, "pages/roadmap.html", {})
+    return render(request, "pages/roadmap.html", {
+        "roadmap_items": ROADMAP_ITEMS,
+        "newsletter_form": NewsletterForm(),
+    })
 
 
 @require_POST

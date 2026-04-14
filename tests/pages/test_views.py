@@ -1,5 +1,5 @@
 import pytest
-from django.test import RequestFactory
+from django.test import Client, RequestFactory
 from unittest.mock import MagicMock
 from pages.models import Subscriber
 from pages.forms import NewsletterForm
@@ -83,3 +83,27 @@ class TestSubscribeView:
         request = rf.get("/roadmap/subscribe/")
         response = subscribe(request)
         assert response.status_code == 405
+
+
+class TestRoadmapView:
+    def test_roadmap_page_loads(self):
+        client = Client()
+        response = client.get("/roadmap/")
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "připravujeme" in content.lower()
+
+    def test_roadmap_contains_sections(self):
+        client = Client()
+        response = client.get("/roadmap/")
+        content = response.content.decode()
+        assert "Brzy" in content
+        assert "Připravujeme" in content
+        assert "Na horizontu" in content
+
+    def test_roadmap_contains_newsletter_form(self):
+        client = Client()
+        response = client.get("/roadmap/")
+        content = response.content.decode()
+        assert "email" in content.lower()
+        assert "subscribe" in content

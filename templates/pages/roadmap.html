@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Roadmapa — Vibescan{% endblock %}
+
+{% block content %}
+<section class="max-w-3xl mx-auto px-6 py-20">
+
+  <!-- Hero -->
+  <div class="mb-12">
+    <h1 class="text-3xl font-extrabold mb-4">Co připravujeme</h1>
+    <p class="text-slate-500 leading-relaxed">
+      Vibescan je v aktivním vývoji. Tady najdete přehled toho, na čem pracujeme a co plánujeme. Chcete vědět, až to bude? Nechte nám email.
+    </p>
+  </div>
+
+  <!-- Roadmap sections -->
+  <div class="space-y-10 mb-16">
+    {% for section in roadmap_items %}
+    <div>
+      <div class="flex items-center gap-3 mb-4">
+        {% if section.color == "blue" %}
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">{{ section.label }}</span>
+        {% elif section.color == "violet" %}
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200">{{ section.label }}</span>
+        {% else %}
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">{{ section.label }}</span>
+        {% endif %}
+      </div>
+      <div class="space-y-3">
+        {% for item in section.items %}
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+          <div class="font-semibold text-sm text-slate-900 mb-1">{{ item.title }}</div>
+          <div class="text-sm text-slate-500 leading-relaxed">{{ item.description }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Newsletter -->
+  <div class="bg-slate-900 text-white rounded-2xl p-8">
+    <div class="font-bold text-lg mb-2">Nechte si dát vědět</div>
+    <p class="text-sm text-slate-400 leading-relaxed mb-6">
+      Žádný spam — pošleme vám email, až spustíme novou velkou funkci.
+    </p>
+    <form hx-post="{% url 'pages:subscribe' %}" hx-target="#newsletter-result" hx-swap="innerHTML" class="flex gap-3">
+      {% csrf_token %}
+      <div class="flex-1 bg-white/10 rounded-lg px-4 py-2.5">
+        {{ newsletter_form.email }}
+      </div>
+      <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-colors flex-shrink-0">
+        Odebírat
+      </button>
+    </form>
+    <div id="newsletter-result" class="mt-4"></div>
+  </div>
+
+</section>
+{% endblock %}
