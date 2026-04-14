@@ -72,7 +72,7 @@ def _fetch_url(url):
         url,
         timeout=10,
         follow_redirects=True,
-        headers={"User-Agent": "Vibescan/1.0 (security audit; https://vibescan.io)"},
+        headers={"User-Agent": "Vibescan/1.0 (security audit; https://vibescan.cz)"},
     ) as response:
         # Check final URL after redirects — prevent SSRF bypass via redirect
         final_host = urlparse(str(response.url)).hostname

@@ -234,7 +234,7 @@ class DNSScanner(BaseScanModule):
                 f"{base}/robots.txt",
                 timeout=5,
                 follow_redirects=True,
-                headers={"User-Agent": "Vibescan/1.0 (security audit; https://vibescan.io)"},
+                headers={"User-Agent": "Vibescan/1.0 (security audit; https://vibescan.cz)"},
             )
             if resp.status_code != 200 or not resp.text.strip():
                 return None

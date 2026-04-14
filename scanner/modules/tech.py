@@ -82,7 +82,7 @@ SENSITIVE_PATHS = [
 PROBE_TIMEOUT = 5
 
 # User-Agent for probes
-PROBE_UA = "Vibescan/1.0 (security audit; https://vibescan.io)"
+PROBE_UA = "Vibescan/1.0 (security audit; https://vibescan.cz)"
 
 
 def _build_probe_url(base_url: str, path: str) -> str:

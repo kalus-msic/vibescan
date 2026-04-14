@@ -50,7 +50,19 @@ GUIDE_PROMPTS = [
     {
         "id": "zavislosti-cve",
         "title": "Závislosti & CVE",
-        "content": "Zkontroluj závislosti projektu na známé zranitelnosti. Spusť příslušný audit příkaz pro svůj ekosystém:\n\n- Python: pip audit\n- Node.js: npm audit\n- PHP: composer audit\n\nAktualizuj balíčky s Critical a High CVE na opravenou verzi. Pokud aktualizace není možná (breaking changes), ověř zda se zranitelnost týká tvého use-case. Pokud ne, zdokumentuj důvod v komentáři. Nastav automatické kontroly závislostí v CI/CD (Dependabot, Renovate nebo Snyk).",
+        "content": """Zkontroluj závislosti projektu na známé zranitelnosti. Spusť příslušný audit příkaz pro svůj ekosystém:
+
+- Python: pip audit
+- Node.js: npm audit
+- PHP: composer audit
+
+Nebo použij Kontrolu závislostí na Vibescan.cz \u2014 vlož obsah requirements.txt, package.json nebo composer.json a výsledek zkopíruj tlačítkem \u201eKopírovat pro AI\u201c přímo do svého AI nástroje. Ten ti navrhne konkrétní aktualizace.
+
+Aktualizuj balíčky s Critical a High CVE na opravenou verzi. Pokud aktualizace není možná (breaking changes), ověř zda se zranitelnost týká tvého use-case. Pokud ne, zdokumentuj důvod v komentáři.
+
+Po aktualizaci a otestování znovu zkontroluj závislosti \u2014 nové verze balíčků mohou obsahovat jiné známé zranitelnosti.
+
+Nastav automatické kontroly závislostí v CI/CD (Dependabot, Renovate nebo Snyk).""",
     },
     {
         "id": "pravni-dokumenty",
