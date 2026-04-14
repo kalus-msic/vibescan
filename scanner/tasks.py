@@ -18,6 +18,8 @@ from .modules.meta import MetaTagScanner
 from .modules.cors import CORSScanner
 from .modules.cookies import CookieScanner
 from .modules.tracking import TrackingConsentScanner
+from .modules.accessibility import AccessibilityScanner
+from .modules.legal import LegalScanner
 from .modules.dns_check import DNSScanner
 from .score import calculate_vibe_score
 from .validator import validate_resolved_ip, validate_scan_url, SSRFError
@@ -39,6 +41,8 @@ SCAN_MODULES = [
     CORSScanner(),
     CookieScanner(),
     TrackingConsentScanner(),
+    AccessibilityScanner(),
+    LegalScanner(),
     DNSScanner(),
     # TechLeakageScanner — disabled, requires domain verification (Phase 3)
 ]
@@ -129,7 +133,7 @@ def run_scan(self, scan_id: str):
 
         try:
             # Skip HTML parsing modules for non-HTML responses
-            if not is_html and module.name in ("html", "secrets", "forms", "sri", "meta", "tracking"):
+            if not is_html and module.name in ("html", "secrets", "forms", "sri", "meta", "tracking", "accessibility", "legal"):
                 progress[i]["status"] = "done"
                 continue
             findings = module.run(scan.url, response)
