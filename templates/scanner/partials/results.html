@@ -144,7 +144,7 @@
             {% if not scan.ephemeral %}
             <div class="relative" x-data="{ open: false, above: false }" x-init="$watch('open', v => { if(v){ let r=$el.getBoundingClientRect(); above=r.bottom+140>window.innerHeight } })">
               <button @click="open = !open" class="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">Není relevantní</button>
-              <div x-show="open" @click.outside="open = false" :class="above ? 'bottom-6' : 'top-6'" class="absolute right-0 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-52">
+              <div x-show="open" x-cloak @click.outside="open = false" :class="above ? 'bottom-6' : 'top-6'" class="absolute right-0 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-52">
                 <form method="post" action="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-post="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-target="#scan-content" hx-swap="outerHTML">
                   {% csrf_token %}
                   <button type="submit" name="reason" value="not_applicable" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Nepoužívám tuto funkci</button>
@@ -190,7 +190,7 @@
             {% if not scan.ephemeral %}
             <div class="relative" x-data="{ open: false, above: false }" x-init="$watch('open', v => { if(v){ let r=$el.getBoundingClientRect(); above=r.bottom+140>window.innerHeight } })">
               <button @click="open = !open" class="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">Není relevantní</button>
-              <div x-show="open" @click.outside="open = false" :class="above ? 'bottom-6' : 'top-6'" class="absolute right-0 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-52">
+              <div x-show="open" x-cloak @click.outside="open = false" :class="above ? 'bottom-6' : 'top-6'" class="absolute right-0 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-52">
                 <form method="post" action="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-post="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-target="#scan-content" hx-swap="outerHTML">
                   {% csrf_token %}
                   <button type="submit" name="reason" value="not_applicable" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Nepoužívám tuto funkci</button>
@@ -236,7 +236,7 @@
             {% if not scan.ephemeral %}
             <div class="relative" x-data="{ open: false, above: false }" x-init="$watch('open', v => { if(v){ let r=$el.getBoundingClientRect(); above=r.bottom+140>window.innerHeight } })">
               <button @click="open = !open" class="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">Není relevantní</button>
-              <div x-show="open" @click.outside="open = false" :class="above ? 'bottom-6' : 'top-6'" class="absolute right-0 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-52">
+              <div x-show="open" x-cloak @click.outside="open = false" :class="above ? 'bottom-6' : 'top-6'" class="absolute right-0 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-52">
                 <form method="post" action="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-post="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-target="#scan-content" hx-swap="outerHTML">
                   {% csrf_token %}
                   <button type="submit" name="reason" value="not_applicable" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Nepoužívám tuto funkci</button>
