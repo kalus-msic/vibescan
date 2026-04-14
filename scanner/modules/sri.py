@@ -75,6 +75,7 @@ class SRIScanner(BaseScanModule):
                 description=desc,
                 severity=severity,
                 category="sri",
+                fix_url="/guide/#sri-integrita",
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity",
                 detail="\n".join(missing_scripts[:5]) + (f"\n… a {len(missing_scripts) - 5} dalších" if len(missing_scripts) > 5 else ""),
             ))
@@ -114,6 +115,7 @@ class SRIScanner(BaseScanModule):
                 description="Externí CSS nemá integrity atribut. Kompromitované CDN může změnit vzhled stránky nebo exfiltrovat data přes CSS selektory (CSS exfiltration).",
                 severity=Severity.INFO,
                 category="sri",
+                fix_url="/guide/#sri-integrita",
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity",
                 detail="\n".join(missing_styles[:5]) + (f"\n… a {len(missing_styles) - 5} dalších" if len(missing_styles) > 5 else ""),
             ))

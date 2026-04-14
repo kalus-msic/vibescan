@@ -26,6 +26,7 @@ class SSLScanner(BaseScanModule):
                 description="Web nepřesměrovává HTTP na HTTPS. Veškerá komunikace (hesla, formuláře, cookies) jde přes nešifrované spojení. Na veřejné Wi-Fi může kdokoliv zachytit přenášená data.",
                 severity=Severity.CRITICAL,
                 category="ssl",
+                fix_url="/guide/#ssl-https",
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/TLS",
             ))
         else:

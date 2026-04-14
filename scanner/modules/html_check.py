@@ -31,6 +31,7 @@ class HTMLScanner(BaseScanModule):
                 description='Odkaz s target="_blank" bez rel="noopener" umožňuje otevřené stránce přistoupit k window.opener. Útočník může přesměrovat původní záložku na phishing stránku (reverse tabnabbing).',
                 severity=Severity.WARNING,
                 category="html",
+                fix_url="/guide/#html-bezpecnost",
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noopener",
                 detail=", ".join(bad_links[:3]),
             ))
@@ -49,6 +50,7 @@ class HTMLScanner(BaseScanModule):
                 description="HTML komentáře obsahují klíčová slova jako TODO, password nebo api_key. Komentáře jsou viditelné v zdrojovém kódu stránky — mohou prozradit interní informace, testovací účty nebo zapomenuté API klíče.",
                 severity=Severity.WARNING,
                 category="html",
+                fix_url="/guide/#html-bezpecnost",
                 detail=flagged_comments[0],
             ))
 

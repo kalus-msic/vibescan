@@ -65,6 +65,31 @@ Po aktualizaci a otestování znovu zkontroluj závislosti \u2014 nové verze ba
 Nastav automatické kontroly závislostí v CI/CD (Dependabot, Renovate nebo Snyk).""",
     },
     {
+        "id": "ssl-https",
+        "title": "SSL & HTTPS redirect",
+        "content": "Nastav HTTPS redirect \u2014 veškerý HTTP provoz musí být přesměrován na HTTPS (301 redirect). Nastav HSTS header (Strict-Transport-Security: max-age=31536000; includeSubDomains). Pro Django: SECURE_SSL_REDIRECT=True, SECURE_HSTS_SECONDS=31536000. Pro Nginx: return 301 https://$host$request_uri;",
+    },
+    {
+        "id": "html-bezpecnost",
+        "title": "HTML bezpe\u010dnost",
+        "content": "Zkontroluj v\u0161echny odkazy s target=\"_blank\" \u2014 ka\u017ed\u00fd mus\u00ed m\u00edt rel=\"noopener noreferrer\". Bez toho m\u016f\u017ee otev\u0159en\u00e1 str\u00e1nka p\u0159istoupit k window.opener a p\u0159esm\u011brovat p\u016fvodn\u00ed z\u00e1lo\u017eku na phishing (reverse tabnabbing). Odstra\u0148 HTML koment\u00e1\u0159e obsahuj\u00edc\u00ed TODO, password, api_key nebo debug \u2014 jsou viditeln\u00e9 v zdrojov\u00e9m k\u00f3du str\u00e1nky.",
+    },
+    {
+        "id": "sri-integrita",
+        "title": "Subresource Integrity (SRI)",
+        "content": "P\u0159idej integrity atribut na v\u0161echny extern\u00ed scripty a styly z CDN. SRI zaji\u0161\u0165uje, \u017ee prohl\u00ed\u017ee\u010d odm\u00edtne spustit soubor, kter\u00fd byl na CDN zm\u011bn\u011bn. Vygeneruj hash p\u0159es: echo sha384-$(curl -s URL | openssl dgst -sha384 -binary | openssl base64 -A). P\u0159\u00edklad: <script src=\"https://cdn.example.com/lib.js\" integrity=\"sha384-...\" crossorigin=\"anonymous\"></script>",
+    },
+    {
+        "id": "dns-emaily",
+        "title": "DNS z\u00e1znamy & ochrana email\u016f",
+        "content": "Nastav DNS z\u00e1znamy pro ochranu dom\u00e9ny proti email spoofingu:\n\n1. **SPF** \u2014 TXT z\u00e1znam na root dom\u00e9n\u011b: v=spf1 include:_spf.google.com ~all (uprav podle poskytovatele emailu)\n2. **DMARC** \u2014 TXT z\u00e1znam na _dmarc.domena.cz: v=DMARC1; p=reject; rua=mailto:dmarc@domena.cz (za\u010dni s p=none pro monitoring, pak p=quarantine, nakonec p=reject)\n3. **DKIM** \u2014 nastav podle poskytovatele emailu (Google Workspace, Microsoft 365)\n4. **CAA** \u2014 omez kter\u00e9 certifika\u010dn\u00ed autority mohou vydat certifik\u00e1t: 0 issue \"letsencrypt.org\"\n5. **DNSSEC** \u2014 aktivuj u registr\u00e1tora dom\u00e9ny\n6. **security.txt** \u2014 vytvo\u0159 /.well-known/security.txt s kontaktn\u00edm emailem pro hl\u00e1\u0161en\u00ed zranitelnost\u00ed (RFC 9116)\n7. **robots.txt** \u2014 neprozrazuj citliv\u00e9 cesty (/admin, /backup, /.env) v Disallow pravidlech",
+    },
+    {
+        "id": "meta-informace",
+        "title": "Meta tagy & information disclosure",
+        "content": "Odstra\u0148 meta tag generator nebo z n\u011bj odstra\u0148 \u010d\u00edslo verze. \u00dato\u010dn\u00edk vyhled\u00e1 v CVE datab\u00e1zi zn\u00e1m\u00e9 zranitelnosti pro konkr\u00e9tn\u00ed verzi CMS. Pro WordPress: add_filter('the_generator', '__return_empty_string'); Pro obecn\u00e9: odstra\u0148 <meta name=\"generator\" content=\"...\"> z HTML.",
+    },
+    {
         "id": "pravni-dokumenty",
         "title": "Právní dokumenty a přístupnost",
         "content": """Vygeneruj právní dokumenty a základní prvky přístupnosti pro můj web:

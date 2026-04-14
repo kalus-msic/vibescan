@@ -65,6 +65,7 @@ class TrackingConsentScanner(BaseScanModule):
                 description="Tracking skripty se načítají přímo v HTML bez ohledu na souhlas uživatele. Podle GDPR musí být analytické a marketingové cookies načteny až po udělení souhlasu. Pokuta za nedodržení může být až 4 % ročního obratu.",
                 severity=Severity.WARNING,
                 category="tracking",
+                fix_url="/guide/#pravni-dokumenty",
                 doc_url="https://gdpr.eu/cookies/",
                 detail=", ".join(detected_services),
             ))
