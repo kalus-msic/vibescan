@@ -148,4 +148,5 @@ class LegalScanner(BaseScanModule):
             severity=Severity.INFO,
             category="legal",
             fix_url="/guide/#pravni-dokumenty",
+            doc_url="https://www.zakonyprolidi.cz/cs/2000-121",
         )

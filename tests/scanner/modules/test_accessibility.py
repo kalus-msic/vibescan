@@ -93,6 +93,39 @@ class TestAccessibilityScanner:
         ids = [f.id for f in findings]
         assert "missing-skip-link" in ids
 
+    def test_accessibility_statement_detected_by_href(self):
+        html = '<body><footer><a href="/prohlaseni-o-pristupnosti">Prohlášení</a></footer></body>'
+        findings = self.scanner.run("https://example.com", make_response(html))
+        ids = [f.id for f in findings]
+        assert "accessibility-statement-ok" in ids
+        assert "missing-accessibility-statement" not in ids
+
+    def test_accessibility_statement_detected_by_english_href(self):
+        html = '<body><footer><a href="/accessibility-statement">Accessibility</a></footer></body>'
+        findings = self.scanner.run("https://example.com", make_response(html))
+        ids = [f.id for f in findings]
+        assert "accessibility-statement-ok" in ids
+
+    def test_accessibility_statement_detected_by_text(self):
+        html = '<body><footer><a href="/info/a11y">Prohlášení o přístupnosti</a></footer></body>'
+        findings = self.scanner.run("https://example.com", make_response(html))
+        ids = [f.id for f in findings]
+        assert "accessibility-statement-ok" in ids
+
+    def test_missing_accessibility_statement(self):
+        html = '<body><nav><a href="/about">About</a></nav></body>'
+        findings = self.scanner.run("https://example.com", make_response(html))
+        ids = [f.id for f in findings]
+        assert "missing-accessibility-statement" in ids
+        f = next(x for x in findings if x.id == "missing-accessibility-statement")
+        assert f.severity == Severity.INFO
+
+    def test_empty_html_missing_both(self):
+        findings = self.scanner.run("https://example.com", make_response(""))
+        ids = [f.id for f in findings]
+        assert "missing-skip-link" in ids
+        assert "missing-accessibility-statement" in ids
+
     def test_module_metadata(self):
         assert self.scanner.name == "accessibility"
         assert self.scanner.step_label == "Přístupnost"

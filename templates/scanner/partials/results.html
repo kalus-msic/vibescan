@@ -137,7 +137,7 @@
             </div>
             <div class="text-xs text-slate-500 leading-relaxed">{{ f.description }}</div>
             {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 block whitespace-pre-wrap">{{ f.detail }}</code>{% endif %}
-            {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 block">Dokumentace (MDN) →</a>{% endif %}
+            {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 block">Dokumentace →</a>{% endif %}
           </div>
           <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
             <a href="{{ f.fix_url }}" class="text-xs text-blue-600 hover:underline font-semibold">Opravit →</a>
@@ -183,7 +183,7 @@
             </div>
             <div class="text-xs text-slate-500 leading-relaxed">{{ f.description }}</div>
             {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 block whitespace-pre-wrap">{{ f.detail }}</code>{% endif %}
-            {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 block">Dokumentace (MDN) →</a>{% endif %}
+            {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 block">Dokumentace →</a>{% endif %}
           </div>
           <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
             <a href="{{ f.fix_url }}" class="text-xs text-blue-600 hover:underline font-semibold">Opravit →</a>
@@ -229,6 +229,10 @@
             </div>
             <div class="text-xs text-slate-500 leading-relaxed">{{ f.description }}</div>
             {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 block">{{ f.detail }}</code>{% endif %}
+            {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 inline-block">Dokumentace →</a>{% endif %}
+          </div>
+          <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
+            <a href="{{ f.fix_url }}" class="text-xs text-blue-600 hover:underline font-semibold">Opravit →</a>
           </div>
           {% if not scan.ephemeral %}
           <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
