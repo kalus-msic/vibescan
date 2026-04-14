@@ -2,7 +2,7 @@
 {% block title %}Vibescan — bezpečnostní audit{% endblock %}
 
 {% block content %}
-<section class="max-w-5xl mx-auto px-6 pt-20 pb-24">
+<section class="max-w-5xl mx-auto px-6 pt-10 pb-24">
 
   <div class="text-center mb-12">
     <div class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-3 py-1 text-xs font-semibold mb-5">
@@ -12,7 +12,7 @@
       Víš, co jsi<br>zapomněl zabezpečit?
     </h1>
     <p class="text-slate-500 text-lg leading-relaxed max-w-2xl mx-auto">
-      Vibescan zkontroluje HTTP hlavičky, SSL, DNS záznamy a tech leakage. Dostaneš konkrétní skóre a návod, co opravit.
+      Vibescan zkontroluje HTTP hlavičky, SSL, cookies, DNS záznamy a další. Dostaneš konkrétní skóre a návod, co opravit.
     </p>
   </div>
 
@@ -130,8 +130,8 @@
       <div class="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center mb-3">
         <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803A7.5 7.5 0 0015.803 15.803z"/></svg>
       </div>
-      <div class="font-semibold text-sm mb-1">Info leakage</div>
-      <div class="text-xs text-slate-500 leading-relaxed">Exponované soubory, tech stack, komentáře v kódu</div>
+      <div class="font-semibold text-sm mb-1">Cookies & CORS</div>
+      <div class="text-xs text-slate-500 leading-relaxed">Secure, HttpOnly, SameSite flagy a CORS konfigurace</div>
     </div>
     <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
       <div class="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center mb-3">
