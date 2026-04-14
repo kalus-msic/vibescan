@@ -1,4 +1,4 @@
-Django==5.2.9
+Django==6.0.4
 celery==5.4
 redis==5.2
 django-celery-results==2.5
