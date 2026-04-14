@@ -288,11 +288,14 @@
       </div>
       <div class="flex-1">
         <div class="font-bold text-sm mb-0.5">Nevíš, jak to opravit?</div>
-        <p class="text-xs text-slate-400 leading-relaxed">Průvodce s copy-paste prompty pro Claude Code a Cursor.{% if not scan.ephemeral %} Nebo exportuj všechny nálezy naráz pro AI.{% endif %}</p>
+        <p class="text-xs text-slate-400 leading-relaxed">Projdi svůj kód krok po kroku, nebo použij prompty pro Claude Code a Cursor.{% if not scan.ephemeral %} Nebo exportuj všechny nálezy naráz pro AI.{% endif %}</p>
       </div>
       <div class="flex flex-col gap-2 flex-shrink-0">
-        <a href="{% url 'pages:guide' %}" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-2.5 px-5 rounded-lg transition-colors whitespace-nowrap text-center">
-          Průvodce opravami →
+        <a href="{% url 'pages:review' %}" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-2.5 px-5 rounded-lg transition-colors whitespace-nowrap text-center">
+          Security Review →
+        </a>
+        <a href="{% url 'pages:guide' %}" class="border border-white/20 hover:bg-white/10 text-white text-xs font-semibold py-2.5 px-5 rounded-lg transition-colors whitespace-nowrap text-center">
+          Průvodce prompty →
         </a>
         {% if not scan.ephemeral %}
         <a href="{% url 'scanner:export_txt' scan.id %}" class="border border-white/20 hover:bg-white/10 text-white text-xs font-semibold py-2.5 px-5 rounded-lg transition-colors whitespace-nowrap text-center">
