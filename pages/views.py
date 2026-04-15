@@ -117,7 +117,13 @@ Poznámka: Vygenerované texty jsou šablony — uprav je podle skutečných úd
 
 4. **Log rotace** \u2014 Nastav logrotate nebo Docker logging driver s max-size limitem, aby logy nezaplnily disk.
 
-5. **Monitoring** \u2014 Nastav uptime monitoring (UptimeRobot, Healthchecks.io) pro v\u010dasn\u00e9 odchycen\u00ed v\u00fdpadk\u016f.""",
+5. **Monitoring** \u2014 Nastav uptime monitoring (UptimeRobot, Healthchecks.io) pro v\u010dasn\u00e9 odchycen\u00ed v\u00fdpadk\u016f.
+
+6. **Logov\u00e1n\u00ed p\u0159ihl\u00e1\u0161en\u00ed** \u2014 Loguj \u00fasp\u011b\u0161n\u00e9 i ne\u00fasp\u011b\u0161n\u00e9 pokusy o p\u0159ihl\u00e1\u0161en\u00ed v\u010detn\u011b IP adresy. Pro Django: pou\u017eij sign\u00e1ly user_logged_in a user_login_failed. Ukl\u00e1dej do souboru (ne jen stdout), aby logy p\u0159e\u017eily restart kontejneru.
+
+7. **Rate limiting na login** \u2014 Nastav rate limiting na p\u0159ihla\u0161ovac\u00ed endpoint proti brute-force \u00fatok\u016fm. Pro Django: django-axes (automatick\u00fd lockout po X pokusech) nebo django-ratelimit na login view.
+
+8. **Skryt\u00ed admin URL** \u2014 Nepou\u017e\u00edvej v\u00fdchoz\u00ed cestu /admin/, /wp-admin/ nebo /administrator/. P\u0159ejmenuj na n\u011bco nep\u0159edv\u00eddateln\u00e9ho (nap\u0159. /manage-xyz123/). Boti automaticky skenuj\u00ed zn\u00e1m\u00e9 admin cesty \u2014 p\u0159ejmenov\u00e1n\u00ed eliminuje v\u011bt\u0161inu automatizovan\u00fdch \u00fatok\u016f.""",
     },
     {
         "id": "seo-zaklady",
