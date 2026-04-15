@@ -42,15 +42,15 @@
   {% endif %}
 
   <!-- Score + summary cards -->
-  <div class="flex items-stretch gap-4 mb-6">
-    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center min-w-[140px]">
+  <div class="flex flex-col sm:flex-row items-stretch gap-4 mb-6">
+    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center sm:min-w-[140px]">
       <div class="leading-none mb-1"><span class="text-6xl font-extrabold text-{{ category.color }}-500">{{ scan.vibe_score }}</span><span class="text-xl font-semibold text-slate-300">/100</span></div>
       <div class="text-xs text-slate-500 font-medium">Vibe Score</div>
       <div class="mt-3 bg-{{ category.color }}-100 text-{{ category.color }}-700 text-xs font-semibold px-2.5 py-1 rounded-full">{{ category.label }}</div>
     </div>
 
     {% with counts=active|finding_counts %}
-    <div class="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="flex-1 grid grid-cols-2 gap-4">
       <div class="bg-white border border-red-200 rounded-2xl p-5 shadow-sm">
         <div class="text-3xl font-extrabold text-red-500 mb-1">{{ counts.critical }}</div>
         <div class="text-sm font-semibold text-slate-700">Kritické</div>
@@ -131,7 +131,7 @@
       </div>
       <div class="divide-y divide-slate-100">
         {% for f in critical %}
-        <div class="px-5 py-4 flex gap-3">
+        <div class="px-5 py-4 flex flex-col sm:flex-row gap-3">
           <div class="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0 mt-0.5">
             <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
           </div>
@@ -141,10 +141,10 @@
               <span class="text-xs font-mono text-red-500">−{{ f|penalty }}</span>
             </div>
             <div class="text-xs text-slate-500 leading-relaxed">{{ f.description }}</div>
-            {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 block whitespace-pre-wrap">{{ f.detail }}</code>{% endif %}
+            {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 block whitespace-pre-wrap break-all overflow-hidden">{{ f.detail }}</code>{% endif %}
             {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 block">Dokumentace →</a>{% endif %}
           </div>
-          <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
+          <div class="flex sm:flex-col items-start sm:items-end gap-2 sm:gap-1 flex-shrink-0 mt-2 sm:mt-0.5">
             <a href="{{ f.fix_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-blue-600 hover:underline font-semibold">Opravit →</a>
             {% if not scan.ephemeral %}
             <div class="relative" x-data="{ open: false, above: false }" x-init="$watch('open', v => { if(v){ let r=$el.getBoundingClientRect(); above=r.bottom+140>window.innerHeight } })">
@@ -177,7 +177,7 @@
       </div>
       <div class="divide-y divide-slate-100">
         {% for f in warnings %}
-        <div class="px-5 py-4 flex gap-3">
+        <div class="px-5 py-4 flex flex-col sm:flex-row gap-3">
           <div class="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0 mt-0.5">
             <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg>
           </div>
@@ -187,10 +187,10 @@
               <span class="text-xs font-mono text-amber-500">−{{ f|penalty }}</span>
             </div>
             <div class="text-xs text-slate-500 leading-relaxed">{{ f.description }}</div>
-            {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 block whitespace-pre-wrap">{{ f.detail }}</code>{% endif %}
+            {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 block whitespace-pre-wrap break-all overflow-hidden">{{ f.detail }}</code>{% endif %}
             {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 block">Dokumentace →</a>{% endif %}
           </div>
-          <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
+          <div class="flex sm:flex-col items-start sm:items-end gap-2 sm:gap-1 flex-shrink-0 mt-2 sm:mt-0.5">
             <a href="{{ f.fix_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-blue-600 hover:underline font-semibold">Opravit →</a>
             {% if not scan.ephemeral %}
             <div class="relative" x-data="{ open: false, above: false }" x-init="$watch('open', v => { if(v){ let r=$el.getBoundingClientRect(); above=r.bottom+140>window.innerHeight } })">
@@ -223,7 +223,7 @@
       </div>
       <div class="divide-y divide-slate-100">
         {% for f in infos %}
-        <div class="px-5 py-4 flex gap-3">
+        <div class="px-5 py-4 flex flex-col sm:flex-row gap-3">
           <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
             <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg>
           </div>
@@ -236,7 +236,7 @@
             {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 block">{{ f.detail }}</code>{% endif %}
             {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 inline-block">Dokumentace →</a>{% endif %}
           </div>
-          <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
+          <div class="flex sm:flex-col items-start sm:items-end gap-2 sm:gap-1 flex-shrink-0 mt-2 sm:mt-0.5">
             <a href="{{ f.fix_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-blue-600 hover:underline font-semibold">Opravit →</a>
             {% if not scan.ephemeral %}
             <div class="relative" x-data="{ open: false, above: false }" x-init="$watch('open', v => { if(v){ let r=$el.getBoundingClientRect(); above=r.bottom+140>window.innerHeight } })">

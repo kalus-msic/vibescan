@@ -6,7 +6,7 @@
   <div class="max-w-3xl mx-auto">
     <div class="text-center mb-8">
       <div class="text-xs text-slate-400 font-mono mb-3">vibescan.cz/scan/{{ scan.id }}</div>
-      <h2 class="text-2xl font-bold">
+      <h2 class="text-2xl font-bold break-all">
         {% if scan.status == "done" %}Výsledky pro{% else %}Skenuji{% endif %}
         <span class="text-blue-600">{{ scan.url }}</span>
       </h2>
