@@ -3,7 +3,7 @@ from django.views.decorators.http import require_http_methods
 from django.http import HttpResponse, HttpResponseBadRequest, Http404
 from django_ratelimit.decorators import ratelimit
 from urllib.parse import urlparse
-from .models import ScanResult, ScanStatus
+from .models import ScanResult, ScanLog, ScanStatus
 from .forms import ScanForm
 from .tasks import run_scan
 from scanner.score import ScoreCategory, recalculate_from_findings_dicts
@@ -22,10 +22,17 @@ def _session_key(group, request):
 def home(request):
     form = ScanForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
+        client_ip = request.META.get("HTTP_X_REAL_IP") or request.META.get("REMOTE_ADDR")
+        ephemeral = form.cleaned_data.get("ephemeral", False)
         scan = ScanResult.objects.create(
             url=form.cleaned_data["url"],
-            ephemeral=form.cleaned_data.get("ephemeral", False),
-            client_ip=request.META.get("HTTP_X_REAL_IP") or request.META.get("REMOTE_ADDR"),
+            ephemeral=ephemeral,
+            client_ip=client_ip,
+        )
+        ScanLog.objects.create(
+            url=form.cleaned_data["url"],
+            client_ip=client_ip,
+            ephemeral=ephemeral,
         )
         run_scan.delay(str(scan.id))
         return redirect("scanner:scan_detail", pk=scan.id)

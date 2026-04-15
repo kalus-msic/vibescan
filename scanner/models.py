@@ -29,3 +29,18 @@ class ScanResult(models.Model):
 
     def __str__(self):
         return f"{self.url} — {self.status} ({self.vibe_score})"
+
+
+class ScanLog(models.Model):
+    """Lightweight audit log — tracks every scan including ephemeral ones."""
+    url = models.URLField(max_length=2000)
+    client_ip = models.GenericIPAddressField(null=True, blank=True)
+    ephemeral = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        tag = "jednorázový" if self.ephemeral else "uložený"
+        return f"{self.url} — {self.client_ip} ({tag})"

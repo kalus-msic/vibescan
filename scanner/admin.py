@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django_celery_results.models import GroupResult
-from scanner.models import ScanResult
+from scanner.models import ScanResult, ScanLog
 
 admin.site.unregister(GroupResult)
 
@@ -12,3 +12,12 @@ class ScanResultAdmin(admin.ModelAdmin):
     search_fields = ("url", "client_ip")
     ordering = ("-created_at",)
     readonly_fields = ("id", "created_at", "completed_at", "client_ip")
+
+
+@admin.register(ScanLog)
+class ScanLogAdmin(admin.ModelAdmin):
+    list_display = ("url", "client_ip", "ephemeral", "created_at")
+    list_filter = ("ephemeral",)
+    search_fields = ("url", "client_ip")
+    ordering = ("-created_at",)
+    readonly_fields = ("url", "client_ip", "ephemeral", "created_at")
