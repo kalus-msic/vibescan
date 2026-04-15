@@ -23,14 +23,10 @@ services:
   web:
     build: .
     command: >
-      sh -c "mkdir -p static/css &&
-             tailwindcss -i static/src/input.css -o static/css/style.css --minify &&
-             python manage.py migrate &&
+      sh -c "python manage.py migrate &&
              python manage.py createsuperuser --noinput 2>/dev/null || true &&
-             python manage.py collectstatic --noinput &&
              gunicorn vibescan.wsgi:application --bind 0.0.0.0:8000"
     volumes:
-      - .:/app
       - static_volume:/app/staticfiles
     env_file: .env
     depends_on:
@@ -44,8 +40,6 @@ services:
   celery:
     build: .
     command: celery -A vibescan worker --loglevel=info --concurrency=2
-    volumes:
-      - .:/app
     env_file: .env
     depends_on:
       db:
