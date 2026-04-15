@@ -50,7 +50,7 @@
     </div>
 
     {% with counts=active|finding_counts %}
-    <div class="flex-1 grid grid-cols-3 gap-4">
+    <div class="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
       <div class="bg-white border border-red-200 rounded-2xl p-5 shadow-sm">
         <div class="text-3xl font-extrabold text-red-500 mb-1">{{ counts.critical }}</div>
         <div class="text-sm font-semibold text-slate-700">Kritické</div>
@@ -60,6 +60,11 @@
         <div class="text-3xl font-extrabold text-amber-500 mb-1">{{ counts.warning }}</div>
         <div class="text-sm font-semibold text-slate-700">Varování</div>
         <div class="text-xs text-slate-400 mt-1">Doporučeno opravit</div>
+      </div>
+      <div class="bg-white border border-blue-200 rounded-2xl p-5 shadow-sm">
+        <div class="text-3xl font-extrabold text-blue-400 mb-1">{{ counts.info }}</div>
+        <div class="text-sm font-semibold text-slate-700">Upozornění</div>
+        <div class="text-xs text-slate-400 mt-1">Ke zvážení</div>
       </div>
       <div class="bg-white border border-green-200 rounded-2xl p-5 shadow-sm">
         <div class="text-3xl font-extrabold text-green-500 mb-1">{{ counts.ok }}</div>

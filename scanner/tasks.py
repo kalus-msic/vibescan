@@ -135,7 +135,7 @@ def run_scan(self, scan_id: str):
 
         try:
             # Skip HTML parsing modules for non-HTML responses
-            if not is_html and module.name in ("html", "secrets", "forms", "sri", "meta", "tracking", "accessibility", "legal"):
+            if not is_html and module.name in ("html", "secrets", "forms", "sri", "meta", "tracking", "accessibility", "legal", "seo"):
                 progress[i]["status"] = "done"
                 continue
             findings = module.run(scan.url, response)
