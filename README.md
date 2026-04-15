@@ -2,7 +2,7 @@
 
 Open-source web security scanner pro projekty postavene s AI nastroji (Cursor, Lovable, Bolt, Claude Code, Windsurf...) i bez nich.
 
-Zadej URL, Vibescan behem par sekund zkontroluje 12 bezpecnostnich oblasti a vrati "vibe score" (0-100) s konkretnimi navrhy co opravit.
+Zadej URL, Vibescan behem par sekund zkontroluje 14 bezpecnostnich oblasti a vrati "vibe score" (0-100) s konkretnimi navrhy co opravit.
 
 **[vibescan.cz](https://vibescan.cz)**
 
@@ -22,6 +22,8 @@ Zadej URL, Vibescan behem par sekund zkontroluje 12 bezpecnostnich oblasti a vra
 | CORS | Wildcard origin, chybejici Vary header |
 | Tracking & consent | Tracking skripty bez cookie consent |
 | Pravni & pristupnost | Cookie consent lista, ochrana osobnich udaju, copyright, skip link |
+| Pristupnost | Alt atributy, html lang, form labels, heading hierarchy |
+| SEO zaklady | Title, meta description, canonical, Open Graph, h1 |
 
 ## Stack
 

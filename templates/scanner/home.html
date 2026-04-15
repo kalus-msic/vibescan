@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Vibescan — bezpečnostní audit{% endblock %}
+{% block title %}Vibescan — bezpečnostní audit pro webové projekty{% endblock %}
+{% block meta_description %}Zadej URL a během pár sekund zjisti, jak je tvůj web zabezpečený. 12 bezpečnostních kontrol, vibe score, návody na opravu.{% endblock %}
 
 {% block content %}
 <section class="max-w-5xl mx-auto px-6 pt-16 pb-24">
@@ -36,7 +37,7 @@
       <form method="post" action="{% url 'scanner:home' %}">
         {% csrf_token %}
         <label class="block text-sm font-semibold text-slate-700 mb-2">URL adresa webu</label>
-        <div class="flex gap-3">
+        <div class="flex flex-col sm:flex-row gap-3">
           <div class="flex-1 flex items-center border border-slate-300 rounded-xl px-4 py-3 gap-2 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all bg-white">
             <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/></svg>
             {{ form.url }}

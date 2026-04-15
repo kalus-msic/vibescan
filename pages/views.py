@@ -119,6 +119,23 @@ Poznámka: Vygenerované texty jsou šablony — uprav je podle skutečných úd
 
 5. **Monitoring** \u2014 Nastav uptime monitoring (UptimeRobot, Healthchecks.io) pro v\u010dasn\u00e9 odchycen\u00ed v\u00fdpadk\u016f.""",
     },
+    {
+        "id": "seo-zaklady",
+        "title": "SEO z\u00e1klady",
+        "content": """Nastav z\u00e1kladn\u00ed SEO meta tagy na ka\u017ed\u00e9 str\u00e1nce:
+
+1. **<title>** \u2014 Unik\u00e1tn\u00ed titulek 50\u201360 znak\u016f. Zobrazuje se ve v\u00fdsledc\u00edch vyhled\u00e1v\u00e1n\u00ed a v z\u00e1lo\u017ek\u00e1ch prohl\u00ed\u017ee\u010de.
+
+2. **<meta name="description">** \u2014 Popisek 120\u2013160 znak\u016f. Google ho zobrazuje pod titulkem ve v\u00fdsledc\u00edch.
+
+3. **<link rel="canonical">** \u2014 Canonical URL ur\u010duje hlavn\u00ed verzi str\u00e1nky. P\u0159edch\u00e1z\u00ed probl\u00e9m\u016fm s duplicitn\u00edm obsahem (nap\u0159. s/bez www, s/bez trailing slash).
+
+4. **Open Graph tagy** \u2014 og:title, og:description, og:image ur\u010duj\u00ed jak str\u00e1nka vypad\u00e1 p\u0159i sd\u00edlen\u00ed na soci\u00e1ln\u00edch s\u00edt\u00edch.
+
+5. **<h1> nadpis** \u2014 Ka\u017ed\u00e1 str\u00e1nka by m\u011bla m\u00edt pr\u00e1v\u011b jeden <h1>. Popisuje hlavn\u00ed t\u00e9ma str\u00e1nky pro vyhled\u00e1va\u010de i u\u017eivatele.
+
+6. **<html lang="cs">** \u2014 Jazykov\u00fd atribut pom\u00e1h\u00e1 vyhled\u00e1va\u010d\u016fm i hlasov\u00fdm \u010dte\u010dk\u00e1m.""",
+    },
 ]
 
 

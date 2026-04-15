@@ -4,7 +4,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Vibescan{% endblock %}</title>
+  <title>{% block title %}Vibescan — bezpečnostní audit pro webové projekty{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}Open-source bezpečnostní skener pro weby. 12 kontrol, vibe score, návody na opravu. Zkontroluj headers, SSL, DNS, cookies a další.{% endblock %}">
+  <link rel="canonical" href="{% block canonical %}https://vibescan.cz{% endblock %}">
+  <meta property="og:title" content="{% block og_title %}Vibescan — bezpečnostní audit pro webové projekty{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}Open-source bezpečnostní skener. 12 kontrol, vibe score 0–100, konkrétní návody co opravit.{% endblock %}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{% block og_url %}https://vibescan.cz{% endblock %}">
+  <meta property="og:locale" content="cs_CZ">
+  <meta property="og:site_name" content="Vibescan">
+  <meta name="twitter:card" content="summary">
+  <meta name="robots" content="index, follow">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,19 +44,29 @@
   Přeskočit na obsah
 </a>
 
-<nav aria-label="Hlavní navigace" class="bg-white border-b border-slate-200 px-6 sticky top-0 z-50">
+<nav aria-label="Hlavní navigace" class="bg-white border-b border-slate-200 px-6 sticky top-0 z-50" x-data="{ open: false }">
   <div class="max-w-5xl mx-auto flex items-center justify-between h-14">
     <a href="{% url 'scanner:home' %}" class="flex items-center gap-2">
       <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
       <span class="font-bold text-lg tracking-tight">vibescan</span>
       <span class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-full font-medium">beta</span>
     </a>
-    <div class="flex items-center gap-5 text-sm">
+    <div class="hidden md:flex items-center gap-5 text-sm">
       <a href="{% url 'pages:how_it_works' %}" class="text-slate-500 hover:text-slate-900 font-medium transition-colors">Jak to funguje</a>
       <a href="{% url 'pages:guide' %}" class="text-slate-500 hover:text-slate-900 font-medium transition-colors">Průvodce</a>
       <a href="{% url 'pages:review' %}" class="text-slate-500 hover:text-slate-900 font-medium transition-colors">Security Review</a>
       <a href="{% url 'pages:roadmap' %}" class="text-slate-500 hover:text-slate-900 font-medium transition-colors">Roadmapa</a>
     </div>
+    <button @click="open = !open" class="md:hidden text-slate-500 hover:text-slate-900 cursor-pointer" aria-label="Menu">
+      <svg x-show="!open" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
+      <svg x-show="open" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div x-show="open" x-cloak @click.outside="open = false" class="md:hidden border-t border-slate-100 py-3 space-y-1">
+    <a href="{% url 'pages:how_it_works' %}" class="block px-2 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg font-medium">Jak to funguje</a>
+    <a href="{% url 'pages:guide' %}" class="block px-2 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg font-medium">Průvodce</a>
+    <a href="{% url 'pages:review' %}" class="block px-2 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg font-medium">Security Review</a>
+    <a href="{% url 'pages:roadmap' %}" class="block px-2 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg font-medium">Roadmapa</a>
   </div>
 </nav>
 

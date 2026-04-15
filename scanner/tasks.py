@@ -21,6 +21,7 @@ from .modules.tracking import TrackingConsentScanner
 from .modules.accessibility import AccessibilityScanner
 from .modules.legal import LegalScanner
 from .modules.dns_check import DNSScanner
+from .modules.seo import SEOScanner
 from .score import calculate_vibe_score
 from .validator import validate_resolved_ip, validate_scan_url, SSRFError
 
@@ -44,6 +45,7 @@ SCAN_MODULES = [
     AccessibilityScanner(),
     LegalScanner(),
     DNSScanner(),
+    SEOScanner(),
     # TechLeakageScanner — disabled, requires domain verification (Phase 3)
 ]
 
