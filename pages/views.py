@@ -136,6 +136,27 @@ Poznámka: Vygenerované texty jsou šablony — uprav je podle skutečných úd
 
 6. **<html lang="cs">** \u2014 Jazykov\u00fd atribut pom\u00e1h\u00e1 vyhled\u00e1va\u010d\u016fm i hlasov\u00fdm \u010dte\u010dk\u00e1m.""",
     },
+    {
+        "id": "rychlost-a-indexace",
+        "title": "Rychlost webu & indexace",
+        "content": """Rychlost webu p\u0159\u00edmo ovliv\u0148uje pozici ve vyhled\u00e1v\u00e1n\u00ed (Core Web Vitals jsou ranking faktor od 2021). Pomal\u00fd web = hor\u0161\u00ed pozice + vy\u0161\u0161\u00ed bounce rate.
+
+1. **Obr\u00e1zky ve WebP/AVIF** \u2014 Serv\u00edruj obr\u00e1zky v modern\u00edch form\u00e1tech (WebP, AVIF) m\u00edsto PNG/JPEG. \u00daspora 30\u201380 % velikosti. Pou\u017eij <picture> element s fallbackem: <source srcset="img.avif" type="image/avif">, <source srcset="img.webp" type="image/webp">, <img src="img.jpg">.
+
+2. **Lazy loading** \u2014 P\u0159idej loading="lazy" na obr\u00e1zky pod ohybem str\u00e1nky (mimo viewport). Prohl\u00ed\u017ee\u010d je na\u010dte a\u017e kdy\u017e se k nim u\u017eivatel scrollne.
+
+3. **Minifikace CSS/JS** \u2014 Minimalizuj a komprimuj CSS a JavaScript. Zapni gzip/brotli kompresi na serveru (Nginx: gzip on; Cloudflare/Vercel: automaticky).
+
+4. **PageSpeed Insights** \u2014 Otestuj rychlost webu na https://pagespeed.web.dev/ \u2014 zm\u011b\u0159\u00ed Core Web Vitals (LCP, INP, CLS) a d\u00e1 ti konkr\u00e9tn\u00ed doporu\u010den\u00ed co zrychlit. C\u00edl je sk\u00f3re 90+ v mobile i desktop.
+
+6. **Google Search Console** \u2014 Zaregistruj web na https://search.google.com/search-console/ \u2014 uvid\u00ed\u0161 jak Google indexuje tv\u016fj web, jak\u00e9 m\u00e1\u0161 chyby a na jak\u00e9 dotazy se zobrazuje\u0161.
+
+7. **Seznam Webmaster** \u2014 Pro \u010desk\u00fd trh p\u0159idej web i na https://search.seznam.cz/wt/pridej-stranku \u2014 Seznam m\u00e1 v \u010cR st\u00e1le ~15 % pod\u00edl na vyhled\u00e1v\u00e1n\u00ed.
+
+8. **Sitemap.xml** \u2014 Vygeneruj sitemap.xml a p\u0159idej ho do Search Console. Pom\u00e1h\u00e1 vyhled\u00e1va\u010d\u016fm naj\u00edt v\u0161echny str\u00e1nky webu.
+
+9. **robots.txt** \u2014 Vytvo\u0159 robots.txt v ko\u0159eni webu. Povol indexaci ve\u0159ejn\u00fdch str\u00e1nek, zaka\u017e admin sekce a intern\u00ed API.""",
+    },
 ]
 
 
