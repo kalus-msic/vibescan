@@ -34,6 +34,9 @@ wireframe/
 # Docker (dev only)
 docker-compose.override.yml
 
+# Logs
+logs/
+
 # OS
 .DS_Store
 Thumbs.db

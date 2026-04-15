@@ -104,6 +104,21 @@ Nastav automatické kontroly závislostí v CI/CD (Dependabot, Renovate nebo Sny
 
 Poznámka: Vygenerované texty jsou šablony — uprav je podle skutečných údajů o provozovateli a zpracování dat.""",
     },
+    {
+        "id": "logovani-monitoring",
+        "title": "Logov\u00e1n\u00ed & monitoring",
+        "content": """Nastav logov\u00e1n\u00ed a monitoring pro produk\u010dn\u00ed nasazen\u00ed:
+
+1. **Access logy** \u2014 Loguj ka\u017ed\u00fd HTTP request v\u010detn\u011b skute\u010dn\u00e9 IP klienta (ne intern\u00ed IP proxy). Za reverse proxy (Nginx, Cloudflare) pou\u017eij X-Forwarded-For nebo X-Real-IP header. V Nginx: set_real_ip_from a real_ip_header.
+
+2. **Error logy** \u2014 Loguj v\u0161echny chyby (500, v\u00fdjimky, timeouty). Nikdy neloguj citliv\u00e1 data (hesla, tokeny, osobn\u00ed \u00fadaje). Pro Django: nastav LOGGING v settings.py s handlery pro soubor i stdout.
+
+3. **Persistentn\u00ed logy** \u2014 V Dockeru logy defaultn\u011b miz\u00ed s kontejnerem. Mountuj log adres\u00e1\u0159 na host: volumes: - ./logs:/var/log/nginx. P\u0159idej logs/ do .gitignore.
+
+4. **Log rotace** \u2014 Nastav logrotate nebo Docker logging driver s max-size limitem, aby logy nezaplnily disk.
+
+5. **Monitoring** \u2014 Nastav uptime monitoring (UptimeRobot, Healthchecks.io) pro v\u010dasn\u00e9 odchycen\u00ed v\u00fdpadk\u016f.""",
+    },
 ]
 
 
