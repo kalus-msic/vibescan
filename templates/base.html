@@ -8,8 +8,8 @@
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/htmx.org@2.0.3/dist/htmx.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.3/dist/htmx.min.js" integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js" integrity="sha384-9Ax3MmS9AClxJyd5/zafcXXjxmwFhZCdsT6HJoJjarvCaAkJlk5QDzjLJm+Wdx5F" crossorigin="anonymous"></script>
   <style>[x-cloak] { display: none !important; }</style>
   {% if gtm_id %}
   <!-- GTM - loaded only after cookie consent (see cookie consent bar) -->
@@ -67,7 +67,7 @@
 </footer>
 
 <!-- Cookie consent bar -->
-<div x-data="{
+<div id="cookie-consent" x-data="{
   show: false,
   init() { this.show = !localStorage.getItem('cookie_consent'); }
 }" x-show="show" x-cloak x-transition.opacity
