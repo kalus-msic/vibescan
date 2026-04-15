@@ -22,6 +22,7 @@ class ScanResult(models.Model):
     completed_at = models.DateTimeField(null=True, blank=True)
     error_message = models.TextField(blank=True, default="")
     ephemeral = models.BooleanField(default=False)
+    client_ip = models.GenericIPAddressField(null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at"]

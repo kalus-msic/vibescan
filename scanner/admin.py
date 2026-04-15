@@ -7,8 +7,8 @@ admin.site.unregister(GroupResult)
 
 @admin.register(ScanResult)
 class ScanResultAdmin(admin.ModelAdmin):
-    list_display = ("url", "status", "vibe_score", "created_at")
+    list_display = ("url", "status", "vibe_score", "client_ip", "created_at")
     list_filter = ("status",)
-    search_fields = ("url",)
+    search_fields = ("url", "client_ip")
     ordering = ("-created_at",)
-    readonly_fields = ("id", "created_at", "completed_at")
+    readonly_fields = ("id", "created_at", "completed_at", "client_ip")

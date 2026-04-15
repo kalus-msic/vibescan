@@ -25,6 +25,7 @@ def home(request):
         scan = ScanResult.objects.create(
             url=form.cleaned_data["url"],
             ephemeral=form.cleaned_data.get("ephemeral", False),
+            client_ip=request.META.get("HTTP_X_REAL_IP") or request.META.get("REMOTE_ADDR"),
         )
         run_scan.delay(str(scan.id))
         return redirect("scanner:scan_detail", pk=scan.id)
