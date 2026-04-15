@@ -51,18 +51,18 @@
       <span class="font-bold text-lg tracking-tight">vibescan</span>
       <span class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-full font-medium">beta</span>
     </a>
-    <div class="hidden lg:flex items-center gap-5 text-sm">
+    <div class="hidden xl:flex items-center gap-5 text-sm">
       <a href="{% url 'pages:how_it_works' %}" class="text-slate-500 hover:text-slate-900 font-medium transition-colors">Jak to funguje</a>
       <a href="{% url 'pages:guide' %}" class="text-slate-500 hover:text-slate-900 font-medium transition-colors">Průvodce</a>
       <a href="{% url 'pages:review' %}" class="text-slate-500 hover:text-slate-900 font-medium transition-colors">Security Review</a>
       <a href="{% url 'pages:roadmap' %}" class="text-slate-500 hover:text-slate-900 font-medium transition-colors">Roadmapa</a>
     </div>
-    <button @click="open = !open" class="lg:hidden text-slate-500 hover:text-slate-900 cursor-pointer" aria-label="Menu">
+    <button @click="open = !open" class="xl:hidden text-slate-500 hover:text-slate-900 cursor-pointer" aria-label="Menu">
       <svg x-show="!open" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
       <svg x-show="open" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
     </button>
   </div>
-  <div x-show="open" x-cloak @click.outside="open = false" class="lg:hidden border-t border-slate-100 py-3 space-y-1">
+  <div x-show="open" x-cloak @click.outside="open = false" class="xl:hidden border-t border-slate-100 py-3 space-y-1">
     <a href="{% url 'pages:how_it_works' %}" class="block px-2 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg font-medium">Jak to funguje</a>
     <a href="{% url 'pages:guide' %}" class="block px-2 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg font-medium">Průvodce</a>
     <a href="{% url 'pages:review' %}" class="block px-2 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg font-medium">Security Review</a>
