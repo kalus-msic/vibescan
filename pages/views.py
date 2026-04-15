@@ -408,32 +408,38 @@ SCAN_CHECKS = [
         "icon": "lock",
         "title": "HTTP Security Headers",
         "description": "Kontrolujeme přítomnost a správné nastavení bezpečnostních hlaviček: HSTS, Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy a Permissions-Policy. Chybějící hlavičky jsou nejčastější problém vibecoded projektů — AI je málokdy přidá automaticky.",
+        "doc_url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers#security",
     },
     {
         "icon": "shield",
         "title": "SSL & HTTPS",
         "description": "Ověříme, že web běží na HTTPS a správně přesměrovává HTTP požadavky. Bez HTTPS je veškerá komunikace nešifrovaná a zranitelná vůči odposlouchávání.",
+        "doc_url": "https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/TLS",
     },
     {
         "icon": "dns",
         "title": "DNS záznamy (SPF, DMARC, DKIM)",
         "description": "Kontrolujeme emailové DNS záznamy, které chrání tvou doménu před spoofingem a phishingem. Ověříme SPF, DMARC (včetně síly politiky p=none vs p=reject) a DKIM přes běžné selektory.",
+        "doc_url": "https://www.cloudflare.com/learning/dns/dns-records/dns-dmarc-record/",
     },
     {
         "icon": "code",
         "title": "HTML analýza",
         "description": "Parsujeme HTML stránky a hledáme typické chyby: odkazy s target=\"_blank\" bez rel=\"noopener\" (reverse tabnabbing útok), HTML komentáře obsahující TODO, hesla, API klíče nebo debug poznámky.",
+        "doc_url": "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noopener",
     },
     {
         "icon": "eye",
         "title": "Tech leakage",
         "description": "Detekujeme prozrazení technologického stacku přes HTTP hlavičky — X-Powered-By, Server verze a podobně. Útočníci tyto informace využívají k cílení známých zranitelností.",
+        "doc_url": "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/01-Information_Gathering/08-Fingerprint_Web_Application_Framework",
     },
     {
         "id": "sensitive-files",
         "icon": "folder",
         "title": "Citlivé soubory",
         "description": "Kontrolujeme veřejnou dostupnost souborů, které by neměly být přístupné zvenčí. Testujeme pouze existenci (HTTP HEAD, status code) — obsah souborů nečteme.",
+        "doc_url": "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/04-Review_Old_Backup_and_Unreferenced_Files_for_Sensitive_Information",
         "detail_mono": True,
         "detail_footer": mark_safe(
             'Toto není vyčerpávající seznam — pokrývá nejčastější chyby vibecoded projektů. '
@@ -455,22 +461,26 @@ SCAN_CHECKS = [
         "icon": "file",
         "title": "security.txt",
         "description": "Kontrolujeme přítomnost souboru security.txt (RFC 9116) na /.well-known/security.txt. Tento soubor říká bezpečnostním výzkumníkům, kam hlásit nalezené zranitelnosti.",
+        "doc_url": "https://securitytxt.org/",
     },
     {
         "icon": "accessibility",
         "title": "Základní přístupnost",
         "description": "Kontrolujeme vybrané signály přístupnosti webu: přítomnost odkazu pro přeskočení navigace (skip link) pro uživatele klávesnice a hlasových čteček, a respektování systémového nastavení prefers-reduced-motion pro uživatele s vestibulárními potížemi nebo epilepsií. Pokud tyto prvky nenajdeme, upozorníme — ale doporučujeme ověřit i další stránky webu.",
+        "doc_url": "https://pristupne-stranky.cz/zakon-a-standardy/",
     },
     {
         "icon": "legal",
         "title": "Právní náležitosti",
         "description": "Hledáme základní právní prvky vyžadované českým a evropským právem: mechanismus pro souhlas s cookies (cookie consent lišta), odkaz na stránku ochrany osobních údajů (GDPR) a copyright v patičce. Nekontrolujeme IČO ani adresu provozovatele — tyto údaje bývají na podstránkách, kam se pasivním skenem nedostaneme. Pokud něco nenajdeme, neznamená to porušení zákona — pouze doporučujeme zkontrolovat.",
+        "doc_url": "https://gdpr.eu/cookies/",
     },
     {
         "id": "dependency-check",
         "icon": "package",
         "title": "Kontrola závislostí (CVE)",
         "description": "Vložte obsah souboru se závislostmi a zkontrolujeme každý balíček proti databázi známých zranitelností. Automaticky rozpoznáme formát souboru (requirements.txt, package.json, composer.json), extrahujeme názvy a verze balíčků a dotážeme se OSV.dev API. Pro každou nalezenou zranitelnost zobrazíme identifikátor, závažnost podle CVSS skóre, popis a opravenou verzi — pokud existuje.",
+        "doc_url": "https://osv.dev/",
         "detail_list": [
             "Databáze: OSV.dev (osv.dev) — open-source agregátor zranitelností provozovaný Googlem",
             "Zdroje dat: NVD (NIST), GitHub Security Advisories, PyPI Advisory, npm Advisory, RustSec, Go Vulnerability Database a další",
