@@ -35,5 +35,5 @@ RUN mkdir -p static/css \
 # Collect static files (dummy secrets for build only, not persisted in runtime env)
 RUN SECRET_KEY=build-only DB_PASSWORD=build-only python manage.py collectstatic --noinput
 
-RUN chown -R app:app /app
+RUN mkdir -p /app/logs && chown -R app:app /app
 USER app

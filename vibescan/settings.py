@@ -99,6 +99,11 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
+        "auth_file": {
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR / "logs" / "auth.log",
+            "formatter": "verbose",
+        },
     },
     "loggers": {
         "django.security": {
@@ -106,7 +111,7 @@ LOGGING = {
             "level": "INFO",
         },
         "auth": {
-            "handlers": ["console"],
+            "handlers": ["console", "auth_file"],
             "level": "INFO",
         },
     },
