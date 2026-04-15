@@ -116,6 +116,14 @@ class AccessibilityScanner(BaseScanModule):
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/img#alt",
                 detail=", ".join(imgs_without_alt[:5]),
             ))
+        elif soup.find_all("img"):
+            findings.append(Finding(
+                id="img-alt-ok",
+                title="Obrázky mají alt atributy",
+                description="Všechny obrázky na stránce mají nastaven alt atribut.",
+                severity=Severity.OK,
+                category="accessibility",
+            ))
 
         # Form inputs without labels
         inputs_without_label = []
@@ -146,6 +154,7 @@ class AccessibilityScanner(BaseScanModule):
             ))
 
         # Empty links and buttons
+        # Note: no OK finding here — absence of empty elements is expected, not noteworthy
         empty_interactive = []
         for el in soup.find_all(["a", "button"]):
             text = el.get_text(strip=True)
@@ -189,6 +198,14 @@ class AccessibilityScanner(BaseScanModule):
                 fix_url="/guide/#pravni-dokumenty",
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Heading_Elements",
                 detail=", ".join(skipped[:5]),
+            ))
+        elif headings:
+            findings.append(Finding(
+                id="heading-hierarchy-ok",
+                title="Hierarchie nadpis\u016f je spr\u00e1vn\u00e1",
+                description="Nadpisy na str\u00e1nce dodr\u017euj\u00ed spr\u00e1vnou hierarchii bez p\u0159esko\u010den\u00fdch \u00farovn\u00ed.",
+                severity=Severity.OK,
+                category="accessibility",
             ))
 
         return findings
