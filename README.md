@@ -36,11 +36,23 @@ Zadej URL, Vibescan behem par sekund zkontroluje 14 bezpecnostnich oblasti a vra
 
 ```bash
 cp .env.example .env
-# uprav .env (SECRET_KEY, DB_PASSWORD, ...)
+# uprav .env (SECRET_KEY, DB_PASSWORD, REDIS_PASSWORD, ...)
 docker-compose up --build
 ```
 
-Aplikace bezi na `http://localhost`.
+Aplikace bezi na `http://localhost:9003`.
+
+### Docker Compose sluzby
+
+| Sluzba | Obraz | Popis |
+|--------|-------|-------|
+| **db** | postgres:16-alpine | PostgreSQL databaze |
+| **redis** | redis:7-alpine | Message broker pro Celery |
+| **web** | vlastni build | Django + Gunicorn (migrace + superuser pri startu) |
+| **celery** | vlastni build | Celery worker — zpracovava skeny asynchronne |
+| **nginx** | nginx:alpine | Reverse proxy, servuje statiku |
+
+`web` a `celery` sdili stejny Docker image. Pri startu `web` automaticky spusti migrace a vytvori admin ucet (z `.env`).
 
 ## Vibe Score
 
