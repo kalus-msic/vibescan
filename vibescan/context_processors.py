@@ -2,4 +2,7 @@ from django.conf import settings
 
 
 def gtm(request):
-    return {"gtm_id": getattr(settings, "GTM_ID", "")}
+    return {
+        "gtm_id": getattr(settings, "GTM_ID", ""),
+        "ga_id": getattr(settings, "GA_ID", ""),
+    }

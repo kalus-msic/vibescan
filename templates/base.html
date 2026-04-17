@@ -22,23 +22,27 @@
   <script src="https://unpkg.com/htmx.org@2.0.3/dist/htmx.min.js" integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js" integrity="sha384-9Ax3MmS9AClxJyd5/zafcXXjxmwFhZCdsT6HJoJjarvCaAkJlk5QDzjLJm+Wdx5F" crossorigin="anonymous"></script>
   <style>[x-cloak] { display: none !important; }</style>
-  {% if gtm_id %}
-  <!-- GTM - loaded only after cookie consent (see cookie consent bar) -->
+  {% if ga_id %}
+  <!-- GA4 - loaded only after cookie consent -->
   <script>
   window.dataLayer = window.dataLayer || [];
-  function loadGTM() {
-    if (window._gtmLoaded) return;
-    window._gtmLoaded = true;
-    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','{{ gtm_id }}');
+  function gtag(){dataLayer.push(arguments);}
+  function loadGA() {
+    if (window._gaLoaded) return;
+    window._gaLoaded = true;
+    var s = document.createElement('script');
+    s.async = true;
+    s.crossOrigin = 'anonymous';
+    s.src = 'https://www.googletagmanager.com/gtag/js?id={{ ga_id }}';
+    document.head.appendChild(s);
+    gtag('js', new Date());
+    gtag('config', '{{ ga_id }}');
   }
-  if (localStorage.getItem('cookie_consent') === 'accepted') { loadGTM(); }
+  if (localStorage.getItem('cookie_consent') === 'accepted') { loadGA(); }
   </script>
   {% endif %}
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen">
-  {% if gtm_id %}
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ gtm_id }}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-  {% endif %}
 
 <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:bg-white focus:text-blue-600 focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg focus:text-sm focus:font-semibold">
   Přeskočit na obsah
@@ -103,7 +107,7 @@
         class="text-sm text-slate-500 hover:text-slate-700 font-medium px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer">
         Odmítnout
       </button>
-      <button @click="localStorage.setItem('cookie_consent', 'accepted'); show = false; if (typeof loadGTM === 'function') loadGTM();"
+      <button @click="localStorage.setItem('cookie_consent', 'accepted'); show = false; if (typeof loadGA === 'function') loadGA();"
         class="text-sm text-white font-semibold px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 transition-colors cursor-pointer">
         Přijmout vše
       </button>
