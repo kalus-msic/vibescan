@@ -57,12 +57,13 @@ class TestSecretLeakageScanner:
         assert len(critical) == 1
         assert "Supabase" in critical[0].title
 
-    def test_detects_firebase_key(self):
+    def test_detects_google_api_key(self):
         resp = _mock_response('apiKey: "AIzaSyA1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q"')
         findings = self.scanner.run("https://example.com", resp)
-        critical = [f for f in findings if f.severity == Severity.CRITICAL]
-        assert len(critical) == 1
-        assert "Firebase" in critical[0].title
+        google = [f for f in findings if f.id == "secret-google-api-key"]
+        assert len(google) == 1
+        assert google[0].severity == Severity.WARNING
+        assert "Google API Key" in google[0].title
 
     def test_detects_vercel_pat(self):
         resp = _mock_response('const token = "vcp_abcdefghijklmnopqrstuvwx";')

@@ -6,7 +6,6 @@ CRITICAL_PATTERNS = {
     "OpenAI API Key": r"sk-proj-[A-Za-z0-9_-]{20,}",
     "OpenAI Legacy Key": r"sk-[A-Za-z0-9]{20,}",
     "AWS Access Key": r"AKIA[0-9A-Z]{16}",
-    "Firebase API Key": r"AIzaSy[A-Za-z0-9_-]{33}",
     "GitHub PAT": r"ghp_[A-Za-z0-9]{36}",
     "GitHub OAuth Token": r"gho_[A-Za-z0-9]{36}",
     "GitHub Fine-grained PAT": r"github_pat_[A-Za-z0-9_]{22,}",
@@ -19,7 +18,14 @@ CRITICAL_PATTERNS = {
 }
 
 WARNING_PATTERNS = {
-    "Supabase Legacy JWT": r"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}",
+    "Google API Key": {
+        "pattern": r"AIzaSy[A-Za-z0-9_-]{33}",
+        "description": "V HTML stránky byl nalezen Google API Key (Firebase, YouTube, Maps aj.). Tyto klíče jsou často záměrně veřejné a chráněné pomocí API restrictions (HTTP referrer, IP whitelist). Ověřte, že máte nastavená omezení v Google Cloud Console.",
+    },
+    "Supabase Legacy JWT": {
+        "pattern": r"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}",
+        "description": "V HTML stránky byl nalezen HS256 JWT token — může jít o Supabase anon key (to je ok) nebo service_role key (kritické — plný přístup k DB). Ověřte který klíč to je.",
+    },
 }
 
 GENERIC_PATTERNS = {
@@ -61,8 +67,8 @@ class SecretLeakageScanner(BaseScanModule):
                     detail=_mask_value(value),
                 ))
 
-        for label, pattern in WARNING_PATTERNS.items():
-            for match in re.finditer(pattern, text):
+        for label, config in WARNING_PATTERNS.items():
+            for match in re.finditer(config["pattern"], text):
                 value = match.group()
                 if value in seen:
                     continue
@@ -70,7 +76,7 @@ class SecretLeakageScanner(BaseScanModule):
                 findings.append(Finding(
                     id=f"secret-{label.lower().replace(' ', '-')}",
                     title=f"{label} nalezen v HTML",
-                    description=f"V HTML stránky byl nalezen HS256 JWT token — může jít o Supabase anon key (to je ok) nebo service_role key (kritické — plný přístup k DB). Ověřte který klíč to je.",
+                    description=config["description"],
                     severity=Severity.WARNING,
                     category="secrets",
                     fix_url="/guide/#secrets-env",
