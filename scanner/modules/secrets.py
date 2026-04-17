@@ -51,37 +51,45 @@ class SecretLeakageScanner(BaseScanModule):
         seen = set()
 
         for label, pattern in CRITICAL_PATTERNS.items():
+            matches = []
             for match in re.finditer(pattern, text):
                 value = match.group()
                 if value in seen:
                     continue
                 seen.add(value)
+                matches.append(_mask_value(value))
+            if matches:
+                count = f" ({len(matches)}×)" if len(matches) > 1 else ""
                 findings.append(Finding(
                     id=f"secret-{label.lower().replace(' ', '-')}",
-                    title=f"{label} nalezen v HTML",
+                    title=f"{label} nalezen v HTML{count}",
                     description=f"V HTML stránky byl nalezen {label}. Kdokoliv může otevřít zdrojový kód stránky (Ctrl+U) a klíč zkopírovat. Přesuňte na server a použijte environment variables.",
                     severity=Severity.CRITICAL,
                     category="secrets",
                     fix_url="/guide/#secrets-env",
                     doc_url="https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_credentials",
-                    detail=_mask_value(value),
+                    detail="\n".join(matches[:5]) + (f"\n… a {len(matches) - 5} dalších" if len(matches) > 5 else ""),
                 ))
 
         for label, config in WARNING_PATTERNS.items():
+            matches = []
             for match in re.finditer(config["pattern"], text):
                 value = match.group()
                 if value in seen:
                     continue
                 seen.add(value)
+                matches.append(_mask_value(value))
+            if matches:
+                count = f" ({len(matches)}×)" if len(matches) > 1 else ""
                 findings.append(Finding(
                     id=f"secret-{label.lower().replace(' ', '-')}",
-                    title=f"{label} nalezen v HTML",
+                    title=f"{label} nalezen v HTML{count}",
                     description=config["description"],
                     severity=Severity.WARNING,
                     category="secrets",
                     fix_url="/guide/#secrets-env",
                     doc_url="https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_credentials",
-                    detail=_mask_value(value),
+                    detail="\n".join(matches[:5]) + (f"\n… a {len(matches) - 5} dalších" if len(matches) > 5 else ""),
                 ))
 
         generic_matches = []
