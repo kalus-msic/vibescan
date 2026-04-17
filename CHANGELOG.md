@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.1.0 (2026-04-17)
+
+### Scanner
+- Google API Key (AIzaSy) preklasifikovan z CRITICAL (-20) na WARNING (-8) — tyto klice jsou zamerne verejne a chranene pres API restrictions
+- Prejmenovano z "Firebase API Key" na "Google API Key" — format je spolecny pro vsechny Google sluzby (Firebase, YouTube, Maps aj.)
+- Duplicitni nalezy stejneho typu se nyni seskupuji do jednoho findingu s poctem (napr. "Google API Key nalezen v HTML (5×)") misto samostatnych penalizaci za kazdy vyskyt
+
 ## v1.0.0 (2026-04-15)
 
 Prvni verejna verze Vibescan.cz.
