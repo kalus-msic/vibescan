@@ -32,7 +32,6 @@
     window._gaLoaded = true;
     var s = document.createElement('script');
     s.async = true;
-    s.crossOrigin = 'anonymous';
     s.src = 'https://www.googletagmanager.com/gtag/js?id={{ ga_id }}';
     document.head.appendChild(s);
     gtag('js', new Date());
