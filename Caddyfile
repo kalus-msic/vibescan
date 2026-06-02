@@ -1,0 +1,20 @@
+# Local development Caddyfile — listens on :80 inside the container,
+# exposed as http://localhost:9003 via docker-compose port mapping.
+#
+# Production deploys use a host-level Caddy instead — see docker-compose.prod.yml.
+
+:80 {
+	# Static files served directly by Caddy (faster than going through Django).
+	handle_path /static/* {
+		root * /static
+		file_server
+	}
+
+	# All other requests → Django/Gunicorn.
+	reverse_proxy web:8000 {
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Real-IP {remote_host}
+	}
+
+	encode gzip zstd
+}

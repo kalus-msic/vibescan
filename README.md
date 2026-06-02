@@ -29,7 +29,7 @@ Zadej URL, Vibescan behem par sekund zkontroluje 14 bezpecnostnich oblasti a vra
 
 - **Backend:** Django 6 / PostgreSQL 16 / Redis 7 / Celery 5.4
 - **Frontend:** HTMX + Alpine.js + Tailwind CSS
-- **Infra:** Docker Compose / Gunicorn / Nginx / WhiteNoise
+- **Infra:** Docker Compose / Gunicorn / Caddy / WhiteNoise
 - **Export:** PDF (WeasyPrint) a TXT (Markdown pro AI)
 
 ## Spusteni
@@ -50,9 +50,37 @@ Aplikace bezi na `http://localhost:9003`.
 | **redis** | redis:7-alpine | Message broker pro Celery |
 | **web** | vlastni build | Django + Gunicorn (migrace + superuser pri startu) |
 | **celery** | vlastni build | Celery worker — zpracovava skeny asynchronne |
-| **nginx** | nginx:alpine | Reverse proxy, servuje statiku |
+| **caddy** | caddy:2-alpine | Reverse proxy, servuje statiku, naslouchá na :9003 |
 
 `web` a `celery` sdili stejny Docker image. Pri startu `web` automaticky spusti migrace a vytvori admin ucet (z `.env`).
+
+### Produkcni nasazeni s externi Caddy
+
+Na VPS, kde uz mas Caddy na hostu (servuje vic aplikaci a resi HTTPS),
+pouzij `docker-compose.prod.yml` override. Vypne interni Caddy, prida DB
+tuning a pripoji `web` na externi Docker sit, kterou sdilis s host Caddy.
+
+```bash
+# Jednorazove
+docker network create web
+
+# Pri kazdem deployi
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+V host Caddyfile pak nasmeruj domenu na vibescan_web:8000 pres sdilenou sit:
+
+```caddyfile
+vibescan.cz {
+    handle_path /static/* {
+        root * /srv/projects/vibescan/static_volume
+        file_server
+    }
+    reverse_proxy vibescan-web-1:8000
+}
+```
+
+Pozn.: nazev kontejneru (`vibescan-web-1`) si overit pres `docker ps`.
 
 ## Vibe Score
 

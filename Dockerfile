@@ -32,8 +32,9 @@ COPY . .
 RUN mkdir -p static/css \
     && tailwindcss -i static/src/input.css -o static/css/style.css --minify
 
+RUN mkdir -p /app/logs && chown -R app:app /app
+
 # Collect static files (dummy secrets for build only, not persisted in runtime env)
 RUN SECRET_KEY=build-only DB_PASSWORD=build-only python manage.py collectstatic --noinput
 
-RUN mkdir -p /app/logs && chown -R app:app /app
 USER app

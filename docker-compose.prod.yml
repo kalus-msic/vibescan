@@ -1,0 +1,37 @@
+# Production overrides for deploying Vibescan on a VPS where a
+# host-level Caddy (or other reverse proxy) handles HTTPS termination
+# and serves multiple apps from one machine.
+#
+# Usage on the server (one-time setup):
+#   docker network create web
+#
+# Then for every deploy:
+#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Your host Caddy should reverse-proxy the public domain to vibescan_web:8000
+# over the shared "web" Docker network. See README.md "Produkcni nasazeni"
+# for a Caddyfile snippet.
+
+services:
+  db:
+    command: >
+      postgres
+      -c shared_buffers=128MB
+      -c effective_cache_size=512MB
+      -c work_mem=8MB
+      -c maintenance_work_mem=64MB
+      -c max_connections=50
+
+  web:
+    networks:
+      - default
+      - web
+
+  caddy:
+    # Internal Caddy is disabled in production — host Caddy handles routing.
+    # The "donotstart" profile is never activated, so this service stays off.
+    profiles: ["donotstart"]
+
+networks:
+  web:
+    external: true
