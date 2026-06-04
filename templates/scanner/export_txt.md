@@ -9,7 +9,7 @@
 **URL:** {{ scan.url }}
 **Datum skenu:** {{ scan.completed_at|date:"j. n. Y H:i" }}
 **Vibe Score:** {{ scan.vibe_score }}/100 ({{ category.label }})
-**Celková penalizace:** -{{ scan.findings|active_findings|total_penalty }} bodů
+**Celková penalizace:** -{{ scan.vibe_score|score_penalty }} bodů
 
 ## Shrnutí
 

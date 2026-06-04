@@ -98,7 +98,8 @@ class FormScanner(BaseScanModule):
 
         page_has_csrf_signal = _has_meta_csrf_token(soup) or _has_inline_js_csrf(soup)
 
-        # Check POST forms for CSRF tokens
+        # Check POST forms for CSRF tokens — agregujeme do jednoho findingu.
+        unprotected_actions = []
         for form in soup.find_all("form"):
             method = (form.get("method") or "GET").upper()
             if method != "POST":
@@ -112,16 +113,29 @@ class FormScanner(BaseScanModule):
 
             if not has_csrf:
                 action = form.get("action") or "bez action atributu"
-                findings.append(Finding(
-                    id="missing-csrf-token",
-                    title="POST formulář bez CSRF ochrany",
-                    description="Formulář odesílá POST bez CSRF tokenu. Pokud formulář provádí citlivou akci (přihlášení, změna údajů, platba), útočník může vytvořit stránku s neviditelným formulářem, který se automaticky odešle — prohlížeč přiloží cookies a akce proběhne za přihlášeného uživatele. U veřejných formulářů (newsletter, vyhledávání) je riziko minimální.",
-                    severity=Severity.WARNING,
-                    category="forms",
-                    fix_url="/guide/#csrf-forms",
-                    doc_url="https://owasp.org/www-community/attacks/csrf",
-                    detail=action,
-                ))
+                unprotected_actions.append(action)
+
+        if unprotected_actions:
+            count = len(unprotected_actions)
+            unique_actions = list(dict.fromkeys(unprotected_actions))  # preserve order, dedupe
+            detail = ", ".join(unique_actions[:5]) + (
+                f" … a {len(unique_actions) - 5} dalších" if len(unique_actions) > 5 else ""
+            )
+            title = (
+                "POST formulář bez CSRF ochrany"
+                if count == 1
+                else f"POST formuláře bez CSRF ochrany ({count}×)"
+            )
+            findings.append(Finding(
+                id="missing-csrf-token",
+                title=title,
+                description="Formulář odesílá POST bez CSRF tokenu. Pokud formulář provádí citlivou akci (přihlášení, změna údajů, platba), útočník může vytvořit stránku s neviditelným formulářem, který se automaticky odešle — prohlížeč přiloží cookies a akce proběhne za přihlášeného uživatele. U veřejných formulářů (newsletter, vyhledávání) je riziko minimální.",
+                severity=Severity.WARNING,
+                category="forms",
+                fix_url="/guide/#csrf-forms",
+                doc_url="https://owasp.org/www-community/attacks/csrf",
+                detail=detail,
+            ))
 
         # Check password inputs for autocomplete
         for pw_input in soup.find_all("input", attrs={"type": "password"}):

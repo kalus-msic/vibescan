@@ -37,8 +37,23 @@ def penalty(finding):
 
 @register.filter
 def total_penalty(findings):
-    """Return sum of penalty points for a list of findings."""
+    """Return sum of penalty points for a list of findings.
+
+    POZN: Toto je suma syrových severity penalt. Pro celkovou penalizaci
+    odpovídající skóre (s aplikovanými module caps) použij filter
+    `score_penalty` proti vibe_score.
+    """
     return sum(SEVERITY_PENALTY_MAP.get(f.get("severity", ""), 0) for f in findings)
+
+
+@register.filter
+def score_penalty(vibe_score):
+    """Return penalty consistent with the computed vibe score (100 - score).
+
+    Použij místo `total_penalty` všude, kde se zobrazuje „Celková penalizace" —
+    `total_penalty` ignoruje per-module caps a nesouhlasí se zobrazeným skóre.
+    """
+    return 100 - (vibe_score or 0)
 
 
 DISMISS_REASON_LABELS = {
