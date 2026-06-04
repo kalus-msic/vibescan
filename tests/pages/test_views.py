@@ -205,3 +205,12 @@ class TestGuideView:
         assert "Secrets scan — kontrola před deployem" in body
         assert 'id="pristupy-idor"' in body
         assert 'id="secrets-scan"' in body
+
+    def test_pravni_dokumenty_contains_nis2_and_sources(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert "NIS2" in body or "ZoKB" in body
+        assert "Kde se učit víc" in body
+        assert "w3.org/TR/WCAG22" in body
+        assert "gcs=G100" in body or "gcs=G111" in body

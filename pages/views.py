@@ -319,15 +319,35 @@ Nastav automatické kontroly závislostí v CI/CD (Dependabot, Renovate nebo Sny
 
 1. **Cookie consent lišta** — Zobraz lištu se souhlasem s cookies před načtením jakýchkoliv tracking skriptů. Tlačítka "Přijmout" a "Odmítnout" musí mít stejnou vizuální váhu (stejná velikost, stejný styl). Tracking skripty (GA, GTM, Facebook Pixel) se smí načíst až po souhlasu.
 
+   Jak ověřit správnost:
+   - DevTools → Application → Cookies po kliknutí "Odmítnout" — nesmí být _ga, _gid, _fbp.
+   - DevTools → Network → hledej "collect" requesty na google-analytics.com. V query stringu:
+     - gcs=G100 = cookieless ping (OK, žádný souhlas nepotřebuje)
+     - gcs=G111 po odmítnutí = CMP nefunkční — tracking běží bez souhlasu.
+   - Pokud po odmítnutí vidíš gcs=G111, cookie consent lišta pouze "oznamuje" místo "zamyká".
+
 2. **Stránka ochrany osobních údajů** — Vytvoř stránku /ochrana-osobnich-udaju/ s informacemi: kdo data zpracovává (název, IČO, adresa, kontakt), jaká data sbíráme, proč a na jakém právním základě (GDPR čl. 6), jak dlouho data uchováváme, práva návštěvníků (přístup, výmaz, přenositelnost, námitka), kontakt na DPO (pokud existuje), odkaz na podání stížnosti u ÚOOÚ.
 
 3. **Patička webu** — V patičce by měly být: odkaz na ochranu osobních údajů, kontakt na provozovatele, IČO. Copyright označení (© rok a název) je tradiční konvence, ale **není legálně povinné** — autorské právo vzniká automaticky vytvořením díla (Bernská úmluva, autorský zákon č. 121/2000 Sb. § 9).
 
 4. **Prohlášení o přístupnosti** — Pokud provozuješ e-shop, banku, dopravu, telekom nebo audiovizuální media, máš podle zákona č. 424/2023 Sb. (EAA, od 28.6.2025) povinnost zveřejnit prohlášení o přístupnosti. Musí obsahovat: stav (ne)souladu s WCAG 2.2, výjimky s odůvodněním (nepřiměřená zátěž), náhradní řešení pro nepřístupné části, kontakt pro hlášení nedostupnosti.
 
-5. **Přístupnost (WCAG 2.2)** — Přidej odkaz pro přeskočení navigace (<a href="#main" class="sr-only focus:not-sr-only">Přeskočit na obsah</a>) jako první prvek v <body>. V CSS přidej @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } } pro uživatele s vestibulárními potížemi.
+5. **NIS2 / ZoKB (zákon č. 264/2025 Sb.)** — Pokud tvoje appka zpracovává data pro organizaci v regulovaném sektoru (energetika, zdravotnictví, finance, doprava, digitální infrastruktura, IT správa, veřejná správa a další — celkem 15 sektorů), stáváš se článkem dodavatelského řetězce. Regulovaný subjekt musí posoudit bezpečnost svých dodavatelů — tedy i tebe. Povinnosti: dokumentovaná bezpečnostní politika, DPA s každým sub-procesorem, firemní (ne osobní) AI účty, incident response plán. Pokuta: až 250 mil. Kč nebo 2 % celosvětového obratu.
+
+6. **Přístupnost (WCAG 2.2)** — Přidej odkaz pro přeskočení navigace (<a href="#main" class="sr-only focus:not-sr-only">Přeskočit na obsah</a>) jako první prvek v <body>. V CSS přidej @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } } pro uživatele s vestibulárními potížemi.
+
+--- Kde se učit víc ---
+
+- WCAG 2.2 specifikace: https://www.w3.org/TR/WCAG22/
+- EAA (zákon č. 424/2023 Sb.): https://www.zakonyprolidi.cz/cs/2023-424
+- GDPR (vyhledatelně): https://gdpr-info.eu
+- NIS2/ZoKB metodiky (NÚKIB): https://nukib.gov.cz
+- GDPR judikatura ČR (ÚOOÚ): https://uoou.gov.cz
+- CNIL judikatura k retenci dat (Free Mobile, Discord, Spartoo, PAP) — viz sekce „Retence dat — case law" výše na této stránce.
 
 Poznámka: Vygenerované texty jsou šablony — uprav je podle skutečných údajů o provozovateli a zpracování dat.""",
+        "disclaimer_title": "Tohle není právní rada.",
+        "disclaimer": "Vygenerované dokumenty jsou šablony — neřeší tvou konkrétní situaci. Pro produkční nasazení konzultuj advokáta. Viz <a href='/terms/' class='underline'>Podmínky použití</a>.",
     },
     {
         "id": "logovani-monitoring",
