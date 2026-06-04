@@ -624,6 +624,112 @@ class TestModulePenaltyCap:
 # potvrdil, že to neovlivňuje SEO. Penalty -2 je cargo cult.
 # --------------------------------------------------------------------------
 
+class TestCSRFBroaderDetection:
+    """Univerzálnější CSRF token detection (plain assignment, object property)."""
+
+    def test_plain_assignment_token_is_csrf_signal(self):
+        """ČSOB: `Token = '...'` bez var/let/const (implicit global)."""
+        scanner = FormScanner()
+        resp = _mock_response(
+            '<script>'
+            'jQuery(document).ready(function(){ alert(1); });'
+            'Token = "IqLR4uqAbCdEfGhIjKlMn";'
+            '</script>'
+            '<form method="POST" action="#"><input type="text" name="x"></form>'
+        )
+        findings = scanner.run("https://example.com", resp)
+        warnings = [f for f in findings if f.severity == Severity.WARNING]
+        assert warnings == [], (
+            "Plain assignment `Token = '...'` (ČSOB pattern) musí být CSRF signal."
+        )
+
+    def test_object_property_token_is_csrf_signal(self):
+        """Liferay/AdobeDTM pattern: `liferay.Token: '...'` v config objektu."""
+        scanner = FormScanner()
+        resp = _mock_response(
+            '<script>var config = {'
+            '  url: "/api", '
+            '  csrfToken: "abc123def456ghi789", '
+            '  debug: false'
+            '};</script>'
+            '<form method="POST" action="/submit"><input type="text" name="x"></form>'
+        )
+        findings = scanner.run("https://example.com", resp)
+        warnings = [f for f in findings if f.severity == Severity.WARNING]
+        assert warnings == [], (
+            "Object property `csrfToken: '...'` v config je CSRF signal."
+        )
+
+    def test_window_bracket_csrf_is_signal(self):
+        """`window['_csrf'] = '...'` pattern (Express, Koa)."""
+        scanner = FormScanner()
+        resp = _mock_response(
+            '<script>window["_csrf"] = "abc123def456ghi789";</script>'
+            '<form method="POST"><input type="text" name="x"></form>'
+        )
+        findings = scanner.run("https://example.com", resp)
+        warnings = [f for f in findings if f.severity == Severity.WARNING]
+        assert warnings == []
+
+    def test_random_assignment_not_csrf_signal(self):
+        """Univerzální detekce nesmí false-positivovat."""
+        scanner = FormScanner()
+        resp = _mock_response(
+            '<script>greeting = "Hello world this is long enough text";</script>'
+            '<form method="POST"><input type="text" name="x"></form>'
+        )
+        findings = scanner.run("https://example.com", resp)
+        warnings = [f for f in findings if f.severity == Severity.WARNING]
+        assert len(warnings) == 1, (
+            "Bez CSRF-like identifier se MUSÍ flagnout POST form."
+        )
+
+
+# --------------------------------------------------------------------------
+# Fix #13 — České cookie consent UI patterny
+#
+# Empirie: ČSOB, KB, Seznam — vlastní cookie consent implementace s
+# českým textem. Současný detection najde jen Cookiebot/OneTrust/Klaro
+# knihovny + známé ID/class konvence. Vlastní české UI nezachytí.
+# --------------------------------------------------------------------------
+
+class TestCzechCookieConsent:
+    def setup_method(self):
+        from scanner.modules.legal import LegalScanner
+        self.scanner = LegalScanner()
+
+    def test_souhlas_s_cookies_button(self):
+        resp = _mock_response(
+            '<html><body>'
+            '<div><p>Stránka používá cookies.</p>'
+            '<button>Přijmout cookies</button>'
+            '<button>Nastavení cookies</button>'
+            '</div></body></html>'
+        )
+        findings = self.scanner.run("https://example.cz", resp)
+        missing = [f for f in findings if f.id == "missing-cookie-consent"]
+        assert missing == [], (
+            "Tlačítko 'Přijmout cookies' v HTML je consent signal."
+        )
+
+    def test_spravovat_cookies_link(self):
+        resp = _mock_response(
+            '<html><body>'
+            '<a href="#cookies">Spravovat cookies</a>'
+            '</body></html>'
+        )
+        findings = self.scanner.run("https://example.cz", resp)
+        missing = [f for f in findings if f.id == "missing-cookie-consent"]
+        assert missing == []
+
+    def test_no_consent_signal_still_flagged(self):
+        """Negative — web bez consent textu pořád dostane INFO."""
+        resp = _mock_response('<html><body><p>Žádné cookies tu nejsou</p></body></html>')
+        findings = self.scanner.run("https://example.cz", resp)
+        missing = [f for f in findings if f.id == "missing-cookie-consent"]
+        assert len(missing) == 1
+
+
 class TestMultipleH1NoPenalty:
     def setup_method(self):
         self.scanner = SEOScanner()

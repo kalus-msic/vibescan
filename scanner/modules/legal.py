@@ -20,6 +20,15 @@ CONSENT_ELEMENT_CLASSES = {
     "cookie-notice", "cookie-bar", "cookieconsent",
 }
 
+# Text patterny pro vlastní/české consent UI (ČSOB, KB, Seznam pattern).
+CONSENT_TEXT_PATTERNS = re.compile(
+    r"(přijmout (?:všechny )?cookies|odmítnout cookies|nastavení cookies|"
+    r"spravovat cookies|souhlas s cookies|nastavení soukromí|"
+    r"accept (?:all )?cookies|reject cookies|cookie settings|"
+    r"manage cookies|cookie preferences)",
+    re.IGNORECASE,
+)
+
 PRIVACY_HREF_PATTERNS = re.compile(
     r"/(gdpr|privacy|ochrana-osobnich-udaju|zasady-ochrany|osobni-udaje|"
     r"datenschutz|privacy-policy|ochrana-udaju|ochrana-soukromi)",
@@ -82,6 +91,18 @@ class LegalScanner(BaseScanModule):
                     id="cookie-consent-ok",
                     title="Cookie consent mechanismus nalezen",
                     description="Stránka obsahuje element pro správu souhlasu s cookies.",
+                    severity=Severity.OK,
+                    category="legal",
+                )
+
+        # Vlastní/české consent UI — hledáme typický text v buttonech/odkazech.
+        for element in soup.find_all(["button", "a"]):
+            text = element.get_text(strip=True)
+            if text and CONSENT_TEXT_PATTERNS.search(text):
+                return Finding(
+                    id="cookie-consent-ok",
+                    title="Cookie consent mechanismus nalezen",
+                    description=f'Stránka obsahuje consent UI element s textem „{text[:60]}".',
                     severity=Severity.OK,
                     category="legal",
                 )

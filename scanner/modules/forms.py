@@ -35,25 +35,51 @@ def _has_meta_csrf_token(soup: BeautifulSoup) -> bool:
     return False
 
 
-# Inline JS pattern: var Token = '...', let csrfToken = '...', window._csrf = '...'.
-_JS_CSRF_VAR_RE = re.compile(
-    r"""(?:var|let|const|window\.|self\.)\s*\.?\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*['"][^'"]{8,}['"]""",
-    re.IGNORECASE,
+# Detekce CSRF tokenu v inline JS — pokrývá:
+#   var/let/const X = '...'   (declaration)
+#   window.X = '...'          (global)
+#   X = '...'                 (plain assignment, ČSOB pattern)
+#   X: '...'                  (object property, Liferay/Adobe DTM pattern)
+#   window['X'] = '...'       (bracket notation)
+# Filtr na X: musí být csrf/xsrf/_token/nonce/token (čisté slovo).
+_JS_ASSIGN_RE = re.compile(
+    r"""(?:^|[\s;{,])
+        (?:var\s+|let\s+|const\s+|window\.|self\.)?
+        ([A-Za-z_][A-Za-z0-9_]*)
+        \s*[:=]\s*['"][^'"]{8,}['"]""",
+    re.IGNORECASE | re.VERBOSE,
+)
+_JS_BRACKET_RE = re.compile(
+    r"""(?:window|self|globalThis)\s*\[\s*['"]([A-Za-z_][A-Za-z0-9_-]*)['"]\s*\]
+        \s*=\s*['"][^'"]{8,}['"]""",
+    re.IGNORECASE | re.VERBOSE,
 )
 
 
+def _is_csrf_identifier(ident: str) -> bool:
+    n = (ident or "").lower()
+    if not n:
+        return False
+    if n == "token":
+        return True
+    return any(p in n for p in CSRF_TOKEN_PATTERNS)
+
+
 def _has_inline_js_csrf(soup: BeautifulSoup) -> bool:
-    """ČSOB-style: <script>var Token = '...';</script> jako CSRF signal."""
+    """Detekce CSRF token v inline <script>.
+
+    Pokrývá ČSOB (`Token = '...'`), Liferay/AdobeDTM (`csrfToken: '...'`),
+    Express/Koa (`window['_csrf'] = '...'`) a další.
+    """
     for script in soup.find_all("script"):
         body = script.string
         if not body:
             continue
-        for match in _JS_CSRF_VAR_RE.finditer(body):
-            ident = match.group(1)
-            ident_l = ident.lower()
-            if ident_l == "token":
+        for match in _JS_ASSIGN_RE.finditer(body):
+            if _is_csrf_identifier(match.group(1)):
                 return True
-            if any(p in ident_l for p in CSRF_TOKEN_PATTERNS):
+        for match in _JS_BRACKET_RE.finditer(body):
+            if _is_csrf_identifier(match.group(1)):
                 return True
     return False
 
