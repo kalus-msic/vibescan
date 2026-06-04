@@ -388,6 +388,70 @@ Poznámka: Vygenerované texty jsou šablony — uprav je podle skutečných úd
 
 9. **robots.txt** \u2014 Vytvo\u0159 robots.txt v ko\u0159eni webu. Povol indexaci ve\u0159ejn\u00fdch str\u00e1nek, zaka\u017e admin sekce a intern\u00ed API.""",
     },
+    {
+        "id": "pristupy-idor",
+        "title": "P\u0159\u00edstupy a IDOR \u2014 kontrola autorizace",
+        "content": """Zkontroluj autorizaci v tomto projektu. Autentizace (login) NEN\u00cd autorizace (kdo sm\u00ed co vid\u011bt).
+
+1. IDOR TEST: Projdi v\u0161echny API endpointy a datab\u00e1zov\u00e9 dotazy.
+   Pro ka\u017ed\u00fd endpoint kde se pracuje s konkr\u00e9tn\u00edm z\u00e1znamem (order, user, document):
+   - Bere se ID z\u00e1znamu z URL parametru nebo request body? Pokud ano \u2192 IDOR riziko.
+   - Ov\u011b\u0159uje se vlastnictv\u00ed z\u00e1znamu (WHERE user_id = current_user.id)? Pokud ne \u2192 IDOR.
+   - Test: p\u0159ihlas se jako u\u017eivatel A, zavolej endpoint s ID z\u00e1znamu u\u017eivatele B. Vr\u00e1t\u00ed data? \u2192 opravit.
+
+2. SUPABASE RLS (pokud projekt pou\u017e\u00edv\u00e1 Supabase):
+   - Je RLS zapnut\u00fd na V\u0160ECH tabulk\u00e1ch s u\u017eivatelsk\u00fdmi daty? (ALTER TABLE ... ENABLE ROW LEVEL SECURITY)
+   - Jsou policies napsan\u00e9 tak, \u017ee filtruj\u00ed podle auth.uid()?
+   - Nen\u00ed service_role kl\u00ed\u010d v client bundlu? (NIKDY \u2014 obch\u00e1z\u00ed RLS kompletn\u011b)
+   - Maj\u00ed Views nastaveno security_invoker = true? (bez toho View obch\u00e1z\u00ed RLS)
+   - NEGATIVN\u00cd TEST: p\u0159ihlas jako user A, zavolej supabase.from('table').select('*') s anon kl\u00ed\u010dem.
+     Pokud vrac\u00ed z\u00e1znamy jin\u00fdch u\u017eivatel\u016f \u2192 RLS policy je \u0161patn\u011b.
+
+3. API AUTORIZACE:
+   - Maj\u00ed v\u0161echny CRUD endpointy middleware pro kontrolu opr\u00e1vn\u011bn\u00ed?
+   - Jsou admin endpointy odd\u011blen\u00e9 a chr\u00e1n\u011bn\u00e9 role-based kontrolou?
+   - Je rate limiting na citliv\u00fdch endpointech (login, password reset, API kl\u00ed\u010d generov\u00e1n\u00ed)?
+
+4. SESSION:
+   - User ID se bere ze session/JWT, nikdy z URL parametru nebo request body.
+   - Session se regeneruje po p\u0159ihl\u00e1\u0161en\u00ed (session fixation prevence).
+
+Pokud najde\u0161 IDOR nebo chyb\u011bj\u00edc\u00ed autorizaci, oprav a vysv\u011btli co jsi zm\u011bnil.""",
+    },
+    {
+        "id": "secrets-scan",
+        "title": "Secrets scan \u2014 kontrola p\u0159ed deployem",
+        "content": """Prove\u010f scan secrets v tomto projektu p\u0159ed nasazen\u00edm do produkce.
+
+1. HARDCODED SECRETS: Prohledej cel\u00fd k\u00f3d na hardcoded secrets:
+   - API kl\u00ed\u010de (sk_live, sk_test, OPENAI_API_KEY, ANTHROPIC_API_KEY)
+   - Datab\u00e1zov\u00e9 credentials (DATABASE_URL, SUPABASE_SERVICE_ROLE, connection stringy)
+   - Tokeny (JWT, Bearer, SMTP_PASS, TELEGRAM_TOKEN, STRIPE_SECRET)
+   - Hledej i v: koment\u00e1\u0159\u00edch, README, konfigura\u010dn\u00edch souborech, test fixtures
+   P\u0159\u00edkaz: grep -rn "sk_live\\|service_role\\|OPENAI_API_KEY\\|Bearer \\|DATABASE_URL" .
+
+2. BUILD OUTPUT: Pokud projekt pou\u017e\u00edv\u00e1 Next.js, Vite nebo jin\u00fd bundler:
+   - Zkontroluj v\u00fdstupn\u00ed bundle (.next/, dist/, build/) na p\u0159\u00edtomnost secrets
+   - NEXT_PUBLIC_ a VITE_ prom\u011bnn\u00e9 JSOU ve frontend bundlu \u2014 nesm\u00ed obsahovat citliv\u00e9 kl\u00ed\u010de
+   - service_role kl\u00ed\u010d Supabase NIKDY s prefixem NEXT_PUBLIC_ nebo VITE_
+
+3. GIT HISTORIE: Zkontroluj, zda se secrets nedostaly do git historie:
+   - git log -p --all -S "sk_live" --oneline
+   - git log -p --all -S "service_role" --oneline
+   Pokud ano: rotuj kl\u00ed\u010d (vygeneruj nov\u00fd), star\u00fd kl\u00ed\u010d deaktivuj.
+
+4. .ENV SETUP:
+   - .env MUS\u00cd b\u00fdt v .gitignore
+   - .env.example existuje s placeholder hodnotami (bez skute\u010dn\u00fdch secrets)
+   - Odd\u011blen\u00e9 .env pro dev a produkci (jin\u00e9 kl\u00ed\u010de, jin\u00e9 datab\u00e1ze)
+   - Produk\u010dn\u00ed secrets v secret manageru (Vercel Env Vars, AWS Secrets Manager, Railway)
+
+5. AI PROMPT BEZPE\u010cNOST:
+   - Nepos\u00edlej secrets do AI prompt\u016f \u2014 AI pracuje s referenc\u00ed (.env prom\u011bnn\u00e1), ne s hodnotou
+   - Pokud jsi omylem secret do promptu vlo\u017eil a nem\u00e1\u0161 opt-out z tr\u00e9nov\u00e1n\u00ed \u2192 rotuj kl\u00ed\u010d
+
+Pokud najde\u0161 jak\u00fdkoliv hardcoded secret, nahra\u010f ho referenc\u00ed na .env prom\u011bnnou a vysv\u011btli co jsi zm\u011bnil.""",
+    },
 ]
 
 

@@ -196,3 +196,12 @@ class TestGuideView:
         assert "Retence dat" in body
         assert "Free Mobile" in body
         assert "27 mil. EUR" in body
+
+    def test_new_prompts_present(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert "Přístupy a IDOR — kontrola autorizace" in body
+        assert "Secrets scan — kontrola před deployem" in body
+        assert 'id="pristupy-idor"' in body
+        assert 'id="secrets-scan"' in body
