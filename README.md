@@ -105,7 +105,7 @@ Na [vibescan.cz/guide/](https://vibescan.cz/guide/) najdes:
 
 ## Kontrola zavislosti
 
-Na [vibescan.cz/dependencies/](https://vibescan.cz/dependencies/) vloz obsah `requirements.txt`, `package.json` nebo `composer.json` — Vibescan zkontroluje zname CVE a navrhne opravene verze.
+Primo na [vibescan.cz](https://vibescan.cz/) vloz obsah `requirements.txt`, `package.json` nebo `composer.json` — Vibescan zkontroluje zname CVE a navrhne opravene verze.
 
 ## Licence
 
