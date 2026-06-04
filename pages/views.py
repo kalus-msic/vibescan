@@ -16,6 +16,53 @@ Preferred-Languages: cs, en
 Canonical: https://vibescan.cz/.well-known/security.txt
 """
 
+CHECKLIST_ITEMS = [
+    {
+        "id": "secrets",
+        "title": "Žádný API klíč ani secret v kódu nebo gitu",
+        "hint": ".env je v .gitignore, service_role klíč nikdy ve frontend bundlu.",
+        "anchor": "section-secrets",
+    },
+    {
+        "id": "rls",
+        "title": "Supabase / databáze má zapnuté RLS na všech tabulkách s uživatelskými daty",
+        "hint": "Pokud nepoužíváš Supabase, odškrtni jako N/A.",
+        "anchor": "section-idor",
+    },
+    {
+        "id": "idor",
+        "title": "API kontroluje vlastnictví záznamu (IDOR test prošel)",
+        "hint": "Přihlásil jsem se jako user A a nemůžu načíst data uživatele B.",
+        "anchor": "section-idor",
+    },
+    {
+        "id": "dpa",
+        "title": "Používám firemní AI účet (Team/Enterprise), ne osobní",
+        "hint": "Osobní účty = consumer terms = trénování zapnuté by default.",
+        "anchor": "section-nis2",
+    },
+    {
+        "id": "ratelimit",
+        "title": "Rate limiting na citlivých endpointech",
+        "hint": "Login, password reset, registrace, generování API klíče.",
+        "anchor": "logovani-monitoring",
+    },
+    {
+        "id": "privacy",
+        "title": "Privacy Policy + funkční Cookie consent (CMP, ne jen lišta)",
+        "hint": "_ga / _gid / _fbp se nesmí načíst před souhlasem.",
+        "anchor": "pravni-dokumenty",
+    },
+    {
+        "id": "terms",
+        "title": "Terms of Service + Přístupnost (WCAG 2.2 AA, EAA pokud B2C v EU)",
+        "hint": "Pro e-shop, banku, dopravu, telekom je EAA povinná od 28. 6. 2025.",
+        "anchor": "pravni-dokumenty",
+    },
+]
+
+NARRATIVE_SECTIONS = []  # naplní se v navazujícím subagentu
+
 GUIDE_PROMPTS = [
     {
         "id": "http-security-headers",
@@ -402,6 +449,8 @@ def guide(request):
         "prompts": GUIDE_PROMPTS,
         "tool_categories": TOOL_CATEGORIES,
         "security_blocks": SECURITY_BLOCKS,
+        "checklist_items": CHECKLIST_ITEMS,
+        "narrative_sections": NARRATIVE_SECTIONS,
     })
 
 

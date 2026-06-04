@@ -11,6 +11,58 @@
     <p class="text-slate-500 leading-relaxed">Vyber nástroj, kterým stavíš, a zjisti na co si dát pozor. Prompty na konci stránky fungují ve všech AI nástrojích.</p>
   </div>
 
+  <!-- Rychlý start checklist -->
+  <div x-data="checklist()" class="mb-14">
+    <h2 class="text-2xl font-extrabold mb-2">Rychlý start checklist</h2>
+    <p class="text-slate-500 text-sm mb-6">
+      Sedm bodů, které by každá vibecoded appka měla mít před nasazením do produkce.
+      Odškrtni si, co máš hotovo — stav se ukládá lokálně ve tvém prohlížeči.
+    </p>
+
+    <ul class="space-y-2 mb-6">
+      {% for item in checklist_items %}
+      <li @click="toggle('{{ item.id }}')"
+          :class="checked['{{ item.id }}'] ? 'bg-green-50 border-green-300' : 'bg-white border-slate-200 hover:border-slate-300'"
+          class="border rounded-xl p-4 cursor-pointer transition-colors flex gap-3 items-start">
+        <div class="flex-shrink-0 mt-0.5">
+          <span x-show="!checked['{{ item.id }}']" class="block w-5 h-5 border-2 border-slate-300 rounded"></span>
+          <span x-show="checked['{{ item.id }}']" class="w-5 h-5 bg-green-500 rounded flex items-center justify-center text-white text-xs font-bold">✓</span>
+        </div>
+        <div class="flex-1">
+          <div class="font-semibold text-sm">{{ item.title }}</div>
+          <div class="text-xs text-slate-500 mt-1">
+            {{ item.hint }}
+            <a href="#{{ item.anchor }}" @click.stop class="text-blue-600 underline ml-1">Více →</a>
+          </div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+
+    <div class="bg-slate-100 border border-slate-200 rounded-xl p-5 text-sm text-slate-600 leading-relaxed">
+      <strong>Pozor:</strong> Toto je základní orientační checklist, ne právní ani bezpečnostní audit.
+      Vibescan není právní ani bezpečnostní poradce — odpovědnost za bezpečnost a soulad s předpisy
+      nese provozovatel webu. Pro konkrétní situaci (GDPR, ZoKB, EAA) konzultuj advokáta nebo
+      bezpečnostního specialistu. Viz <a href="{% url 'pages:terms' %}" class="text-blue-600 underline">Podmínky použití</a>.
+    </div>
+  </div>
+
+  <script>
+    function checklist() {
+      return {
+        checked: (() => {
+          try { return JSON.parse(localStorage.getItem('vibescan-checklist') || '{}'); }
+          catch(e) { return {}; }
+        })(),
+        toggle(id) {
+          this.checked[id] = !this.checked[id];
+          try { localStorage.setItem('vibescan-checklist', JSON.stringify(this.checked)); }
+          catch(e) { /* private browsing — pokračujeme v paměti */ }
+        }
+      }
+    }
+  </script>
+
   <!-- Jaký nástroj používáš -->
   <div class="mb-14">
     <h2 class="text-2xl font-extrabold mb-2">S čím stavíš?</h2>
@@ -131,6 +183,19 @@
     <div class="bg-slate-100 border border-slate-200 rounded-xl p-5 text-sm text-slate-600 leading-relaxed mt-4">
       <span class="font-semibold text-slate-900">Chceš projít svůj projekt krok po kroku?</span> Podívej se na <a href="{% url 'pages:review' %}" class="text-blue-600 hover:text-blue-800 font-medium underline">Security Review</a> — 7 kroků s konkrétními příklady co hledat a jak to opravit.
     </div>
+  </div>
+
+  <!-- Narativní sekce: IDOR, Secrets, NIS2, Retence -->
+  <div class="mb-14 space-y-10">
+    {% for section in narrative_sections %}
+    <section id="{{ section.id }}" class="bg-white border border-slate-200 rounded-2xl p-6 scroll-mt-20">
+      <h2 class="text-2xl font-extrabold mb-1">{{ section.title }}</h2>
+      <p class="text-slate-500 text-sm mb-6 italic">{{ section.subtitle }}</p>
+      {% for block in section.blocks %}
+        {% include "pages/partials/narrative_block.html" with block=block %}
+      {% endfor %}
+    </section>
+    {% endfor %}
   </div>
 
   <!-- Granulární prompty -->

@@ -131,3 +131,34 @@ class TestContextProcessor:
         client = Client()
         response = client.get("/")
         assert "gtm_id" in response.context
+
+
+class TestGuideView:
+    def test_guide_loads(self):
+        client = Client()
+        r = client.get("/guide/")
+        assert r.status_code == 200
+
+    def test_guide_has_checklist_heading(self):
+        client = Client()
+        r = client.get("/guide/")
+        assert "Rychlý start checklist" in r.content.decode()
+
+    def test_guide_has_all_checklist_items(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        for item_id in ["secrets", "rls", "idor", "dpa", "ratelimit", "privacy", "terms"]:
+            assert f"toggle('{item_id}')" in body, f"Missing checklist item: {item_id}"
+
+    def test_checklist_disclaimer_present(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert "základní orientační checklist" in body
+        assert "není právní ani bezpečnostní poradce" in body
+
+    def test_checklist_uses_localstorage(self):
+        client = Client()
+        r = client.get("/guide/")
+        assert "vibescan-checklist" in r.content.decode()

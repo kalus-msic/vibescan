@@ -1,0 +1,43 @@
+{% if block.type == "p" %}
+  <p class="text-sm text-slate-700 leading-relaxed mb-4">{{ block.html|safe }}</p>
+{% elif block.type == "h3" %}
+  <h3 class="text-base font-bold mt-6 mb-2">{{ block.text }}</h3>
+{% elif block.type == "ul" %}
+  <ul class="list-disc pl-5 text-sm text-slate-700 space-y-1 mb-4">
+    {% for it in block.items %}<li>{{ it|safe }}</li>{% endfor %}
+  </ul>
+{% elif block.type == "ol" %}
+  <ol class="list-decimal pl-5 text-sm text-slate-700 space-y-1 mb-4">
+    {% for it in block.items %}<li>{{ it|safe }}</li>{% endfor %}
+  </ol>
+{% elif block.type == "table" %}
+  <div class="overflow-x-auto mb-4">
+    <table class="text-xs w-full border-collapse">
+      <thead>
+        <tr class="border-b border-slate-200">
+          {% for h in block.headers %}<th class="text-left px-3 py-2 font-semibold text-slate-700">{{ h }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in block.rows %}
+        <tr class="border-b border-slate-100">
+          {% for c in row %}<td class="px-3 py-2 text-slate-700 align-top">{{ c|safe }}</td>{% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% elif block.type == "code" %}
+  <pre class="text-xs bg-slate-50 border border-slate-100 rounded-lg p-3 overflow-x-auto mb-4 font-mono text-slate-700"><code>{{ block.text }}</code></pre>
+{% elif block.type == "callout" %}
+  <div class="border-l-4 {% if block.variant == 'warning' %}border-amber-400 bg-amber-50 text-amber-900{% elif block.variant == 'danger' %}border-red-400 bg-red-50 text-red-900{% else %}border-blue-400 bg-blue-50 text-blue-900{% endif %} p-4 rounded-r-lg mb-4 text-sm leading-relaxed">
+    {{ block.html|safe }}
+  </div>
+{% elif block.type == "sources" %}
+  <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500">
+    <div class="font-semibold mb-1">Zdroje:</div>
+    <ul class="space-y-0.5">
+      {% for it in block.items %}<li>{{ it|safe }}</li>{% endfor %}
+    </ul>
+  </div>
+{% endif %}
