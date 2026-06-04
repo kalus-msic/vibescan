@@ -1,9 +1,60 @@
 import re
+from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from .base import BaseScanModule, Finding, Severity
 
 
 KNOWN_SKIP_HREFS = {"#main", "#content", "#main-content"}
+
+# Signály sektorů spadajících pod zákon 424/2023 Sb. (EAA, od 28.6.2025).
+# Pro tyto je accessibility statement legálně povinný — eskalace na WARNING.
+
+ECOMMERCE_TEXT_PATTERNS = re.compile(
+    r"(košík|do košíku|přidat do košíku|"
+    r"objednat|objednávka|pokladna|"
+    r"add to cart|shopping cart|checkout|"
+    r"schema\.org/product|schema\.org/offer)",
+    re.IGNORECASE,
+)
+
+BANKING_TEXT_PATTERNS = re.compile(
+    r"(internetbanking|internetové bankovnictví|internet banking|"
+    r"\biban\b|\bbic\b|swift code|"
+    r"bankovní účet|číslo účtu|platba převodem|"
+    r"online banking|mobilní bankovnictví)",
+    re.IGNORECASE,
+)
+
+TRANSPORT_TEXT_PATTERNS = re.compile(
+    r"(jízdenka|jízdenky|odjezdy|příjezdy|spojení|"
+    r"booking|reservation|časový rozvrh|"
+    r"departures|arrivals|timetable)",
+    re.IGNORECASE,
+)
+
+PUBLIC_SECTOR_DOMAINS = re.compile(
+    r"(\.gov\.cz$|\.gov\.[a-z]{2}$|\.justice\.cz$|"
+    r"\bobec\b|\bmesto\b|\bministerstvo\b|"
+    r"\.policie\.cz$|\.army\.cz$)",
+    re.IGNORECASE,
+)
+
+
+def _is_covered_sector(url: str, html: str) -> bool:
+    """Spadá web pod EAA (zák. 424/2023) nebo zák. 99/2019?
+
+    Returns True pro: e-commerce, banking, transport, public sector.
+    """
+    host = (urlparse(url).hostname or "").lower()
+    if PUBLIC_SECTOR_DOMAINS.search(host):
+        return True
+    if ECOMMERCE_TEXT_PATTERNS.search(html):
+        return True
+    if BANKING_TEXT_PATTERNS.search(html):
+        return True
+    if TRANSPORT_TEXT_PATTERNS.search(html):
+        return True
+    return False
 
 SKIP_LINK_CLASSES = {
     "sr-only", "skip-link", "skip-nav", "skip-to-content",
@@ -37,6 +88,7 @@ class AccessibilityScanner(BaseScanModule):
         html = response.text or ""
         soup = BeautifulSoup(html, "html.parser")
         findings = []
+        covered_sector = _is_covered_sector(url, html)
 
         if self._has_skip_link(soup):
             findings.append(Finding(
@@ -68,11 +120,29 @@ class AccessibilityScanner(BaseScanModule):
                 doc_url="https://pristupne-stranky.cz/zakon-a-standardy/",
             ))
         else:
+            if covered_sector:
+                desc = (
+                    "Nenašli jsme odkaz na prohlášení o přístupnosti. "
+                    "Web podle obsahu spadá pod zákon č. 424/2023 Sb. "
+                    "(implementace European Accessibility Act, platnost od 28.6.2025) "
+                    "nebo zákon č. 99/2019 Sb. (orgány veřejné moci). "
+                    "Prohlášení je legálně povinné — musí obsahovat stav souladu "
+                    "s WCAG 2.2 a kontakt pro hlášení nedostupnosti."
+                )
+                severity = Severity.WARNING
+            else:
+                desc = (
+                    "Nenašli jsme odkaz na prohlášení o přístupnosti. "
+                    "Pro tento typ webu (mimo zák. 424/2023 a 99/2019) "
+                    "je to doporučená praxe, ne legální povinnost. "
+                    "Ověřte, zda se tento odkaz nenachází na jiné stránce."
+                )
+                severity = Severity.INFO
             findings.append(Finding(
                 id="missing-accessibility-statement",
                 title="Nenašli jsme prohlášení o přístupnosti",
-                description="Nenašli jsme odkaz na prohlášení o přístupnosti webu. Veřejnoprávní subjekty jsou povinny toto prohlášení zveřejnit ze zákona (zákon č. 99/2019 Sb.). Pro komerční weby je to doporučená praxe. Ověřte, zda se tento odkaz nachází na jiné stránce vašeho webu.",
-                severity=Severity.INFO,
+                description=desc,
+                severity=severity,
                 category="accessibility",
                 fix_url="/guide/#pravni-dokumenty",
                 doc_url="https://pristupne-stranky.cz/zakon-a-standardy/",

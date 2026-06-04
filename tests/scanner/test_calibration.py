@@ -754,3 +754,102 @@ class TestMultipleH1NoPenalty:
             f"Multiple <h1> nepenalizovat — HTML5 to povoluje. "
             f"Má: {[f.title for f in problems]}"
         )
+
+
+# --------------------------------------------------------------------------
+# Fix #14 — EAA (zák. 424/2023): eskalace severity pro covered sectors
+#
+# Od 28.6.2025 jsou banky, e-shopy, doprava, telekom a audiovizuální media
+# povinné zveřejnit prohlášení o přístupnosti (zákon č. 424/2023 Sb.,
+# implementace European Accessibility Act). Skener má escalovat
+# `missing-accessibility-statement` z INFO (-2) na WARNING (-8) pokud HTML
+# obsahuje signály těchto sektorů.
+# --------------------------------------------------------------------------
+
+class TestEAACoveredSectorEscalation:
+    from scanner.modules.accessibility import AccessibilityScanner  # noqa
+
+    def setup_method(self):
+        from scanner.modules.accessibility import AccessibilityScanner
+        self.scanner = AccessibilityScanner()
+
+    def test_ecommerce_missing_statement_is_warning(self):
+        """E-shop bez prohlášení o přístupnosti → WARNING (EAA)."""
+        html = (
+            '<html lang="cs"><body>'
+            '<a href="/kosik">Košík (2)</a>'
+            '<button>Přidat do košíku</button>'
+            '<span itemtype="https://schema.org/Product">Produkt</span>'
+            '</body></html>'
+        )
+        resp = _mock_response(html)
+        findings = self.scanner.run("https://example.cz", resp)
+        stmt = [f for f in findings if f.id == "missing-accessibility-statement"]
+        assert len(stmt) == 1
+        assert stmt[0].severity == Severity.WARNING, (
+            "E-shop pod EAA musí mít accessibility statement — WARNING."
+        )
+
+    def test_banking_missing_statement_is_warning(self):
+        """Banka bez prohlášení → WARNING."""
+        html = (
+            '<html lang="cs"><body>'
+            '<a href="/internetbanking">Internetové bankovnictví</a>'
+            '<form><input name="iban" placeholder="IBAN"></form>'
+            '<p>Bankovní účet, platba převodem.</p>'
+            '</body></html>'
+        )
+        resp = _mock_response(html)
+        findings = self.scanner.run("https://example-bank.cz", resp)
+        stmt = [f for f in findings if f.id == "missing-accessibility-statement"]
+        assert stmt[0].severity == Severity.WARNING
+
+    def test_public_sector_domain_is_warning(self):
+        """Veřejnoprávní (.gov.cz) bez prohlášení → WARNING (zák. 99/2019)."""
+        html = '<html lang="cs"><body><p>Úřad obce</p></body></html>'
+        resp = _mock_response(html)
+        findings = self.scanner.run("https://mesto.gov.cz", resp)
+        stmt = [f for f in findings if f.id == "missing-accessibility-statement"]
+        assert stmt[0].severity == Severity.WARNING
+
+    def test_marketing_site_missing_statement_is_info(self):
+        """Marketing/blog web bez signálů covered sector → zůstává INFO."""
+        html = (
+            '<html lang="cs"><body>'
+            '<h1>Naše SaaS pro B2B klienty</h1>'
+            '<p>Kontaktujte nás pro demo.</p>'
+            '</body></html>'
+        )
+        resp = _mock_response(html)
+        findings = self.scanner.run("https://saas-b2b.com", resp)
+        stmt = [f for f in findings if f.id == "missing-accessibility-statement"]
+        assert stmt[0].severity == Severity.INFO, (
+            "Marketing/B2B web mimo EAA — penalty zůstává INFO."
+        )
+
+    def test_statement_present_no_finding(self):
+        """Pokud web statement má, ne flagne — bez ohledu na sector."""
+        html = (
+            '<html lang="cs"><body>'
+            '<a href="/kosik">Košík</a>'
+            '<a href="/prohlaseni-o-pristupnosti">Prohlášení o přístupnosti</a>'
+            '</body></html>'
+        )
+        resp = _mock_response(html)
+        findings = self.scanner.run("https://eshop.cz", resp)
+        missing = [f for f in findings if f.id == "missing-accessibility-statement"]
+        assert missing == []
+
+
+class TestAccessibilityLegalTextUpdated:
+    """Text findingu má odkazovat na 424/2023, ne 99/2019."""
+
+    def test_finding_description_mentions_424_2023(self):
+        from scanner.modules.accessibility import AccessibilityScanner
+        scanner = AccessibilityScanner()
+        resp = _mock_response('<html lang="cs"><body></body></html>')
+        findings = scanner.run("https://example.com", resp)
+        stmt = [f for f in findings if f.id == "missing-accessibility-statement"][0]
+        assert "424/2023" in stmt.description, (
+            f"Description by měl odkazovat na 424/2023, ne 99/2019. Má: {stmt.description}"
+        )
