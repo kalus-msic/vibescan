@@ -149,20 +149,15 @@ class SEOScanner(BaseScanModule):
                 category="seo",
                 fix_url="/guide/#seo-zaklady",
             )
-        if len(h1_tags) > 1:
-            return Finding(
-                id="multiple-h1",
-                title=f"V\u00edce nadpis\u016f <h1> ({len(h1_tags)}\u00d7)",
-                description="Str\u00e1nka m\u00e1 v\u00edce ne\u017e jeden <h1>. Doporu\u010duje se pou\u017e\u00edt pr\u00e1v\u011b jeden <h1> na str\u00e1nku pro jasnou strukturu obsahu.",
-                severity=Severity.INFO,
-                category="seo",
-                fix_url="/guide/#seo-zaklady",
-                detail=", ".join(h.get_text(strip=True)[:50] for h in h1_tags),
-            )
+        # HTML5 spec povoluje multiple <h1> v sectioning roots od r. 2014.
+        # Google potvrdil, \u017ee to neovliv\u0148uje SEO. \u017d\u00e1dn\u00e1 penalty.
         return Finding(
             id="h1-ok",
-            title="Nadpis <h1> nalezen",
-            description="Str\u00e1nka m\u00e1 pr\u00e1v\u011b jeden <h1> nadpis.",
+            title=f"Nadpis <h1> nalezen ({len(h1_tags)}\u00d7)" if len(h1_tags) > 1 else "Nadpis <h1> nalezen",
+            description=(
+                f"Str\u00e1nka m\u00e1 {len(h1_tags)} <h1> nadpis\u016f \u2014 "
+                "HTML5 to v sekc\u00edch povoluje."
+            ) if len(h1_tags) > 1 else "Str\u00e1nka m\u00e1 pr\u00e1v\u011b jeden <h1> nadpis.",
             severity=Severity.OK,
             category="seo",
             detail=h1_tags[0].get_text(strip=True)[:80],

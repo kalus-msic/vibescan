@@ -9,6 +9,23 @@ SEVERITY_PENALTY = {
     Severity.OK: 0,
 }
 
+# Maximální penalty per kategorie. Brání tomu, aby kumulace drobných nálezů
+# v jediném modulu dominovala skóre (např. 1 cookie bez 3 flagů = -24).
+MODULE_PENALTY_CAP = {
+    "cookies": 16,        # 2× WARNING
+    "accessibility": 8,   # 4× INFO (kumulace drobností)
+    "sri": 10,            # 1× WARNING + 1× INFO
+    "seo": 4,             # SEO nemá ovlivnit bezpečnostní skóre víc
+    "legal": 6,
+    "headers": 24,        # CSP + HSTS + frame = až -60, cap pro férovost
+    "dns": 16,
+    "html": 8,
+    "meta": 8,
+    "forms": 16,
+    "tech": 24,
+    "cors": 20,           # wildcard + credentials = CRITICAL, ostatní méně
+}
+
 
 class ScoreCategory(str, Enum):
     EXCELLENT = "Výborný"
@@ -36,9 +53,23 @@ class ScoreCategory(str, Enum):
         }[self]
 
 
+def _score_from_iter(items) -> int:
+    by_category: dict[str, int] = {}
+    for category, penalty in items:
+        by_category[category] = by_category.get(category, 0) + penalty
+    total = 0
+    for category, penalty in by_category.items():
+        cap = MODULE_PENALTY_CAP.get(category)
+        if cap is not None:
+            penalty = min(penalty, cap)
+        total += penalty
+    return max(0, 100 - total)
+
+
 def calculate_vibe_score(findings: list[Finding]) -> int:
-    penalty = sum(SEVERITY_PENALTY[f.severity] for f in findings)
-    return max(0, 100 - penalty)
+    return _score_from_iter(
+        (f.category, SEVERITY_PENALTY[f.severity]) for f in findings
+    )
 
 
 SEVERITY_PENALTY_MAP = {s.value: p for s, p in SEVERITY_PENALTY.items()}
@@ -46,9 +77,8 @@ SEVERITY_PENALTY_MAP = {s.value: p for s, p in SEVERITY_PENALTY.items()}
 
 def recalculate_from_findings_dicts(findings: list[dict]) -> int:
     """Recalculate vibe score from findings dicts (JSONField data), skipping dismissed."""
-    penalty = sum(
-        SEVERITY_PENALTY_MAP.get(f.get("severity", ""), 0)
+    return _score_from_iter(
+        (f.get("category", ""), SEVERITY_PENALTY_MAP.get(f.get("severity", ""), 0))
         for f in findings
         if not f.get("dismissed")
     )
-    return max(0, 100 - penalty)

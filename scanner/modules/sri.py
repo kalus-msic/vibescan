@@ -4,18 +4,36 @@ from .base import BaseScanModule, Finding, Severity
 
 # Dynamic CDNs where SRI cannot be applied (content changes per config/request)
 DYNAMIC_HOSTS = {
+    # Tag managers & analytics
     "www.googletagmanager.com",
     "googletagmanager.com",
     "www.google-analytics.com",
     "google-analytics.com",
+    "assets.adobedtm.com",  # Adobe DTM / Launch
+    "cdn.segment.com",
+    "static.hotjar.com",
+    "cdn.heapanalytics.com",
+    "static.cloudflareinsights.com",
+    "cdn.matomo.cloud",
+    # Social / marketing
     "connect.facebook.net",
     "platform.twitter.com",
     "platform.x.com",
     "snap.licdn.com",
     "sc-static.net",
+    "analytics.tiktok.com",
+    "bat.bing.com",
+    "mc.yandex.ru",
+    # Widgets & payments
     "widget.intercom.io",
     "js.stripe.com",
-    "cdn.segment.com",
+    "js.hsforms.net",  # HubSpot
+    "js.hs-scripts.com",
+    "js.hs-analytics.net",
+    # reCAPTCHA — Google host but specific dynamic endpoint
+    "www.google.com",
+    "www.gstatic.com",
+    # Fonts
     "fonts.googleapis.com",
     "fonts.gstatic.com",
 }

@@ -1,3 +1,5 @@
+import re
+
 from bs4 import BeautifulSoup
 from .base import BaseScanModule, Finding, Severity
 
@@ -33,6 +35,29 @@ def _has_meta_csrf_token(soup: BeautifulSoup) -> bool:
     return False
 
 
+# Inline JS pattern: var Token = '...', let csrfToken = '...', window._csrf = '...'.
+_JS_CSRF_VAR_RE = re.compile(
+    r"""(?:var|let|const|window\.|self\.)\s*\.?\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*['"][^'"]{8,}['"]""",
+    re.IGNORECASE,
+)
+
+
+def _has_inline_js_csrf(soup: BeautifulSoup) -> bool:
+    """ČSOB-style: <script>var Token = '...';</script> jako CSRF signal."""
+    for script in soup.find_all("script"):
+        body = script.string
+        if not body:
+            continue
+        for match in _JS_CSRF_VAR_RE.finditer(body):
+            ident = match.group(1)
+            ident_l = ident.lower()
+            if ident_l == "token":
+                return True
+            if any(p in ident_l for p in CSRF_TOKEN_PATTERNS):
+                return True
+    return False
+
+
 class FormScanner(BaseScanModule):
     name = "forms"
     step_label = "Formuláře & CSRF"
@@ -45,7 +70,7 @@ class FormScanner(BaseScanModule):
         soup = BeautifulSoup(html, "html.parser")
         findings = []
 
-        page_has_meta_csrf = _has_meta_csrf_token(soup)
+        page_has_csrf_signal = _has_meta_csrf_token(soup) or _has_inline_js_csrf(soup)
 
         # Check POST forms for CSRF tokens
         for form in soup.find_all("form"):
@@ -54,7 +79,7 @@ class FormScanner(BaseScanModule):
                 continue
 
             hidden_inputs = form.find_all("input", attrs={"type": "hidden"})
-            has_csrf = page_has_meta_csrf or any(
+            has_csrf = page_has_csrf_signal or any(
                 _looks_like_csrf_name(inp.get("name"))
                 for inp in hidden_inputs
             )

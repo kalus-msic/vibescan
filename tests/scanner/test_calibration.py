@@ -17,13 +17,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from scanner.modules.base import Severity
+from scanner.modules.base import Finding, Severity
 from scanner.modules.dns_check import DNSScanner
 from scanner.modules.forms import FormScanner
 from scanner.modules.headers import HeaderScanner
 from scanner.modules.html_check import HTMLScanner
 from scanner.modules.secrets import SecretLeakageScanner
+from scanner.modules.seo import SEOScanner
 from scanner.modules.sri import SRIScanner
+from scanner.score import calculate_vibe_score
 
 
 def _mock_response(text="", headers=None):
@@ -453,4 +455,196 @@ class TestWellSecuredSiteCalibration:
         assert warnings == [], (
             f"Form s <meta csrf-token> v hlavičce nesmí dostat CSRF WARNING. "
             f"Má: {[f.title for f in warnings]}"
+        )
+
+
+# --------------------------------------------------------------------------
+# Fix #9 — CSRF token v inline JS proměnné
+#
+# Empirie: ČSOB renderuje CSRF token jako `<script>var Token = 'IqLR4uq...';
+# </script>`. Forms scanner ho nepoznal a flagnul "POST formulář bez CSRF"
+# (-8). Stejný hashe je v secrets už vyloučen (capitalized Token), ale forms
+# o tom nemá info.
+# --------------------------------------------------------------------------
+
+class TestCSRFInlineJSDetection:
+    def setup_method(self):
+        self.scanner = FormScanner()
+
+    def test_var_token_in_script_is_csrf_signal(self):
+        """var Token = '...' v <script> má znamenat, že formuláře CSRF mají."""
+        resp = _mock_response(
+            '<html><head>'
+            '<script>var Token = "IqLR4uqAbCdEfGhIjKlMn";</script>'
+            '</head><body>'
+            '<form method="POST" action="/submit"><input type="text" name="x"></form>'
+            '</body></html>'
+        )
+        findings = self.scanner.run("https://example.com", resp)
+        warnings = [f for f in findings if f.severity == Severity.WARNING]
+        assert warnings == [], (
+            "JS proměnná `var Token = '...'` musí být uznána jako CSRF signal "
+            "(ČSOB pattern)."
+        )
+
+    def test_let_csrf_token_in_script(self):
+        resp = _mock_response(
+            '<script>let csrfToken = "abc123def456ghi789";</script>'
+            '<form method="POST"><input type="text" name="x"></form>'
+        )
+        findings = self.scanner.run("https://example.com", resp)
+        warnings = [f for f in findings if f.severity == Severity.WARNING]
+        assert warnings == []
+
+    def test_window_csrf_in_script(self):
+        resp = _mock_response(
+            '<script>window._csrf = "abc123def456ghi789";</script>'
+            '<form method="POST"><input type="text" name="x"></form>'
+        )
+        findings = self.scanner.run("https://example.com", resp)
+        warnings = [f for f in findings if f.severity == Severity.WARNING]
+        assert warnings == []
+
+    def test_random_js_var_not_csrf_signal(self):
+        """Náhodná JS proměnná jako `var x = '...';` nesmí ošálit detekci."""
+        resp = _mock_response(
+            '<script>var greeting = "Hello world!";</script>'
+            '<form method="POST"><input type="text" name="x"></form>'
+        )
+        findings = self.scanner.run("https://example.com", resp)
+        warnings = [f for f in findings if f.severity == Severity.WARNING]
+        assert len(warnings) == 1, (
+            "Bez CSRF signálu se MUSÍ flagnout POST form bez tokenu."
+        )
+
+
+# --------------------------------------------------------------------------
+# Fix #10 — DYNAMIC_HOSTS rozšířit o recaptcha a Adobe DTM
+#
+# Empirie: ČSOB načítá:
+#   https://www.google.com/recaptcha/api.js
+#   https://assets.adobedtm.com/.../launch-*.min.js
+# Oba jsou dynamic CDN endpoints, kde SRI prakticky nelze aplikovat
+# (parametrizovaný obsah / verze).
+# --------------------------------------------------------------------------
+
+class TestDynamicHostsExpansion:
+    def setup_method(self):
+        self.scanner = SRIScanner()
+
+    def test_recaptcha_is_dynamic(self):
+        resp = _mock_response(
+            '<script src="https://www.google.com/recaptcha/api.js?render=KEY"></script>'
+        )
+        findings = self.scanner.run("https://example.cz", resp)
+        warnings = [f for f in findings if f.severity == Severity.WARNING]
+        assert warnings == [], (
+            "Google reCAPTCHA je dynamic CDN — nepotřebuje SRI."
+        )
+
+    def test_recaptcha_gstatic_is_dynamic(self):
+        resp = _mock_response(
+            '<script src="https://www.gstatic.com/recaptcha/releases/abc/recaptcha__cs.js"></script>'
+        )
+        findings = self.scanner.run("https://example.cz", resp)
+        warnings = [f for f in findings if f.severity == Severity.WARNING]
+        assert warnings == []
+
+    def test_adobe_dtm_is_dynamic(self):
+        resp = _mock_response(
+            '<script src="https://assets.adobedtm.com/0e0/35f/launch-abc.min.js"></script>'
+        )
+        findings = self.scanner.run("https://example.cz", resp)
+        warnings = [f for f in findings if f.severity == Severity.WARNING]
+        assert warnings == []
+
+
+# --------------------------------------------------------------------------
+# Fix #11 — Per-module penalty cap
+#
+# Empirie: ČSOB má 1 cookie TS7e63a684029 bez Secure / HttpOnly / SameSite.
+# Aktuálně: 3 separátní WARNINGs = -24 bodů za JEDNU cookie. Plus dalších
+# 4× cookies bez SameSite (-8) — celkem cookies modul: -32.
+#
+# Module cap zabrání tomu, aby jediný špatně nastavený detail dominoval
+# celkovému skóre.
+# --------------------------------------------------------------------------
+
+class TestModulePenaltyCap:
+    def test_cookies_module_capped(self):
+        """3× WARNING v jedné kategorii nepřesáhne MODULE_PENALTY_CAP."""
+        findings = [
+            Finding(id="c1", title="t1", description="", severity=Severity.WARNING, category="cookies"),
+            Finding(id="c2", title="t2", description="", severity=Severity.WARNING, category="cookies"),
+            Finding(id="c3", title="t3", description="", severity=Severity.WARNING, category="cookies"),
+        ]
+        # Naivní: -24. S capem (16): -16, score=84.
+        score = calculate_vibe_score(findings)
+        assert score >= 84, (
+            f"Cookies modul má být capped — 3× WARNING (-24) by mělo být max -16. "
+            f"Aktuální score: {score}"
+        )
+
+    def test_accessibility_info_capped(self):
+        """Mnoho INFO findings v a11y (drobné nedostatky) nemá zničit skóre."""
+        findings = [
+            Finding(id=f"a{i}", title=f"t{i}", description="", severity=Severity.INFO, category="accessibility")
+            for i in range(6)
+        ]
+        # Naivní: -12. S capem (8): -8, score=92.
+        score = calculate_vibe_score(findings)
+        assert score >= 92, (
+            f"6× a11y INFO (-12) by mělo být max -8. Aktuální score: {score}"
+        )
+
+    def test_cap_does_not_increase_score(self):
+        """Cap nesmí přidávat body — jen omezovat."""
+        findings = [
+            Finding(id="x1", title="t", description="", severity=Severity.WARNING, category="cookies"),
+        ]
+        score = calculate_vibe_score(findings)
+        assert score == 92  # -8 max, žádný cap effect
+
+    def test_different_categories_sum_independently(self):
+        """Cap se aplikuje per kategorie, ne globálně."""
+        findings = [
+            Finding(id="c1", title="t", description="", severity=Severity.WARNING, category="cookies"),
+            Finding(id="h1", title="t", description="", severity=Severity.WARNING, category="headers"),
+            Finding(id="s1", title="t", description="", severity=Severity.WARNING, category="sri"),
+        ]
+        # Každá kategorie -8 (pod capem). Total -24.
+        score = calculate_vibe_score(findings)
+        assert score == 76
+
+
+# --------------------------------------------------------------------------
+# Fix #12 — Multiple <h1> není SEO problém
+#
+# HTML5 spec povoluje multiple h1 v sectioning roots od r. 2014. Google
+# potvrdil, že to neovlivňuje SEO. Penalty -2 je cargo cult.
+# --------------------------------------------------------------------------
+
+class TestMultipleH1NoPenalty:
+    def setup_method(self):
+        self.scanner = SEOScanner()
+
+    def test_multiple_h1_not_penalized(self):
+        """Stránka s více <h1> nesmí dostat INFO penalty."""
+        html = (
+            '<html><head><title>Test</title>'
+            '<meta name="description" content="x">'
+            '<link rel="canonical" href="https://x.com">'
+            '<meta property="og:title" content="x">'
+            '<meta property="og:description" content="x">'
+            '</head><body>'
+            '<section><h1>Sekce A</h1></section>'
+            '<section><h1>Sekce B</h1></section>'
+            '</body></html>'
+        )
+        resp = _mock_response(html)
+        findings = self.scanner.run("https://x.com", resp)
+        problems = [f for f in findings if f.severity in (Severity.WARNING, Severity.INFO) and "h1" in f.id]
+        assert problems == [], (
+            f"Multiple <h1> nepenalizovat — HTML5 to povoluje. "
+            f"Má: {[f.title for f in problems]}"
         )
