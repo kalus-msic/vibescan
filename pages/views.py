@@ -61,7 +61,61 @@ CHECKLIST_ITEMS = [
     },
 ]
 
-NARRATIVE_SECTIONS = []  # naplní se v navazujícím subagentu
+NARRATIVE_SECTIONS = [
+    {
+        "id": "section-idor",
+        "title": "Přístupy a IDOR",
+        "subtitle": "Autentizace není autorizace — největší slepé místo vibecoded appek",
+        "blocks": [
+            {"type": "p", "html": "Login funguje. Uživatel se přihlásí, UI vypadá správně. Ale pod kapotou API ani databáze neověřují, zda přihlášený uživatel smí číst právě tato data. To je <strong>IDOR — Insecure Direct Object Reference</strong> — a je to nejčastější zranitelnost v aplikacích postavených vibe codingem."},
+
+            {"type": "h3", "text": "Jak IDOR vypadá v praxi"},
+            {"type": "p", "html": "Tvoje appka má endpoint <code>/api/orders/123</code>. Přihlášený uživatel A si zobrazí svou objednávku. Změní v URL <code>123</code> na <code>124</code> — a vidí objednávku uživatele B. Login fungoval, ale API nekontroluje vlastnictví záznamu."},
+            {"type": "p", "html": "AI coding nástroje toto typicky neřeší. Vygenerují funkční CRUD s autentizací (přihlášení), ale autorizaci (kdo smí co vidět) musíš zadat ty."},
+
+            {"type": "h3", "text": "Moltbook — jak to vypadá ve skutečnosti"},
+            {"type": "p", "html": "Moltbook byla AI sociální síť postavená kompletně vibe codingem. Zakladatel veřejně uvedl, že nenapsal jediný řádek kódu. Výzkumníci z Wiz Research otevřeli stránku v prohlížeči, zmáčkli F12 a v DevTools našli v JavaScript bundlu hardcoded Supabase credentials. S tímto klíčem zavolali Supabase API přímo — bez dalšího přihlášení — a získali plný čtecí i zápisový přístup ke kompletní produkční databázi: 1,5 milionu API tokenů, 35 000 e-mailových adres, soukromé zprávy."},
+            {"type": "p", "html": "Žádný sofistikovaný útok. Žádný exploit. Jen F12 a veřejně dostupný klíč bez Row Level Security."},
+            {"type": "p", "html": "<strong>Chybový řetězec krok za krokem:</strong>"},
+            {"type": "ol", "items": [
+                "Wiz otevřel moltbook.com v prohlížeči a přes DevTools (F12) inspektoval načtené JavaScript soubory.",
+                "V Next.js static chunku našel hardcoded Supabase credentials: URL projektu + API klíč.",
+                "S tímto klíčem zavolal Supabase API přímo — bez jakékoli autentizace — a získal plný přístup ke všem tabulkám.",
+                "Databáze obsahovala 1,5 mil. API tokenů, 35 000 e-mailů a soukromé zprávy.",
+                "Bonus: za 1,5 mil. „AI agentů“ stálo jen 17 000 lidí (poměr 88:1). Žádný rate limiting, žádná validace.",
+            ]},
+            {"type": "callout", "variant": "warning", "html": "<strong>Kořenová příčina:</strong> secret v client-side JS + chybějící RLS + žádný rate limiting. Kombinace = žádné hackování nebylo potřeba."},
+
+            {"type": "h3", "text": "Supabase a RLS — co AI nástroje neudělají za tebe"},
+            {"type": "p", "html": "Lovable generuje Supabase integraci včetně auth. Ale Row Level Security (RLS) nezapne automaticky — musíš to udělat ručně nebo to zadat AI jako explicitní požadavek."},
+            {"type": "p", "html": "<strong>Tři věci, které Supabase RLS neochrání automaticky:</strong>"},
+            {"type": "ul", "items": [
+                "<strong><code>service_role</code> klíč v client bundlu</strong> — tento klíč obchází RLS kompletně. Nikdy nesmí být ve frontend kódu. Používej ho výhradně na serveru (Edge Functions, backend).",
+                "<strong>Views bez <code>security_invoker = true</code></strong> — Supabase Views defaultně obcházejí RLS. Pokud vytvoříš View, musíš explicitně nastavit <code>security_invoker = true</code>, jinak View vrací data všech uživatelů bez ohledu na RLS policies.",
+                "<strong>Anon klíč s příliš volnými policies</strong> — anon klíč je veřejný (je ve frontend bundlu). RLS policies musí být napsané tak, že s anon klíčem uživatel vidí jen svá vlastní data.",
+            ]},
+
+            {"type": "h3", "text": "Jak ověřit: negativní test přístupů"},
+            {"type": "p", "html": "Přihlas se jako uživatel A. Pak přes DevTools nebo curl zkus přečíst data uživatele B:"},
+            {"type": "ol", "items": [
+                "Otevři DevTools → Network → najdi API volání na Supabase.",
+                "Zkopíruj request a změň ID záznamu na záznam jiného uživatele.",
+                "Pokud dostaneš data — RLS nefunguje.",
+            ]},
+            {"type": "p", "html": "Pro Supabase konkrétně: přihlas jako user A, pak přes anon klíč zavolej <code>supabase.from('table').select('*')</code> — pokud vrací záznamy jiných uživatelů, RLS není správně nastavený."},
+
+            {"type": "h3", "text": "Čísla"},
+            {"type": "p", "html": "40–62 % kódu vygenerovaného AI nástroji obsahuje bezpečnostní zranitelnost. Přístupy a IDOR patří mezi nejčastější."},
+            {"type": "p", "html": "Escape.tech proskenoval 5 600+ vibecoded aplikací a našel 400+ secretů přímo ve frontend kódu (OpenAI, Stripe, Supabase klíče)."},
+
+            {"type": "sources", "items": [
+                "Wiz Research — Moltbook (2026-02-02): <a href='https://www.wiz.io/blog/exposed-moltbook-database-reveals-millions-of-api-keys' rel='noopener' class='underline'>wiz.io/blog/exposed-moltbook-database-reveals-millions-of-api-keys</a>",
+                "Escape.tech — vibecoded apps secrets: <a href='https://escape.tech/blog/exposed-secrets-in-vibecoded-apps' rel='noopener' class='underline'>escape.tech</a>",
+                "Supabase RLS: <a href='https://supabase.com/docs/guides/auth/row-level-security' rel='noopener' class='underline'>supabase.com/docs/guides/auth/row-level-security</a>",
+            ]},
+        ],
+    },
+]
 
 GUIDE_PROMPTS = [
     {

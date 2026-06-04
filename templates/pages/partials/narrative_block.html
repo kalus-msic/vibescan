@@ -1,3 +1,4 @@
+{# All `html` / `items` / `rows` cells are author-trusted raw HTML rendered with |safe. NEVER pass user input here. #}
 {% if block.type == "p" %}
   <p class="text-sm text-slate-700 leading-relaxed mb-4">{{ block.html|safe }}</p>
 {% elif block.type == "h3" %}

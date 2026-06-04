@@ -162,3 +162,11 @@ class TestGuideView:
         client = Client()
         r = client.get("/guide/")
         assert "vibescan-checklist" in r.content.decode()
+
+    def test_narrative_section_idor_present(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert 'id="section-idor"' in body
+        assert "Přístupy a IDOR" in body
+        assert "Moltbook" in body
