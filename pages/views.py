@@ -683,6 +683,39 @@ def security_txt(request):
     return HttpResponse(SECURITY_TXT, content_type="text/plain")
 
 
+SITEMAP_URLS = [
+    ("scanner:home", 1.0, "weekly"),
+    ("pages:how_it_works", 0.8, "monthly"),
+    ("pages:guide", 0.8, "monthly"),
+    ("pages:review", 0.7, "monthly"),
+    ("pages:roadmap", 0.6, "weekly"),
+    ("pages:privacy", 0.3, "yearly"),
+    ("pages:terms", 0.3, "yearly"),
+]
+
+
+def sitemap_xml(request):
+    from django.urls import reverse
+    base = f"{request.scheme}://{request.get_host()}"
+    urls = [
+        {"loc": base + reverse(name), "priority": priority, "changefreq": changefreq}
+        for name, priority, changefreq in SITEMAP_URLS
+    ]
+    return render(request, "pages/sitemap.xml", {"urls": urls}, content_type="application/xml")
+
+
+ROBOTS_TXT = """User-agent: *
+Allow: /
+Disallow: /scan/
+
+Sitemap: https://vibescan.cz/sitemap.xml
+"""
+
+
+def robots_txt(request):
+    return HttpResponse(ROBOTS_TXT, content_type="text/plain")
+
+
 def how_it_works(request):
     return render(request, "pages/how_it_works.html", {
         "scan_checks": SCAN_CHECKS,
