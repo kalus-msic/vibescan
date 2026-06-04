@@ -1,4 +1,5 @@
 import logging
+import re
 
 import httpx
 from datetime import datetime, timezone
@@ -6,6 +7,40 @@ from urllib.parse import urlparse
 from celery import shared_task
 
 logger = logging.getLogger(__name__)
+
+
+# Markery pro typické bot challenge / WAF stránky.
+# Detekce dříve než moduly začnou počítat falešné skóre.
+_CHALLENGE_TITLE_PATTERNS = re.compile(
+    r"<title>[^<]*("
+    r"just a moment|please wait|"
+    r"please confirm you are human|"
+    r"checking your browser|"
+    r"attention required|"
+    r"access denied|verifying you are human|"
+    r"one more step|moment ago"
+    r")[^<]*</title>",
+    re.IGNORECASE,
+)
+_CHALLENGE_BODY_MARKERS = (
+    "/cdn-cgi/challenge-platform/",        # Cloudflare
+    "/cdn-cgi/styles/challenges.css",      # Cloudflare
+    "g-recaptcha\" data-sitekey",          # Generic reCAPTCHA wall (rare on normal pages)
+    "challenge-form",                       # Generic challenge form
+    "_imp_apg-",                           # Imperva
+    "px-captcha",                          # PerimeterX
+    "akamai-bot-manager",                  # Akamai
+    "ddos-guard",                          # DDoS-Guard
+)
+
+
+def _is_bot_challenge(html: str) -> bool:
+    """Detekuje typické bot challenge stránky (Cloudflare, Akamai, Imperva, PX, ...)."""
+    if not html:
+        return False
+    if _CHALLENGE_TITLE_PATTERNS.search(html):
+        return True
+    return any(marker in html for marker in _CHALLENGE_BODY_MARKERS)
 
 from .models import ScanResult, ScanStatus
 from .modules.headers import HeaderScanner
@@ -69,12 +104,23 @@ def _fetch_url(url):
     # Re-validate DNS right before connecting to minimize TOCTOU window
     validate_scan_url(url)
 
+    # Realistický UA snižuje false-block z bot mitigation (Cloudflare/Akamai).
+    # Identita Vibescanu zůstává čitelná v Sec-Browser headeru i From: hlavičce.
+    user_agent = (
+        "Mozilla/5.0 (compatible; Vibescan/1.0; +https://vibescan.cz/) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    )
     with httpx.stream(
         "GET",
         url,
         timeout=10,
         follow_redirects=True,
-        headers={"User-Agent": "Vibescan/1.0 (security audit; https://vibescan.cz)"},
+        headers={
+            "User-Agent": user_agent,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "cs-CZ,cs;q=0.9,en;q=0.8",
+            "From": "audit@vibescan.cz",
+        },
     ) as response:
         # Check final URL after redirects — prevent SSRF bypass via redirect
         final_host = urlparse(str(response.url)).hostname
@@ -124,6 +170,18 @@ def run_scan(self, scan_id: str):
     # Check content type — only parse HTML-like responses
     content_type = response.headers.get("content-type", "").lower().split(";")[0].strip()
     is_html = content_type in ALLOWED_CONTENT_TYPES
+
+    # Detekce bot challenge / WAF stránek. Pokud cílový server skener
+    # zablokoval Cloudflare/Akamai/PerimeterX challenge, nepočítáme falešné
+    # skóre z challenge stránky — vrátíme jasnou chybu.
+    if is_html and _is_bot_challenge(response.text or ""):
+        _fail_scan(
+            scan,
+            "Cílový web vrátil bot challenge (Cloudflare/Akamai/podobné). "
+            "Sken nemůže vyhodnotit obsah. Zkuste přidat výjimku pro "
+            "User-Agent 'Vibescan' nebo IP skeneru ve WAF konfiguraci.",
+        )
+        return
 
     all_findings = []
     progress = _initial_progress()

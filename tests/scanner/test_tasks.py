@@ -80,3 +80,47 @@ class TestRunScanTask(TestCase):
         scan.refresh_from_db()
         assert scan.status == ScanStatus.FAILED
         assert "příliš velká" in scan.error_message
+
+    @patch("scanner.tasks._fetch_url")
+    def test_cloudflare_challenge_detected(self, mock_fetch):
+        """Cloudflare bot challenge se nesmí počítat jako normální odpověď."""
+        cf_body = (
+            b'<html><head><title>Just a moment...</title></head>'
+            b'<body><h1>Please confirm you are human.</h1>'
+            b'<script src="/cdn-cgi/challenge-platform/h/g/orchestrate/chl_page/v1"></script>'
+            b'</body></html>'
+        )
+        mock_fetch.return_value = _make_mock_response(body=cf_body)
+
+        scan = ScanResult.objects.create(url="https://alza.cz")
+        run_scan(str(scan.id))
+
+        scan.refresh_from_db()
+        assert scan.status == ScanStatus.FAILED, (
+            "Sken na bot challenge stránku má failnout, ne vrátit falešné skóre."
+        )
+        assert "bot" in scan.error_message.lower() or "challenge" in scan.error_message.lower()
+
+    @patch("scanner.tasks._fetch_url")
+    def test_just_a_moment_title_detected(self, mock_fetch):
+        """Akamai/Cloudflare 'Just a moment...' title pattern."""
+        body = b'<html><head><title>Just a moment...</title></head><body></body></html>'
+        mock_fetch.return_value = _make_mock_response(body=body)
+
+        scan = ScanResult.objects.create(url="https://example.com")
+        run_scan(str(scan.id))
+
+        scan.refresh_from_db()
+        assert scan.status == ScanStatus.FAILED
+
+    @patch("scanner.tasks._fetch_url")
+    def test_normal_page_not_treated_as_challenge(self, mock_fetch):
+        """Negative — běžná stránka se mylně neoznačí za challenge."""
+        body = b'<html><head><title>Welcome</title></head><body><h1>Hello</h1></body></html>'
+        mock_fetch.return_value = _make_mock_response(body=body)
+
+        scan = ScanResult.objects.create(url="https://example.com")
+        run_scan(str(scan.id))
+
+        scan.refresh_from_db()
+        assert scan.status == ScanStatus.DONE
