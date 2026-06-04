@@ -98,9 +98,11 @@ Nastav automatické kontroly závislostí v CI/CD (Dependabot, Renovate nebo Sny
 
 2. **Stránka ochrany osobních údajů** — Vytvoř stránku /ochrana-osobnich-udaju/ s informacemi: kdo data zpracovává (název, IČO, adresa, kontakt), jaká data sbíráme, proč a na jakém právním základě (GDPR čl. 6), jak dlouho data uchováváme, práva návštěvníků (přístup, výmaz, přenositelnost, námitka), kontakt na DPO (pokud existuje), odkaz na podání stížnosti u ÚOOÚ.
 
-3. **Patička webu** — V patičce musí být: © rok a název provozovatele, odkaz na ochranu osobních údajů, IČO provozovatele.
+3. **Patička webu** — V patičce by měly být: odkaz na ochranu osobních údajů, kontakt na provozovatele, IČO. Copyright označení (© rok a název) je tradiční konvence, ale **není legálně povinné** — autorské právo vzniká automaticky vytvořením díla (Bernská úmluva, autorský zákon č. 121/2000 Sb. § 9).
 
-4. **Přístupnost** — Přidej odkaz pro přeskočení navigace (<a href="#main" class="sr-only focus:not-sr-only">Přeskočit na obsah</a>) jako první prvek v <body>. V CSS přidej @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } } pro uživatele s vestibulárními potížemi.
+4. **Prohlášení o přístupnosti** — Pokud provozuješ e-shop, banku, dopravu, telekom nebo audiovizuální media, máš podle zákona č. 424/2023 Sb. (EAA, od 28.6.2025) povinnost zveřejnit prohlášení o přístupnosti. Musí obsahovat: stav (ne)souladu s WCAG 2.2, výjimky s odůvodněním (nepřiměřená zátěž), náhradní řešení pro nepřístupné části, kontakt pro hlášení nedostupnosti.
+
+5. **Přístupnost (WCAG 2.2)** — Přidej odkaz pro přeskočení navigace (<a href="#main" class="sr-only focus:not-sr-only">Přeskočit na obsah</a>) jako první prvek v <body>. V CSS přidej @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } } pro uživatele s vestibulárními potížemi.
 
 Poznámka: Vygenerované texty jsou šablony — uprav je podle skutečných údajů o provozovateli a zpracování dat.""",
     },
@@ -472,7 +474,7 @@ SCAN_CHECKS = [
     {
         "icon": "legal",
         "title": "Právní náležitosti",
-        "description": "Hledáme základní právní prvky vyžadované českým a evropským právem: mechanismus pro souhlas s cookies (cookie consent lišta), odkaz na stránku ochrany osobních údajů (GDPR) a copyright v patičce. Nekontrolujeme IČO ani adresu provozovatele — tyto údaje bývají na podstránkách, kam se pasivním skenem nedostaneme. Pokud něco nenajdeme, neznamená to porušení zákona — pouze doporučujeme zkontrolovat.",
+        "description": "Hledáme základní právní prvky vyžadované českým a evropským právem: mechanismus pro souhlas s cookies (cookie consent lišta) a odkaz na stránku ochrany osobních údajů (GDPR). Pro weby pod zákonem č. 424/2023 Sb. (EAA — e-shopy, banky, doprava od 28.6.2025) nebo zák. č. 99/2019 Sb. (orgány veřejné moci) eskalujeme chybějící prohlášení o přístupnosti na varování. Copyright označení nekontrolujeme — autorské právo vzniká automaticky a © notice nemá legální efekt.",
         "doc_url": "https://gdpr.eu/cookies/",
     },
     {
