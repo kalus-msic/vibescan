@@ -207,6 +207,36 @@ NARRATIVE_SECTIONS = [
             ]},
         ],
     },
+    {
+        "id": "section-retence",
+        "title": "Retence dat — case law",
+        "subtitle": "Reálné pokuty bez jediného úniku dat",
+        "blocks": [
+            {"type": "p", "html": "GDPR čl. 5(1)(e) říká: <strong>osobní data smaž, jakmile pominul účel</strong>. GDPR ale nestanovuje konkrétní doby — ty vycházejí z judikatury CNIL (francouzský úřad), která se de facto uplatňuje v celé EU."},
+
+            {"type": "h3", "text": "CNIL pokuty za retenci"},
+            {"type": "table",
+             "headers": ["Případ", "Pokuta", "Co se stalo"],
+             "rows": [
+                ["<strong>Free Mobile</strong> (CNIL, 2026)", "27 mil. EUR", "Výlučně za retenci. Žádný únik dat — jen držel osobní data déle, než měl právní důvod."],
+                ["<strong>Discord</strong> (CNIL, 2022)", "800 tis. EUR", "2,4 mil. účtů neaktivních >3 roky + 58 tis. >5 let. Discord neměl žádnou dokumentovanou retenční politiku."],
+                ["<strong>Spartoo</strong> (CNIL, 2020)", "250 tis. EUR", "3 mil. záznamů zákazníků neaktivních od 2013. 5-letá retence prospektů — a pozor: otevření e-mailu NENÍ platný kontakt."],
+                ["<strong>PAP real estate</strong> (CNIL, 2024)", "100 tis. EUR", "10-letá retence bez zdůvodnění, neaktivní účty nesetřídeny."],
+             ]},
+
+            {"type": "callout", "variant": "warning", "html": "<strong>Klíčové poučení:</strong> Musíš mít <strong>dokumentovanou retenční politiku</strong> — je to první dokument, který inspektor ÚOOÚ (nebo CNIL) při kontrole žádá. Nestačí napsat „mažeme po 2 letech“ do Privacy Policy a ručně nikdy nemazat — musíš mít systém, který politiku reálně vykonává (automatické mazání)."},
+
+            {"type": "h3", "text": "Pravidlo „smysluplný kontakt“"},
+            {"type": "p", "html": "Dobu retence „prospect (registrovaný, nekoupil): max. 3 roky od posledního přihlášení“ zpřesnit takto: max. 3 roky od posledního <strong>smysluplného</strong> kontaktu."},
+            {"type": "p", "html": "<strong>Otevření e-mailu NENÍ platný kontakt</strong> (CNIL vs. Spartoo). Platný kontakt = přihlášení, nákup, odeslání formuláře, aktivní interakce."},
+
+            {"type": "sources", "items": [
+                "CNIL judikatura: Free Mobile (2026), Discord (2022), Spartoo (2020), PAP (2024)",
+                "EDPB, leden 2025: GDPR nestanovuje konkrétní doby retence",
+                "EDPB, únor 2026: 4. CEF — retence jako priorita",
+            ]},
+        ],
+    },
 ]
 
 GUIDE_PROMPTS = [

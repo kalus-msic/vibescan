@@ -187,3 +187,12 @@ class TestGuideView:
         assert "NIS2" in body
         assert "ZoKB" in body
         assert "264/2025" in body
+
+    def test_narrative_section_retence_present(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert 'id="section-retence"' in body
+        assert "Retence dat" in body
+        assert "Free Mobile" in body
+        assert "27 mil. EUR" in body
