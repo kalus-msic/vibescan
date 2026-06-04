@@ -211,6 +211,11 @@
           <button onclick="navigator.clipboard.writeText(this.closest('.bg-white').querySelector('pre').textContent.trim()); this.textContent='Zkopírováno!'; setTimeout(() => this.textContent='Kopírovat', 2000)"
             class="text-xs text-slate-400 hover:text-blue-600 font-medium transition-colors cursor-pointer">Kopírovat</button>
         </div>
+        {% if prompt.disclaimer %}
+        <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mx-5 mt-3 text-xs text-amber-800">
+          ⚠ <strong>{{ prompt.disclaimer_title }}</strong> {{ prompt.disclaimer|safe }}
+        </div>
+        {% endif %}
         <div class="p-5">
           <pre class="text-xs text-slate-700 bg-slate-50 rounded-lg p-4 leading-relaxed whitespace-pre-wrap font-mono border border-slate-100">{{ prompt.content }}</pre>
         </div>

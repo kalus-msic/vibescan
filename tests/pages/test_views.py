@@ -214,3 +214,9 @@ class TestGuideView:
         assert "Kde se učit víc" in body
         assert "w3.org/TR/WCAG22" in body
         assert "gcs=G100" in body or "gcs=G111" in body
+
+    def test_pravni_dokumenty_renders_disclaimer(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert "Tohle není právní rada" in body
