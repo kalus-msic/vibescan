@@ -115,6 +115,51 @@ NARRATIVE_SECTIONS = [
             ]},
         ],
     },
+    {
+        "id": "section-secrets",
+        "title": "Secrets — frontend není trezor",
+        "subtitle": "Frontend není trezor, repozitář není trezor, prompt není trezor",
+        "blocks": [
+            {"type": "p", "html": "API klíč, service-role token nebo databázová URL — pokud je to v kódu, je to veřejné. Tři místa, kde secrets nejčastěji unikají:"},
+
+            {"type": "h3", "text": "1. Frontend JavaScript bundle"},
+            {"type": "p", "html": "Cokoliv v client-side JS si kdokoliv může stáhnout nebo prozkoumat v DevTools. To platí i pro <code>.env</code> proměnné, které framework (Next.js, Vite) vloží do client bundlu — prefix <code>NEXT_PUBLIC_</code> nebo <code>VITE_</code> znamená „toto bude veřejné“."},
+            {"type": "p", "html": "Escape.tech proskenoval 5 600+ vibecoded aplikací a našel 400+ secretů v frontend kódu: OpenAI API klíče, Stripe secret keys, Supabase service_role tokeny."},
+            {"type": "callout", "variant": "danger", "html": "<strong>Supabase <code>service_role</code> klíč:</strong> obchází veškerou Row Level Security a dává plný přístup k celé databázi. Nikdy do frontend bundlu — používej výhradně v Edge Functions nebo backend kódu."},
+
+            {"type": "h3", "text": "2. Git historie"},
+            {"type": "p", "html": "Co je v gitu, je tam navždy — i po smazání souboru. Secret commitnutý omylem zůstává v historii repozitáře. Pokud je repo veřejné, stačí <code>git log</code> a secret je venku. I v privátním repu: kdokoliv s přístupem vidí celou historii."},
+            {"type": "p", "html": "Řešení: <code>.env</code> v <code>.gitignore</code> od prvního commitu. Pokud se secret dostal do git historie, <strong>rotuj klíč</strong> (vygeneruj nový) — mazání z historie (<code>git filter-branch</code>, BFG) je nespolehlivé."},
+
+            {"type": "h3", "text": "3. Prompt do AI nástroje"},
+            {"type": "p", "html": "Vložíš API klíč do promptu pro Claude Code, Cursor nebo ChatGPT? Data odchází na cloud servery AI providera. Pokud nemáš opt-out z trénování, klíč se může stát součástí trénovacích dat."},
+            {"type": "p", "html": "Řešení: nikdy nevkládej secrets do AI promptů. Místo toho řekni AI: „přečti klíč z <code>.env</code> proměnné <code>STRIPE_SECRET_KEY</code>“ — ať pracuje s referencí, ne s hodnotou."},
+
+            {"type": "h3", "text": "Checklist před deployem"},
+            {"type": "p", "html": "Před každým nasazením prohledej kód na tyto vzory:"},
+            {"type": "code", "text": "grep -rn \"service_role\\|sk_live\\|sk_test\\|OPENAI_API_KEY\\|Bearer \\|JWT\\|SMTP_PASS\\|TELEGRAM_TOKEN\\|STRIPE_SECRET\\|DATABASE_URL\\|SUPABASE_SERVICE\" --include=\"*.js\" --include=\"*.ts\" --include=\"*.jsx\" --include=\"*.tsx\" --include=\"*.py\" --include=\"*.env\" ."},
+            {"type": "p", "html": "Pokud hledáš ve výstupu Next.js / Vite buildu:"},
+            {"type": "code", "text": "grep -rn \"sk_live\\|service_role\\|OPENAI_API_KEY\" .next/ dist/ build/"},
+            {"type": "p", "html": "Pro automatizaci: nastav <code>gitleaks</code> nebo <code>trufflehog</code> v CI/CD — skenují každý commit automaticky."},
+
+            {"type": "h3", "text": "Správné uložení secrets"},
+            {"type": "table",
+             "headers": ["Kde", "Příklad"],
+             "rows": [
+                ["<code>.env</code> soubor (lokální vývoj)", "<code>STRIPE_SECRET_KEY=sk_live_...</code>"],
+                ["Secret manager (produkce)", "Vercel Environment Variables, AWS Secrets Manager, Railway Variables"],
+                ["Oddělené klíče dev/prod", "Dev API klíč pro testování, produkční klíč jen na serveru"],
+                ["Rotace", "Při podezření na únik okamžitě vygeneruj nový klíč"],
+             ]},
+            {"type": "p", "html": "<strong>Základní pravidlo:</strong> <code>.env</code> musí být v <code>.gitignore</code>. <code>.env.example</code> s placeholder hodnotami commitni do repa, aby nový vývojář věděl jaké proměnné potřebuje."},
+
+            {"type": "sources", "items": [
+                "Escape.tech — exposed secrets in vibecoded apps: <a href='https://escape.tech/blog/exposed-secrets-in-vibecoded-apps' rel='noopener' class='underline'>escape.tech</a>",
+                "gitleaks: <a href='https://github.com/gitleaks/gitleaks' rel='noopener' class='underline'>github.com/gitleaks/gitleaks</a>",
+                "trufflehog: <a href='https://github.com/trufflesecurity/trufflehog' rel='noopener' class='underline'>github.com/trufflesecurity/trufflehog</a>",
+            ]},
+        ],
+    },
 ]
 
 GUIDE_PROMPTS = [

@@ -170,3 +170,11 @@ class TestGuideView:
         assert 'id="section-idor"' in body
         assert "Přístupy a IDOR" in body
         assert "Moltbook" in body
+
+    def test_narrative_section_secrets_present(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert 'id="section-secrets"' in body
+        assert "Secrets — frontend není trezor" in body
+        assert "gitleaks" in body or "trufflehog" in body
