@@ -41,9 +41,6 @@ PRIVACY_TEXT_PATTERNS = re.compile(
     re.IGNORECASE,
 )
 
-COPYRIGHT_PATTERN = re.compile(r"(©|&copy;|\bcopyright\b|\(c\)\s*\d{4})", re.IGNORECASE)
-
-
 class LegalScanner(BaseScanModule):
     name = "legal"
     step_label = "Právní náležitosti"
@@ -58,7 +55,6 @@ class LegalScanner(BaseScanModule):
 
         findings.append(self._check_cookie_consent(soup, html))
         findings.append(self._check_privacy_link(soup))
-        findings.append(self._check_copyright(soup, html))
 
         return findings
 
@@ -147,27 +143,4 @@ class LegalScanner(BaseScanModule):
             category="legal",
             fix_url="/guide/#pravni-dokumenty",
             doc_url="https://www.uoou.cz/",
-        )
-
-    def _check_copyright(self, soup: BeautifulSoup, html: str) -> Finding:
-        footer = soup.find("footer")
-        search_text = footer.get_text() if footer else html
-
-        if COPYRIGHT_PATTERN.search(search_text):
-            return Finding(
-                id="copyright-ok",
-                title="Copyright informace nalezeny",
-                description="Stránka obsahuje označení autorských práv.",
-                severity=Severity.OK,
-                category="legal",
-            )
-
-        return Finding(
-            id="missing-copyright",
-            title="Nenašli jsme copyright informace",
-            description="Nenašli jsme označení autorských práv (© rok a název provozovatele) v patičce webu. Ověřte, zda se tato informace nachází na jiné stránce vašeho webu.",
-            severity=Severity.INFO,
-            category="legal",
-            fix_url="/guide/#pravni-dokumenty",
-            doc_url="https://www.zakonyprolidi.cz/cs/2000-121",
         )

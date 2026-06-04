@@ -108,43 +108,19 @@ class TestLegalScannerPrivacyLink:
         assert f.severity == Severity.INFO
 
 
-class TestLegalScannerCopyright:
+class TestLegalScannerMisc:
     def setup_method(self):
         self.scanner = LegalScanner()
-
-    def test_detects_copyright_symbol_in_footer(self):
-        html = '<html><body><footer>© 2026 Firma s.r.o.</footer></body></html>'
-        findings = self.scanner.run("https://example.com", make_response(html))
-        ids = [f.id for f in findings]
-        assert "copyright-ok" in ids
-        assert "missing-copyright" not in ids
-
-    def test_detects_copyright_text_in_footer(self):
-        html = '<html><body><footer>Copyright 2026 Firma</footer></body></html>'
-        findings = self.scanner.run("https://example.com", make_response(html))
-        ids = [f.id for f in findings]
-        assert "copyright-ok" in ids
-
-    def test_detects_copyright_in_body_without_footer(self):
-        html = '<html><body><div>© 2026 Firma s.r.o.</div></body></html>'
-        findings = self.scanner.run("https://example.com", make_response(html))
-        ids = [f.id for f in findings]
-        assert "copyright-ok" in ids
-
-    def test_missing_copyright(self):
-        html = '<html><body><footer>Made with love</footer></body></html>'
-        findings = self.scanner.run("https://example.com", make_response(html))
-        ids = [f.id for f in findings]
-        assert "missing-copyright" in ids
-        f = next(x for x in findings if x.id == "missing-copyright")
-        assert f.severity == Severity.INFO
 
     def test_empty_html(self):
         findings = self.scanner.run("https://example.com", make_response(""))
         ids = [f.id for f in findings]
         assert "missing-cookie-consent" in ids
         assert "missing-privacy-link" in ids
-        assert "missing-copyright" in ids
+        # Copyright check odstraněn — Bernská úmluva garantuje automatickou
+        # ochranu, © notice nemá v ČR ani v Bernských zemích žádný legální efekt.
+        assert "missing-copyright" not in ids
+        assert "copyright-ok" not in ids
 
     def test_module_metadata(self):
         scanner = LegalScanner()
