@@ -1,5 +1,41 @@
 import re
+from bs4 import BeautifulSoup
 from .base import BaseScanModule, Finding, Severity
+
+
+CSRF_NAME_PATTERNS = ("csrf", "xsrf", "_token", "-token", "nonce")
+
+
+def _collect_csrf_values(text: str) -> set[str]:
+    """Posbírá hodnoty CSRF tokenů v HTML, aby je generic regex nepovažoval za leak.
+
+    Sbíráme z:
+    - <input type="hidden" name="...token..."> value
+    - <meta name="csrf-token" content="...">
+    """
+    values: set[str] = set()
+    try:
+        soup = BeautifulSoup(text, "html.parser")
+    except Exception:
+        return values
+
+    for inp in soup.find_all("input", attrs={"type": "hidden"}):
+        name = (inp.get("name") or "").lower()
+        if not name:
+            continue
+        if name == "token" or any(p in name for p in CSRF_NAME_PATTERNS):
+            v = (inp.get("value") or "").strip()
+            if v:
+                values.add(v)
+
+    for meta in soup.find_all("meta"):
+        meta_name = (meta.get("name") or "").lower()
+        if meta_name in ("csrf-token", "csrf_token", "_csrf", "xsrf-token", "x-csrf-token"):
+            v = (meta.get("content") or "").strip()
+            if v:
+                values.add(v)
+
+    return values
 
 
 CRITICAL_PATTERNS = {
@@ -92,6 +128,8 @@ class SecretLeakageScanner(BaseScanModule):
                     detail="\n".join(matches[:5]) + (f"\n… a {len(matches) - 5} dalších" if len(matches) > 5 else ""),
                 ))
 
+        csrf_values = _collect_csrf_values(text)
+
         generic_matches = []
         for label, pattern in GENERIC_PATTERNS.items():
             for match in re.finditer(pattern, text, re.IGNORECASE):
@@ -99,6 +137,20 @@ class SecretLeakageScanner(BaseScanModule):
                 if value in seen:
                     continue
                 seen.add(value)
+                # Skip CSRF tokens rendered into JS (e.g. `var Token = '...'`)
+                # whose value also appears as a hidden input or <meta> token value.
+                if any(csrf_val in value for csrf_val in csrf_values):
+                    continue
+                # Skip JS variables capitalized as `Token` / `CsrfToken` — by
+                # convention these are CSRF tokens, not credentials.
+                ident_match = re.search(
+                    r"([A-Za-z_][A-Za-z0-9_]*)\s*[=:]",
+                    value,
+                )
+                if ident_match:
+                    ident = ident_match.group(1)
+                    if ident == "Token" or ident.lower().endswith("token") and ident[0].isupper():
+                        continue
                 generic_matches.append(_mask_value(value))
 
         if generic_matches:

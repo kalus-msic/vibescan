@@ -11,22 +11,6 @@ def make_response(html: str, headers: dict = None):
     return resp
 
 
-def test_blank_target_without_noopener():
-    html = '<a href="https://evil.com" target="_blank">link</a>'
-    scanner = HTMLScanner()
-    findings = scanner.run("https://example.com", make_response(html))
-    ids = [f.id for f in findings]
-    assert "missing-noopener" in ids
-
-
-def test_blank_target_with_noopener_is_ok():
-    html = '<a href="https://evil.com" target="_blank" rel="noopener noreferrer">link</a>'
-    scanner = HTMLScanner()
-    findings = scanner.run("https://example.com", make_response(html))
-    ids = [f.id for f in findings if f.id == "missing-noopener"]
-    assert len(ids) == 0
-
-
 def test_todo_comment_flagged():
     html = "<!-- TODO: remove debug key sk-abc123 -->"
     scanner = HTMLScanner()

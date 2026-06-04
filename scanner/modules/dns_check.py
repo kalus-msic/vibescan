@@ -105,16 +105,30 @@ class DNSScanner(BaseScanModule):
                     raw = txt.decode("utf-8", errors="ignore")
                     if raw.lower().startswith("v=dmarc1"):
                         policy = ""
+                        sub_policy = ""
                         for part in raw.split(";"):
                             part = part.strip().lower()
                             if part.startswith("p="):
                                 policy = part[2:]
+                            elif part.startswith("sp="):
+                                sub_policy = part[3:]
                         if policy == "none":
+                            # p=none + sp=reject/quarantine je vědomá strategie:
+                            # monitoring na rootu, enforcement na subdoménách.
+                            strong_sub = sub_policy in ("reject", "quarantine")
                             return Finding(
                                 id="dmarc-weak",
                                 title="DMARC záznam nalezen, ale politika je p=none",
-                                description="DMARC existuje, ale p=none jen monitoruje — nezabraňuje doručení podvržených emailů. Doporučujeme p=quarantine (spam) nebo p=reject (odmítnutí).",
-                                severity=Severity.INFO if is_sub else Severity.WARNING,
+                                description=(
+                                    "DMARC existuje s p=none (jen monitoring), "
+                                    f"ale subdomény jsou tvrdě chráněné (sp={sub_policy}). "
+                                    "Často jde o vědomou deployment strategii — kontrola na rootu."
+                                ) if strong_sub else (
+                                    "DMARC existuje, ale p=none jen monitoruje — "
+                                    "nezabraňuje doručení podvržených emailů. "
+                                    "Doporučujeme p=quarantine (spam) nebo p=reject (odmítnutí)."
+                                ),
+                                severity=Severity.INFO if (is_sub or strong_sub) else Severity.WARNING,
                                 category="dns",
                                 detail=raw,
                                 fix_url="/guide/#dns-emaily",
@@ -247,18 +261,36 @@ class DNSScanner(BaseScanModule):
         except Exception:
             return None
 
+        # Pokud robots.txt používá URL pattern wildcardy V CESTÁCH (nejen za
+        # `User-agent:`), je to pravděpodobně app routing, ne odhalení filesystem
+        # konfigurace — např. GitHub má `/.git/` jako URL prefix pro repo paths,
+        # ne odhalený .git adresář.
+        disallow_lines = [
+            l.split(":", 1)[1].strip()
+            for l in resp.text.splitlines()
+            if l.strip().lower().startswith("disallow:")
+        ]
+        is_url_routing = any(
+            "*" in p or "$" in p for p in disallow_lines
+        )
+
         sensitive_found = []
-        for line in resp.text.splitlines():
-            line = line.strip()
-            if not line.lower().startswith("disallow:"):
-                continue
-            path = line.split(":", 1)[1].strip().lower()
+        for path_raw in disallow_lines:
+            path = path_raw.lower()
             if not path:
                 continue
             for sensitive in SENSITIVE_ROBOT_PATHS:
-                if path.startswith(sensitive.lower()):
-                    sensitive_found.append(line.split(":", 1)[1].strip())
-                    break
+                sensitive_l = sensitive.lower()
+                if is_url_routing:
+                    # Striktnější: jen přesný match bez koncového "/"
+                    # (např. `Disallow: /admin` ano, `/.git/` ne).
+                    if path == sensitive_l:
+                        sensitive_found.append(path_raw)
+                        break
+                else:
+                    if path.startswith(sensitive_l):
+                        sensitive_found.append(path_raw)
+                        break
 
         if not sensitive_found:
             return None

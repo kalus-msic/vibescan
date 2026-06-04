@@ -62,7 +62,7 @@ REQUIRED_HEADERS = [
         "header": "permissions-policy",
         "title": "Chybí Permissions-Policy",
         "description": "Bez Permissions-Policy může jakýkoliv iframe nebo skript na stránce požádat o přístup ke kameře, mikrofonu, geolokaci. Header omezí tyto API jen na to co skutečně potřebuješ.",
-        "severity": Severity.WARNING,
+        "severity": Severity.INFO,
         "ok_title": "Permissions-Policy nastavena",
         "ok_description": "Permissions-Policy header je přítomen.",
         "doc_url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy",

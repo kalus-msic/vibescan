@@ -5,7 +5,32 @@ from .base import BaseScanModule, Finding, Severity
 CSRF_TOKEN_NAMES = {
     "csrf", "_token", "csrfmiddlewaretoken", "authenticity_token",
     "_wpnonce", "nonce", "__requestverificationtoken", "_csrf_token", "token",
+    "csrf_token", "csrftoken", "_csrf", "xsrf", "xsrf-token", "xsrf_token",
+    "x-csrf-token", "x-xsrf-token", "anti-csrf-token", "anticsrf",
+    "form_token", "form-token", "request_token",
 }
+
+# Naming patterns that indicate a CSRF token by their suffix/prefix.
+CSRF_TOKEN_PATTERNS = ("csrf", "xsrf", "_token", "-token", "nonce")
+
+
+def _looks_like_csrf_name(name: str) -> bool:
+    n = (name or "").lower()
+    if not n:
+        return False
+    if n in CSRF_TOKEN_NAMES:
+        return True
+    return any(p in n for p in CSRF_TOKEN_PATTERNS)
+
+
+def _has_meta_csrf_token(soup: BeautifulSoup) -> bool:
+    """Rails/Laravel/Django REST pattern — token v <meta>, vkládá ho JS."""
+    for meta in soup.find_all("meta"):
+        name = (meta.get("name") or "").lower()
+        if name in ("csrf-token", "csrf_token", "_csrf", "xsrf-token", "x-csrf-token"):
+            if (meta.get("content") or "").strip():
+                return True
+    return False
 
 
 class FormScanner(BaseScanModule):
@@ -20,6 +45,8 @@ class FormScanner(BaseScanModule):
         soup = BeautifulSoup(html, "html.parser")
         findings = []
 
+        page_has_meta_csrf = _has_meta_csrf_token(soup)
+
         # Check POST forms for CSRF tokens
         for form in soup.find_all("form"):
             method = (form.get("method") or "GET").upper()
@@ -27,8 +54,8 @@ class FormScanner(BaseScanModule):
                 continue
 
             hidden_inputs = form.find_all("input", attrs={"type": "hidden"})
-            has_csrf = any(
-                (inp.get("name") or "").lower() in CSRF_TOKEN_NAMES
+            has_csrf = page_has_meta_csrf or any(
+                _looks_like_csrf_name(inp.get("name"))
                 for inp in hidden_inputs
             )
 
