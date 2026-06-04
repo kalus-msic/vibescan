@@ -160,6 +160,53 @@ NARRATIVE_SECTIONS = [
             ]},
         ],
     },
+    {
+        "id": "section-nis2",
+        "title": "NIS2 / ZoKB — klientské riziko",
+        "subtitle": "Tvoje appka může být něčí rizikový dodavatel",
+        "blocks": [
+            {"type": "p", "html": "Vibecoded interní nástroj za víkend drží CRM/HR data a běží na osobních AI účtech. Pro tebe je to prototyp. Pro tvého klienta — pokud je regulovaný subjekt — jsi článek v dodavatelském řetězci."},
+
+            {"type": "h3", "text": "Co je ZoKB"},
+            {"type": "p", "html": "ZoKB (zákon č. <strong>264/2025 Sb.</strong>) je česká transpozice EU směrnice NIS2 (2022/2555). Účinný od <strong>1. 11. 2025</strong>. Rozšiřuje povinnosti kybernetické bezpečnosti z původních stovek subjektů na 6–10 tisíc organizací v ČR. Dohled: NÚKIB."},
+
+            {"type": "h3", "text": "Koho se týká"},
+            {"type": "p", "html": "Poskytovatelé regulovaných služeb v 15 sektorech: energetika, doprava, bankovnictví, zdravotnictví, digitální infrastruktura, ICT správa, pitná/odpadní voda, veřejná správa, výroba, poštovní služby, odpady, digitální poskytovatelé (cloud, tržiště) a další."},
+            {"type": "p", "html": "<strong>Základní práh:</strong> střední podnik (50+ zaměstnanců, obrat 10M+ EUR). Kritické subjekty bez ohledu na velikost."},
+
+            {"type": "h3", "text": "Proč se tě týká, i když nejsi regulovaný"},
+            {"type": "p", "html": "NIS2/ZoKB zavádí <strong>povinnost řízení dodavatelského řetězce</strong>. Regulovaný subjekt musí posoudit bezpečnost svých dodavatelů — včetně tvé appky, pokud zpracovává jeho data."},
+            {"type": "p", "html": "Tvůj interní nástroj na Supabase + osobní Claude Code účet:"},
+            {"type": "ul", "items": [
+                "Zpracovává CRM/HR data klienta, který spadá pod ZoKB.",
+                "Nemá DPA s AI providerem (osobní účet = consumer terms = trénování ON).",
+                "Nemá dokumentovanou bezpečnostní politiku.",
+                "Běží na free tier hostingu bez SLA.",
+            ]},
+            {"type": "callout", "variant": "warning", "html": "Pro tvého klienta jsi <strong>rizikový dodavatel</strong>. A on to MUSÍ řešit — jinak porušuje ZoKB."},
+
+            {"type": "h3", "text": "Odpovědnost vedení"},
+            {"type": "p", "html": "ZoKB zavádí <strong>osobní odpovědnost vedení</strong>: ředitel se nemůže vyvinit tvrzením „o ničem jsem nevěděl“. Pokud schválí nasazení nástroje bez bezpečnostního posouzení, nese odpovědnost."},
+
+            {"type": "h3", "text": "Pokuta"},
+            {"type": "callout", "variant": "danger", "html": "Až <strong>250 mil. Kč</strong> nebo <strong>2 % celosvětového ročního obratu</strong> (vyšší z toho)."},
+
+            {"type": "h3", "text": "Co to znamená pro vibecoded appku"},
+            {"type": "p", "html": "Bezpečnostní dokumentace bez bezpečné appky nestačí — a naopak. Pokud tvoje appka zpracovává data pro regulovaný subjekt:"},
+            {"type": "ol", "items": [
+                "Musíš mít DPA s každým AI providerem a sub-procesorem.",
+                "Musíš mít dokumentovanou bezpečnostní politiku (přístupy, secrets, zálohy, incident response).",
+                "Firemní AI účty (Team/Enterprise) místo osobních — jinak data klienta mohou jít do trénování.",
+                "Bezpečnostní testování — minimálně self-review, ideálně SAST/secret scan v CI/CD.",
+            ]},
+
+            {"type": "sources", "items": [
+                "Zákon č. 264/2025 Sb. (ZoKB): <a href='https://www.zakonyprolidi.cz/cs/2025-264' rel='noopener' class='underline'>zakonyprolidi.cz/cs/2025-264</a>",
+                "Směrnice EU 2022/2555 (NIS2)",
+                "NÚKIB: <a href='https://nukib.gov.cz' rel='noopener' class='underline'>nukib.gov.cz</a>",
+            ]},
+        ],
+    },
 ]
 
 GUIDE_PROMPTS = [

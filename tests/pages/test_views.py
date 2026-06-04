@@ -178,3 +178,12 @@ class TestGuideView:
         assert 'id="section-secrets"' in body
         assert "Secrets — frontend není trezor" in body
         assert "gitleaks" in body or "trufflehog" in body
+
+    def test_narrative_section_nis2_present(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert 'id="section-nis2"' in body
+        assert "NIS2" in body
+        assert "ZoKB" in body
+        assert "264/2025" in body
