@@ -6,11 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Vibescan — bezpečnostní audit pro webové projekty{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}Open-source bezpečnostní skener pro weby. 12 kontrol, vibe score, návody na opravu. Zkontroluj headers, SSL, DNS, cookies a další.{% endblock %}">
-  <link rel="canonical" href="{% block canonical %}https://vibescan.cz{% endblock %}">
+  <link rel="canonical" href="{% block canonical %}https://vibescan.cz{{ request.path }}{% endblock %}">
   <meta property="og:title" content="{% block og_title %}Vibescan — bezpečnostní audit pro webové projekty{% endblock %}">
   <meta property="og:description" content="{% block og_description %}Open-source bezpečnostní skener. 12 kontrol, vibe score 0–100, konkrétní návody co opravit.{% endblock %}">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="{% block og_url %}https://vibescan.cz{% endblock %}">
+  <meta property="og:url" content="{% block og_url %}https://vibescan.cz{{ request.path }}{% endblock %}">
   <meta property="og:locale" content="cs_CZ">
   <meta property="og:site_name" content="Vibescan">
   <meta name="twitter:card" content="summary">
