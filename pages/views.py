@@ -932,6 +932,25 @@ def guide(request):
     })
 
 
+def guide_tools(request):
+    return render(request, "pages/guide_tools.html", {
+        "tool_categories": TOOL_CATEGORIES,
+    })
+
+
+def guide_prompts(request):
+    return render(request, "pages/guide_prompts.html", {
+        "security_blocks": SECURITY_BLOCKS,
+        "prompts": GUIDE_PROMPTS,
+    })
+
+
+def guide_topics(request):
+    return render(request, "pages/guide_topics.html", {
+        "narrative_sections": NARRATIVE_SECTIONS,
+    })
+
+
 SCAN_CHECKS = [
     {
         "icon": "lock",

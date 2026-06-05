@@ -418,3 +418,20 @@ class TestGuideView:
         # ToS položka neobsahuje "WCAG" v titulku (může být jinde na stránce)
         # Hledáme přesný název položky checklistu
         assert "Terms of Service / Obchodní podmínky" in body
+
+
+class TestGuideSubpagesReturn200:
+    def test_guide_tools_returns_200(self):
+        client = Client()
+        r = client.get("/guide/tools/")
+        assert r.status_code == 200
+
+    def test_guide_prompts_returns_200(self):
+        client = Client()
+        r = client.get("/guide/prompts/")
+        assert r.status_code == 200
+
+    def test_guide_topics_returns_200(self):
+        client = Client()
+        r = client.get("/guide/topics/")
+        assert r.status_code == 200
