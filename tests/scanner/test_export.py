@@ -74,11 +74,14 @@ class TxtExportTest(TestCase):
         self.assertIn("Strict-Transport-Security přítomen", content)
         self.assertIn("Chybí DMARC záznam", content)
 
-    def test_txt_export_contains_ai_context_note(self):
+    def test_txt_export_contains_ai_agent_header(self):
         scan = _create_done_scan()
         response = self.client.get(reverse("scanner:export_txt", args=[scan.id]))
         content = response.content.decode("utf-8")
-        self.assertIn("nemusí být problém v kontextu", content)
+        self.assertIn("Jsi bezpečnostní konzultant", content)
+        self.assertIn("Vyhodnoť relevanci", content)
+        self.assertIn("Seřaď podle reálného dopadu", content)
+        self.assertIn("Vysvětluj česky", content)
 
     def test_txt_export_contains_score_and_url(self):
         scan = _create_done_scan()
@@ -105,6 +108,56 @@ class TxtExportTest(TestCase):
             reverse("scanner:export_txt", args=[uuid.uuid4()])
         )
         self.assertEqual(response.status_code, 404)
+
+    def test_txt_export_hides_ok_findings_from_category_sections(self):
+        scan = _create_done_scan()
+        response = self.client.get(reverse("scanner:export_txt", args=[scan.id]))
+        content = response.content.decode("utf-8")
+        self.assertNotIn("#### [OK]", content)
+        self.assertNotIn("[OK] Strict-Transport-Security přítomen", content)
+
+    def test_txt_export_has_ok_summary_section_with_titles(self):
+        scan = _create_done_scan()
+        response = self.client.get(reverse("scanner:export_txt", args=[scan.id]))
+        content = response.content.decode("utf-8")
+        self.assertIn("## Co je v pořádku", content)
+        self.assertIn("- Strict-Transport-Security přítomen", content)
+
+    def test_txt_export_ok_summary_includes_detail_when_present(self):
+        findings = [
+            {
+                "id": "title-ok",
+                "title": "Titulek stránky nastaven",
+                "description": "Stránka má titulek.",
+                "severity": "ok",
+                "category": "seo",
+                "penalty": 0,
+                "detail": "InnoVerse",
+                "doc_url": None,
+            },
+        ]
+        scan = _create_done_scan(findings=findings, vibe_score=100)
+        response = self.client.get(reverse("scanner:export_txt", args=[scan.id]))
+        content = response.content.decode("utf-8")
+        self.assertIn("- Titulek stránky nastaven — InnoVerse", content)
+
+    def test_txt_export_omits_ok_section_when_no_ok_findings(self):
+        findings = [
+            {
+                "id": "missing-csp",
+                "title": "Chybí CSP",
+                "description": "...",
+                "severity": "critical",
+                "category": "headers",
+                "penalty": 20,
+                "detail": None,
+                "doc_url": None,
+            },
+        ]
+        scan = _create_done_scan(findings=findings, vibe_score=80)
+        response = self.client.get(reverse("scanner:export_txt", args=[scan.id]))
+        content = response.content.decode("utf-8")
+        self.assertNotIn("## Co je v pořádku", content)
 
 
 class OkFindingsFilterTest(TestCase):
