@@ -45,7 +45,7 @@ Vibescan.cz a máš ho převést na akční doporučení pro majitele/tvůrce we
 | OK       | {{ counts.ok }}     | 0                  |
 {% endwith %}
 ## Nálezy podle kategorie
-{% for cat_name, cat_findings in findings_by_category %}
+{% for cat_name, cat_findings in findings_by_category %}{% if cat_findings|non_ok_count > 0 %}
 ### Kategorie: {{ cat_name }}
 {% for f in cat_findings %}{% if f.severity != 'ok' %}
 #### [{{ f.severity|upper }}] {{ f.title }} (-{{ f|penalty }} bodů)
@@ -55,7 +55,7 @@ Vibescan.cz a máš ho převést na akční doporučení pro majitele/tvůrce we
 {% endif %}{% if f.doc_url %}
 **Dokumentace:** {{ f.doc_url }}
 {% endif %}
-{% endif %}{% endfor %}{% endfor %}
+{% endif %}{% endfor %}{% endif %}{% endfor %}
 {% with ok_list=scan.findings|active_findings|ok_findings %}{% if ok_list %}
 ## Co je v pořádku
 

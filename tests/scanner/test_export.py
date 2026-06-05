@@ -159,6 +159,39 @@ class TxtExportTest(TestCase):
         content = response.content.decode("utf-8")
         self.assertNotIn("## Co je v pořádku", content)
 
+    def test_txt_export_hides_category_with_only_ok_findings(self):
+        findings = [
+            {
+                "id": "https-ok",
+                "title": "HTTPS aktivní",
+                "description": "Web používá HTTPS.",
+                "severity": "ok",
+                "category": "ssl",
+                "penalty": 0,
+                "detail": None,
+                "doc_url": None,
+            },
+            {
+                "id": "missing-csp",
+                "title": "Chybí CSP",
+                "description": "...",
+                "severity": "critical",
+                "category": "headers",
+                "penalty": 20,
+                "detail": None,
+                "doc_url": None,
+            },
+        ]
+        scan = _create_done_scan(findings=findings, vibe_score=80)
+        response = self.client.get(reverse("scanner:export_txt", args=[scan.id]))
+        content = response.content.decode("utf-8")
+        # ssl category has only an OK finding — should NOT appear as a category header
+        self.assertNotIn("### Kategorie: ssl", content)
+        # headers category has a critical finding — SHOULD appear
+        self.assertIn("### Kategorie: headers", content)
+        # the OK finding itself still goes into the summary section
+        self.assertIn("- HTTPS aktivní", content)
+
 
 class OkFindingsFilterTest(TestCase):
 

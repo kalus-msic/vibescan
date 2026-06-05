@@ -77,6 +77,12 @@ def ok_findings(findings):
 
 
 @register.filter
+def non_ok_count(findings):
+    """Return count of findings with severity != 'ok'."""
+    return sum(1 for f in findings if f.get("severity") != "ok")
+
+
+@register.filter
 def dismissed_findings(findings):
     """Return only dismissed findings."""
     return [f for f in findings if f.get("dismissed")]
