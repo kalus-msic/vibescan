@@ -8,7 +8,26 @@
 
   <div class="mb-12">
     <h1 class="text-3xl font-extrabold mb-3">Průvodce zabezpečením</h1>
-    <p class="text-slate-500 leading-relaxed">Vyber co stavíš a projdi si checklist — pak se ponoř do konkrétních oblastí.</p>
+    <p class="text-slate-500 leading-relaxed">Skoč rovnou do konkrétní oblasti, nebo si projdi checklist od začátku.</p>
+  </div>
+
+  <!-- Rozcestník — 3 karty -->
+  <div class="mb-14 grid md:grid-cols-3 gap-4">
+    <a href="{% url 'pages:guide_tools' %}" class="block bg-white border border-slate-200 hover:border-blue-400 rounded-2xl p-6 shadow-sm transition-colors">
+      <div class="font-bold text-base mb-1">S čím stavíš?</div>
+      <p class="text-sm text-slate-500 mb-3 leading-relaxed">8 AI nástrojů a jejich bezpečnostní rizika.</p>
+      <span class="text-sm text-blue-600 font-medium">Lovable, Cursor, … →</span>
+    </a>
+    <a href="{% url 'pages:guide_prompts' %}" class="block bg-white border border-slate-200 hover:border-blue-400 rounded-2xl p-6 shadow-sm transition-colors">
+      <div class="font-bold text-base mb-1">Prompty pro AI</div>
+      <p class="text-sm text-slate-500 mb-3 leading-relaxed">Starter + 18 cílených promptů.</p>
+      <span class="text-sm text-blue-600 font-medium">Copy-paste do Claude / Cursor →</span>
+    </a>
+    <a href="{% url 'pages:guide_topics' %}" class="block bg-white border border-slate-200 hover:border-blue-400 rounded-2xl p-6 shadow-sm transition-colors">
+      <div class="font-bold text-base mb-1">Hluboká témata</div>
+      <p class="text-sm text-slate-500 mb-3 leading-relaxed">IDOR, NIS2, GDPR, retence dat.</p>
+      <span class="text-sm text-blue-600 font-medium">Co AI sama nevyřeší →</span>
+    </a>
   </div>
 
   <!-- Rychlý start checklist + archetype picker -->
@@ -127,25 +146,6 @@
       nese provozovatel webu. Pro konkrétní situaci (GDPR, ZoKB, EAA) konzultuj advokáta nebo
       bezpečnostního specialistu. Viz <a href="{% url 'pages:terms' %}" class="text-blue-600 underline">Podmínky použití</a>.
     </div>
-  </div>
-
-  <!-- Rozcestník — 3 karty -->
-  <div class="mb-14 grid md:grid-cols-3 gap-4">
-    <a href="{% url 'pages:guide_tools' %}" class="block bg-white border border-slate-200 hover:border-blue-400 rounded-2xl p-6 shadow-sm transition-colors">
-      <div class="font-bold text-base mb-1">S čím stavíš?</div>
-      <p class="text-sm text-slate-500 mb-3 leading-relaxed">8 AI nástrojů a jejich bezpečnostní rizika.</p>
-      <span class="text-sm text-blue-600 font-medium">Lovable, Cursor, … →</span>
-    </a>
-    <a href="{% url 'pages:guide_prompts' %}" class="block bg-white border border-slate-200 hover:border-blue-400 rounded-2xl p-6 shadow-sm transition-colors">
-      <div class="font-bold text-base mb-1">Prompty pro AI</div>
-      <p class="text-sm text-slate-500 mb-3 leading-relaxed">Starter + 18 cílených promptů.</p>
-      <span class="text-sm text-blue-600 font-medium">Copy-paste do Claude / Cursor →</span>
-    </a>
-    <a href="{% url 'pages:guide_topics' %}" class="block bg-white border border-slate-200 hover:border-blue-400 rounded-2xl p-6 shadow-sm transition-colors">
-      <div class="font-bold text-base mb-1">Hluboká témata</div>
-      <p class="text-sm text-slate-500 mb-3 leading-relaxed">IDOR, NIS2, GDPR, retence dat.</p>
-      <span class="text-sm text-blue-600 font-medium">Co AI sama nevyřeší →</span>
-    </a>
   </div>
 
   <script>
