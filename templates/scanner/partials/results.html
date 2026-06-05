@@ -3,9 +3,9 @@
 
   {% with category=scan.vibe_score|score_category active=scan.findings|active_findings dismissed=scan.findings|dismissed_findings %}
   {% if scan.ephemeral %}
-  <div class="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-6 text-xs text-amber-700">
-    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-    <span class="font-medium">Jednorázový sken — po opuštění stránky nebudou výsledky dostupné.</span>
+  <div class="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-6 text-xs text-amber-700">
+    <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <span class="font-medium leading-relaxed">Jednorázový sken — po opuštění stránky nebudou výsledky dostupné. Není dostupný export do PDF, export pro AI ani označování nálezů jako nerelevantních. Pro tyto funkce spusťte sken bez zaškrtnutí jednorázového režimu.</span>
   </div>
   <div class="flex items-center gap-3 mb-6 text-sm">
     <span class="text-slate-400 text-xs">{{ scan.completed_at|date:"j. n. Y H:i" }}</span>
@@ -110,11 +110,6 @@
       <span x-show="!expanded">Rozbalit celý export ↓</span>
       <span x-show="expanded" x-cloak>Sbalit ↑</span>
     </button>
-  </div>
-  {% else %}
-  <div class="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-xl px-4 py-2.5 mb-4 text-xs text-amber-600">
-    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"/></svg>
-    <span>Pro export výsledků a opravu přes AI spusťte sken bez zaškrtnutí jednorázového režimu.</span>
   </div>
   {% endif %}
   {% endif %}
