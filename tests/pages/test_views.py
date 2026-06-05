@@ -220,3 +220,12 @@ class TestGuideView:
         r = client.get("/guide/")
         body = r.content.decode()
         assert "Tohle není právní rada" in body
+
+    def test_narrative_section_ai_gdpr_present(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert 'id="section-ai-gdpr"' in body
+        assert "AI nástroje a GDPR" in body
+        assert "DPA" in body
+        assert "Ollama" in body
