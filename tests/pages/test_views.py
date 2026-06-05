@@ -435,3 +435,27 @@ class TestGuideSubpagesReturn200:
         client = Client()
         r = client.get("/guide/topics/")
         assert r.status_code == 200
+
+
+class TestGuideTools:
+    def test_h1_present(self):
+        r = Client().get("/guide/tools/")
+        assert "S čím stavíš?" in r.content.decode()
+
+    def test_all_tool_categories_present(self):
+        r = Client().get("/guide/tools/")
+        body = r.content.decode()
+        from pages.views import TOOL_CATEGORIES
+        for category in TOOL_CATEGORIES:
+            assert category["title"] in body, f"category missing: {category['title']}"
+
+    def test_lovable_tool_card_present(self):
+        r = Client().get("/guide/tools/")
+        body = r.content.decode()
+        assert "Lovable" in body
+        assert "Stack" in body
+        assert "Hosting" in body
+
+    def test_back_to_hub_link(self):
+        r = Client().get("/guide/tools/")
+        assert 'href="/guide/"' in r.content.decode()
