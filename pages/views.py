@@ -1,8 +1,11 @@
+import json
+
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 from django_ratelimit.decorators import ratelimit
+from pages.constants import GUIDE_ANCHOR_PAGE
 from pages.forms import NewsletterForm
 from pages.models import Subscriber
 
@@ -920,15 +923,22 @@ TOOL_CATEGORIES = [
 ]
 
 
+def _attach_checklist_links(items):
+    """Dopočítat link_url pro každý checklist item podle GUIDE_ANCHOR_PAGE."""
+    out = []
+    for item in items:
+        anchor = item["anchor"]
+        page = GUIDE_ANCHOR_PAGE.get(anchor, "prompts")
+        out.append({**item, "link_url": f"/guide/{page}/#{anchor}"})
+    return out
+
+
 def guide(request):
     return render(request, "pages/guide.html", {
-        "prompts": GUIDE_PROMPTS,
-        "tool_categories": TOOL_CATEGORIES,
-        "security_blocks": SECURITY_BLOCKS,
-        "checklist_items": CHECKLIST_ITEMS,
-        "narrative_sections": NARRATIVE_SECTIONS,
         "archetypes": PROJECT_ARCHETYPES,
         "services": PROJECT_SERVICES,
+        "checklist_items": _attach_checklist_links(CHECKLIST_ITEMS),
+        "anchor_page_map_json": json.dumps(GUIDE_ANCHOR_PAGE),
     })
 
 

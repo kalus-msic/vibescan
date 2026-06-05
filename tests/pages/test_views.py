@@ -448,3 +448,36 @@ class TestGuidePrompts:
     def test_link_to_review(self):
         body = Client().get("/guide/prompts/").content.decode()
         assert "/review/" in body
+
+
+class TestGuideHubLinkResolver:
+    def test_section_anchors_point_to_topics(self):
+        body = Client().get("/guide/").content.decode()
+        assert 'href="/guide/topics/#section-idor"' in body
+        assert 'href="/guide/topics/#section-secrets"' in body
+
+    def test_prompt_anchors_point_to_prompts(self):
+        body = Client().get("/guide/").content.decode()
+        assert 'href="/guide/prompts/#pravni-dokumenty"' in body
+        assert 'href="/guide/prompts/#logovani-monitoring"' in body
+
+    def test_anchor_map_json_in_page_for_js_redirect(self):
+        body = Client().get("/guide/").content.decode()
+        assert '"csrf-forms"' in body and '"prompts"' in body
+        assert '"section-idor"' in body and '"topics"' in body
+
+    def test_view_passes_link_url_per_item(self):
+        r = Client().get("/guide/")
+        items = r.context["checklist_items"]
+        for item in items:
+            assert "link_url" in item, f"checklist item bez link_url: {item.get('id')}"
+            assert item["link_url"].startswith("/guide/"), item["link_url"]
+            assert "#" in item["link_url"], item["link_url"]
+
+    def test_view_passes_anchor_page_map_json(self):
+        import json
+        r = Client().get("/guide/")
+        assert "anchor_page_map_json" in r.context
+        parsed = json.loads(r.context["anchor_page_map_json"])
+        assert parsed["csrf-forms"] == "prompts"
+        assert parsed["section-idor"] == "topics"
