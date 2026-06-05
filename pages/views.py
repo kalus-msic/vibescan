@@ -863,14 +863,13 @@ SCAN_CHECKS = [
     {
         "id": "sensitive-files",
         "icon": "folder",
-        "title": "Citlivé soubory",
-        "description": "Kontrolujeme veřejnou dostupnost souborů, které by neměly být přístupné zvenčí. Testujeme pouze existenci (HTTP HEAD, status code) — obsah souborů nečteme.",
+        "title": "Citlivé soubory (plánováno)",
+        "description": "Plánujeme kontrolovat veřejnou dostupnost souborů, které by neměly být přístupné zvenčí. Aktivní probing zapneme až pro ověřené domény — bez ověření vlastnictví je probing v právní šedé zóně a my ji nechceme přecházet bez tvého souhlasu.",
         "doc_url": "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/04-Review_Old_Backup_and_Unreferenced_Files_for_Sensitive_Information",
         "detail_mono": True,
         "detail_footer": mark_safe(
-            'Toto není vyčerpávající seznam — pokrývá nejčastější chyby vibecoded projektů. '
-            'Připravujeme aktivní probing těchto souborů pro ověřené weby — '
-            '<a href="/roadmap/" class="underline hover:text-slate-600">podívejte se, co chystáme</a>.'
+            'Tyto soubory chystáme kontrolovat pro ověřené weby — '
+            '<a href="/roadmap/" class="underline hover:text-slate-600">podívejte se na roadmapu</a>.'
         ),
         "detail_list": [
             ".env — proměnné prostředí (hesla, API klíče, DB credentials)",
