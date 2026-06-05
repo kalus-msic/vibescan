@@ -133,7 +133,8 @@ NARRATIVE_SECTIONS = [
 
             {"type": "h3", "text": "3. Prompt do AI nástroje"},
             {"type": "p", "html": "Vložíš API klíč do promptu pro Claude Code, Cursor nebo ChatGPT? Data odchází na cloud servery AI providera. Pokud nemáš opt-out z trénování, klíč se může stát součástí trénovacích dat."},
-            {"type": "p", "html": "Řešení: nikdy nevkládej secrets do AI promptů. Místo toho řekni AI: „přečti klíč z <code>.env</code> proměnné <code>STRIPE_SECRET_KEY</code>“ — ať pracuje s referencí, ne s hodnotou."},
+            {"type": "p", "html": "Řešení: AI při <strong>generování kódu</strong> nepotřebuje znát hodnotu secretu. Stačí jí říct: „pro Stripe použij <code>os.getenv('STRIPE_SECRET_KEY')</code>“. AI napíše kód, který bude proměnnou číst za běhu — samotná hodnota nikdy neopustí tvůj systém směrem k AI provideru."},
+            {"type": "callout", "variant": "warning", "html": "<strong>Důležitý nuance:</strong> pokud necháš <strong>agentního AI</strong> (Claude Code, Cursor agent, Aider) reálně SPUSTIT kód, který s tím secretem pracuje (např. otestovat Stripe API), agent při běhu hodnotu přečte z <code>.env</code> a ta se vrátí do kontextu konverzace přes výstup nástrojů. Pro běhové testy s reálnými secrets používej výhradně účet s DPA a vypnutým trénováním, nebo použij sandbox/test secrety (<code>sk_test_...</code>, test API klíče)."},
 
             {"type": "h3", "text": "Checklist před deployem"},
             {"type": "p", "html": "Před každým nasazením prohledej kód na tyto vzory:"},
