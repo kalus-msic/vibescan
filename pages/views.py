@@ -9,7 +9,7 @@ from pages.constants import GUIDE_ANCHOR_PAGE
 from pages.forms import NewsletterForm
 from pages.models import Subscriber
 
-LEGAL_LAST_UPDATED = "14. dubna 2025"
+LEGAL_LAST_UPDATED = "6. června 2026"
 
 
 SECURITY_TXT = """\
