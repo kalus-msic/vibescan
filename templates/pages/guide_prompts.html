@@ -1,7 +1,83 @@
 {% extends "base.html" %}
 {% block title %}Jak začít AI projekt bezpečně — prompty pro Cursor, Claude Code, Lovable{% endblock %}
+{% block meta_description %}Copy-paste prompty pro zabezpečení AI projektů. Starter prompty (na začátek konverzace), security rules (jako .cursorrules / CLAUDE.md), 18 cílených promptů (headers, cookies, CSRF, DNS, …).{% endblock %}
+{% block canonical %}https://vibescan.cz/guide/prompts/{% endblock %}
+
 {% block content %}
 <section class="max-w-3xl mx-auto px-6 py-20">
-  <h1 class="text-3xl font-extrabold mb-3">Prompty pro AI nástroje</h1>
+
+  <div class="mb-8">
+    <a href="{% url 'pages:guide' %}" class="text-sm text-slate-500 hover:text-slate-900 inline-flex items-center gap-1">
+      ← Zpět na průvodce
+    </a>
+  </div>
+
+  <div class="mb-12">
+    <h1 class="text-3xl font-extrabold mb-3">Prompty pro AI nástroje</h1>
+    <p class="text-slate-500 leading-relaxed">Starter prompty na začátek projektu plus 18 cílených promptů pro konkrétní oblasti. Kopíruj do Claude Code, Cursoru, Lovable, Boltu nebo jakéhokoliv AI nástroje.</p>
+  </div>
+
+  <!-- Starter prompty -->
+  <div class="mb-14">
+    <h2 class="text-2xl font-extrabold mb-2">Jak zabezpečit projekt od začátku</h2>
+    <p class="text-slate-500 text-sm mb-6">AI nástroje neřeší bezpečnost automaticky. Musíš jim říct co mají dodržovat — a nejlépe hned na začátku, ne až po nasazení. Výzkum ukazuje, že fázovaný přístup (pravidla na začátku + review na konci) snižuje zranitelnosti až 10×.</p>
+
+    <div class="space-y-4">
+      {% for block in security_blocks %}
+      <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div class="px-5 py-4 border-b border-slate-100">
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-semibold text-sm">{{ block.title }}</span>
+            <button onclick="navigator.clipboard.writeText(this.closest('.bg-white').querySelector('pre').textContent.trim()); this.textContent='Zkopírováno!'; setTimeout(() => this.textContent='Kopírovat', 2000)"
+              class="text-xs text-slate-400 hover:text-blue-600 font-medium transition-colors cursor-pointer">Kopírovat</button>
+          </div>
+          <p class="text-xs text-slate-500">{{ block.subtitle }}</p>
+        </div>
+        <div class="p-5">
+          <pre class="text-xs text-slate-700 bg-slate-50 rounded-lg p-4 leading-relaxed whitespace-pre-wrap font-mono border border-slate-100">{{ block.content }}</pre>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 text-sm text-blue-800 leading-relaxed mt-6">
+      <span class="font-semibold">Tip:</span> Starter prompt zadej na začátek konverzace s AI. Security pravidla ulož jako soubor do projektu (CLAUDE.md, .cursorrules). Self-review prompt použij pokaždé když AI vygeneruje nový kód.
+    </div>
+
+    <div class="bg-slate-100 border border-slate-200 rounded-xl p-5 text-sm text-slate-600 leading-relaxed mt-4">
+      <span class="font-semibold text-slate-900">Chceš projít svůj projekt krok po kroku?</span> Podívej se na <a href="{% url 'pages:review' %}" class="text-blue-600 hover:text-blue-800 font-medium underline">Security Review</a> — 7 kroků s konkrétními příklady co hledat a jak to opravit.
+    </div>
+  </div>
+
+  <!-- Granulární prompty -->
+  <div>
+    <h2 class="text-2xl font-extrabold mb-2">Prompty pro konkrétní oblasti</h2>
+    <p class="text-slate-500 text-sm mb-6">Použij ve chvíli kdy pracuješ na konkrétní části — formuláře, autentizace, deploy.</p>
+
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 text-sm text-blue-900 leading-relaxed mb-6">
+      <strong>Konvence:</strong> Tyto prompty jsou univerzální. Některé vyžadují kontext (framework, sektor, stack, jurisdikce) — u nich má prompt na začátku blok „Než začneš". AI má z toho bloku zjistit kontext z konverzace, <code>CLAUDE.md</code>, <code>AGENTS.md</code> nebo <code>GEMINI.md</code> — a pokud informace chybí, <strong>zeptat se přímo tebe</strong>, neodhadovat.
+    </div>
+
+    <div class="space-y-4">
+      {% for prompt in prompts %}
+      <div {% if prompt.id %}id="{{ prompt.id }}"{% endif %} class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm scroll-mt-20">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <span class="font-semibold text-sm">{{ prompt.title }}</span>
+          <button onclick="navigator.clipboard.writeText(this.closest('.bg-white').querySelector('pre').textContent.trim()); this.textContent='Zkopírováno!'; setTimeout(() => this.textContent='Kopírovat', 2000)"
+            class="text-xs text-slate-400 hover:text-blue-600 font-medium transition-colors cursor-pointer">Kopírovat</button>
+        </div>
+        {% if prompt.disclaimer %}
+        <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mx-5 mt-3 text-xs text-amber-800">
+          ⚠ <strong>{{ prompt.disclaimer_title }}</strong> {{ prompt.disclaimer|safe }}
+        </div>
+        {% endif %}
+        <div class="p-5">
+          <pre class="text-xs text-slate-700 bg-slate-50 rounded-lg p-4 leading-relaxed whitespace-pre-wrap font-mono border border-slate-100">{{ prompt.content }}</pre>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
 </section>
 {% endblock %}

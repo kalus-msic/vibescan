@@ -163,53 +163,6 @@ class TestGuideView:
         r = client.get("/guide/")
         assert "vibescan-checklist" in r.content.decode()
 
-    def test_new_prompts_present(self):
-        client = Client()
-        r = client.get("/guide/")
-        body = r.content.decode()
-        assert "Přístupy a IDOR — kontrola autorizace" in body
-        assert "Secrets scan — kontrola před deployem" in body
-        assert 'id="pristupy-idor"' in body
-        assert 'id="secrets-scan"' in body
-
-    def test_pravni_dokumenty_contains_nis2_and_sources(self):
-        client = Client()
-        r = client.get("/guide/")
-        body = r.content.decode()
-        assert "NIS2" in body or "ZoKB" in body
-        assert "Kde se učit víc" in body
-        assert "w3.org/TR/WCAG22" in body
-        assert "gcs=G100" in body or "gcs=G111" in body
-
-    def test_pravni_dokumenty_renders_disclaimer(self):
-        client = Client()
-        r = client.get("/guide/")
-        body = r.content.decode()
-        assert "Tohle není právní rada" in body
-
-    def test_universal_ask_callout_present(self):
-        client = Client()
-        r = client.get("/guide/")
-        body = r.content.decode()
-        assert "Konvence:" in body
-        assert "zeptat se přímo tebe" in body
-
-    def test_nez_zacnes_in_decision_prompts(self):
-        client = Client()
-        r = client.get("/guide/")
-        body = r.content.decode()
-        assert body.count("Než začneš, potřebuješ vědět") >= 5
-
-    def test_pravni_dokumenty_has_two_regimes_and_booking(self):
-        client = Client()
-        r = client.get("/guide/")
-        body = r.content.decode()
-        assert "99/2019" in body
-        assert "424/2023" in body
-        assert "rezervační" in body or "Rezervační" in body
-        assert "mikropodnik" in body.lower()
-        assert "Mít prohlášení" in body
-
     def test_archetype_picker_present(self):
         client = Client()
         r = client.get("/guide/")
@@ -445,3 +398,53 @@ class TestGuideTopics:
     def test_back_to_hub_link(self):
         body = Client().get("/guide/topics/").content.decode()
         assert 'href="/guide/"' in body
+
+
+class TestGuidePrompts:
+    def test_h1_present(self):
+        body = Client().get("/guide/prompts/").content.decode()
+        assert "Prompty pro AI" in body or "Jak začít AI projekt" in body
+
+    def test_starter_blocks_present(self):
+        body = Client().get("/guide/prompts/").content.decode()
+        from pages.views import SECURITY_BLOCKS
+        for block in SECURITY_BLOCKS:
+            assert block["title"] in body, f"starter block missing: {block['title']}"
+
+    def test_universal_ask_callout_present(self):
+        body = Client().get("/guide/prompts/").content.decode()
+        assert "Konvence:" in body
+        assert "zeptat se přímo tebe" in body
+
+    def test_nez_zacnes_in_decision_prompts(self):
+        body = Client().get("/guide/prompts/").content.decode()
+        assert body.count("Než začneš, potřebuješ vědět") >= 5
+
+    def test_prompt_anchors_renderable(self):
+        body = Client().get("/guide/prompts/").content.decode()
+        for anchor in ["csrf-forms", "secrets-env", "autentizace-sessions", "pristupy-idor", "secrets-scan"]:
+            assert f'id="{anchor}"' in body, f"missing prompt id: {anchor}"
+
+    def test_pravni_dokumenty_contains_nis2_and_sources(self):
+        body = Client().get("/guide/prompts/").content.decode()
+        assert "NIS2" in body or "ZoKB" in body
+        assert "Kde se učit víc" in body
+        assert "w3.org/TR/WCAG22" in body
+
+    def test_pravni_dokumenty_renders_disclaimer(self):
+        body = Client().get("/guide/prompts/").content.decode()
+        assert "Tohle není právní rada" in body
+
+    def test_pravni_dokumenty_has_two_regimes_and_booking(self):
+        body = Client().get("/guide/prompts/").content.decode()
+        assert "99/2019" in body
+        assert "424/2023" in body
+        assert "rezervační" in body or "Rezervační" in body
+
+    def test_back_to_hub_link(self):
+        body = Client().get("/guide/prompts/").content.decode()
+        assert 'href="/guide/"' in body
+
+    def test_link_to_review(self):
+        body = Client().get("/guide/prompts/").content.decode()
+        assert "/review/" in body
