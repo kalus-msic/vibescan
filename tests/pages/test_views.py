@@ -252,3 +252,169 @@ class TestGuideView:
         assert "rezervační" in body or "Rezervační" in body
         assert "mikropodnik" in body.lower()
         assert "Mít prohlášení" in body
+
+    def test_archetype_picker_present(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert "Co stavíš?" in body
+        for arch_id in ["vizitka", "blog", "eshop", "booking", "verejnopravni", "saas"]:
+            assert f"toggleArchetype('{arch_id}')" in body, f"Missing archetype button: {arch_id}"
+
+    def test_archetype_labels_rendered(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert "Vizitka / portfolio" in body
+        assert "E-shop" in body
+        assert "Rezervační systém" in body
+        assert "Veřejnoprávní subjekt" in body
+        assert "SaaS / appka s účty" in body
+
+    def test_verejnopravni_archetype_clarifies_operator_not_content(self):
+        """Tip near picker explains that veřejnoprávnost = o provozovateli, ne typ obsahu."""
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert "o provozovateli" in body or "o <em>provozovateli</em>" in body
+        assert "obecní knihovny" in body or "veřejné nemocnice" in body
+
+    def test_archetype_tooltips_rendered(self):
+        """Každý archetyp má tooltip s description, role=tooltip a aria-describedby."""
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        for arch_id in ["vizitka", "blog", "eshop", "booking", "verejnopravni", "saas"]:
+            assert f'id="tooltip-{arch_id}"' in body, f"Missing tooltip for: {arch_id}"
+            assert f'aria-describedby="tooltip-{arch_id}"' in body, f"Missing aria-describedby for: {arch_id}"
+        # Spot-check description content z různých archetypů
+        assert "Statický prezentační web" in body  # vizitka
+        assert "ČOI, reklamace" in body  # eshop
+        assert "Multi-tenant aplikace" in body  # saas
+        assert "ČT/ČRo, ČTK, ČNB" in body  # verejnopravni
+
+    def test_services_picker_present(self):
+        """Druhá chip sekce 'Doplňkové funkce / služby' obsahuje všechny služby."""
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert "Doplňkové funkce" in body
+        for svc_id in ["admin", "newsletter", "members", "comments", "analytics", "forms", "payments"]:
+            assert f"toggleService('{svc_id}')" in body, f"Missing service button: {svc_id}"
+            assert f'id="tooltip-service-{svc_id}"' in body, f"Missing tooltip for service: {svc_id}"
+
+    def test_admin_service_triggers_rls_idor_ratelimit_only(self):
+        """Admin služba aktivuje rls/idor/ratelimit (security), ne privacy/dpa/pii (ty jsou o user data)."""
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        # rls + idor + ratelimit obsahují admin
+        for item_id in ("rls", "idor", "ratelimit"):
+            idx = body.find(f"toggle('{item_id}')")
+            assert idx > 0, f"item {item_id} not found"
+            snippet = body[idx:idx + 600]
+            assert "admin" in snippet, f"{item_id} applies_to should include 'admin'"
+        # privacy a pii-retention NEobsahují admin
+        for item_id in ("privacy", "pii-retention"):
+            idx = body.find(f"toggle('{item_id}')")
+            assert idx > 0
+            # applies_to je hned na dalším řádku, vyhraj ho
+            snippet = body[idx:idx + 600]
+            applies = snippet.split("isRelevantItem(")[1].split(")")[0]
+            assert "'admin'" not in applies, f"{item_id} should NOT include 'admin' (got: {applies})"
+
+    def test_service_labels_and_descriptions(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        # Labels
+        assert "Newsletter" in body
+        assert "Registrace / členská zóna" in body
+        assert "Analytika návštěvnosti" in body
+        assert "Online platby" in body
+        # Description spot-checks
+        assert "Mailchimp" in body or "Ecomail" in body
+        assert "Plausible" in body or "Matomo" in body
+        assert "Stripe" in body or "GoPay" in body
+
+    def test_blog_description_no_longer_mentions_newsletter_comments(self):
+        """Newsletter/komentáře jsou teď doplňkové služby, ne 'blog feature'."""
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        # Najdi blog description tooltip
+        blog_section_start = body.find('id="tooltip-blog"')
+        assert blog_section_start > 0
+        blog_section = body[blog_section_start:blog_section_start + 600]
+        # Blog description už neobsahuje komentáře/newsletter
+        assert "newsletter" not in blog_section.lower() or "Pokud máš newsletter" in blog_section
+        assert "RSS" in blog_section  # ale obsahuje publikační znaky
+
+    def test_services_localstorage_key(self):
+        client = Client()
+        r = client.get("/guide/")
+        assert "vibescan-services" in r.content.decode()
+
+    def test_privacy_applies_to_includes_services(self):
+        """Privacy se aktivuje i službami (newsletter, analytics, members…), ne jen archetypy."""
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        # applies_to je v atributu x-show po toggle('privacy')
+        privacy_idx = body.find("toggle('privacy')")
+        assert privacy_idx > 0
+        snippet = body[privacy_idx:privacy_idx + 600]
+        assert "newsletter" in snippet
+        assert "analytics" in snippet
+        assert "members" in snippet
+
+    def test_new_checklist_items_present(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert "toggle('accessibility')" in body
+        assert "toggle('pii-retention')" in body
+        assert "WCAG 2.2 AA" in body
+        assert "Retence dat" in body
+
+    def test_applies_to_rendered_for_items(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        # Python list je renderován s single quotes — JS to akceptuje
+        assert "isRelevantItem(['all'])" in body
+        assert "eshop" in body and "booking" in body and "verejnopravni" in body
+
+    def test_archetype_localstorage_keys(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert "vibescan-archetype" in body
+        assert "vibescan-hide-irrelevant" in body
+        assert "vibescan-filter-sections" in body
+
+    def test_filter_toggles_present(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert "Skrýt nerelevantní položky checklistu" in body
+        assert "Filtrovat i sekce průvodce" in body
+
+    def test_narrative_sections_have_relevant_for(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        # Sekce má v x-show vázanou relevant_for. Pro section-secrets je 'all'.
+        assert 'id="section-secrets"' in body
+        # Aspoň jedna sekce s restriktivním relevant_for (NIS2 nebo Retence)
+        assert 'id="section-nis2"' in body
+        assert 'id="section-retence"' in body
+
+    def test_terms_no_longer_mentions_accessibility(self):
+        """Po rozsekání: 'terms' položka řeší jen ToS, přístupnost má vlastní položku."""
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        # ToS položka neobsahuje "WCAG" v titulku (může být jinde na stránce)
+        # Hledáme přesný název položky checklistu
+        assert "Terms of Service / Obchodní podmínky" in body

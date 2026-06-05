@@ -16,48 +16,143 @@ Preferred-Languages: cs, en
 Canonical: https://vibescan.cz/.well-known/security.txt
 """
 
+PROJECT_ARCHETYPES = [
+    {
+        "id": "verejnopravni",
+        "label": "Veřejnoprávní subjekt",
+        "description": "Provozovatel je veřejnoprávní subjekt — úřad, územní samospráva (obec, kraj), veřejná VŠ, škola, knihovna, divadlo, ČT/ČRo, ČTK, ČNB, doprava zřízená státem/krajem/obcí. Nezáleží na typu obsahu — i blog nebo vizitka. Zákon 99/2019 Sb. (povinná přístupnost + prohlášení), případně NIS2/ZoKB.",
+    },
+    {
+        "id": "vizitka",
+        "label": "Vizitka / portfolio",
+        "description": "Statický prezentační web bez databáze a admin panelu (např. HTML/CSS generované AI, Astro, Hugo). Max kontaktní formulář. Pokud máš CMS (WordPress, Ghost), vyber i 'Blog'.",
+    },
+    {
+        "id": "blog",
+        "label": "Blog / médium",
+        "description": "Publikace článků nebo postů, RSS feed. Pokud máš newsletter, komentáře nebo registrace, vyber je v Doplňkových funkcích.",
+    },
+    {
+        "id": "eshop",
+        "label": "E-shop",
+        "description": "Objednávky online, platby, ČOI, reklamace, dodací podmínky.",
+    },
+    {
+        "id": "booking",
+        "label": "Rezervační systém",
+        "description": "Termíny, sloty, případně platby. Týká se EAA (přístupnost).",
+    },
+    {
+        "id": "saas",
+        "label": "SaaS / appka s účty",
+        "description": "Multi-tenant aplikace, uživatelské účty, DB s daty více zákazníků.",
+    },
+]
+
+
+PROJECT_SERVICES = [
+    {
+        "id": "admin",
+        "label": "Administrace / CMS",
+        "description": "Mám admin panel pro správu obsahu (wp-admin, Ghost admin, Django admin, Strapi, vlastní). Týká se i jednoduchého CMS pro editaci textů. Brute-force riziko na login + DB obsahuje hesla/drafty.",
+    },
+    {
+        "id": "newsletter",
+        "label": "Newsletter",
+        "description": "Sbírám e-maily na rozesílání novinek (Mailchimp, Ecomail, SmartEmailing, Mailkit, ConvertKit, vlastní implementace). E-mail = osobní údaj, vyžaduje souhlas (čl. 6 GDPR) + DPA s providerem.",
+    },
+    {
+        "id": "members",
+        "label": "Registrace / členská zóna",
+        "description": "Lidé se na webu registrují a přihlašují, mají vlastní účty, případně placené členství. Vyžaduje řízený přístup k záznamům (RLS/IDOR), retenci, práva subjektů.",
+    },
+    {
+        "id": "comments",
+        "label": "Komentáře",
+        "description": "Návštěvníci přidávají komentáře s identifikací (jméno, e-mail, nebo přes Disqus / Google login). Osobní údaje = GDPR + retence.",
+    },
+    {
+        "id": "analytics",
+        "label": "Analytika návštěvnosti",
+        "description": "Google Analytics, Plausible, Matomo, Hotjar nebo jiný tracking. GA + Hotjar = nutný cookie consent před načtením. Plausible/Matomo bez cookies = volnější režim.",
+    },
+    {
+        "id": "forms",
+        "label": "Formuláře (kontakt, dotazník)",
+        "description": "Kontaktní formulář, dotazník, poptávka — cokoliv kde uživatel posílá své osobní údaje. Vyžaduje souhlas / informaci o zpracování + retenci.",
+    },
+    {
+        "id": "payments",
+        "label": "Online platby",
+        "description": "Stripe, PayPal, GoPay, Comgate. Vyžaduje obchodní podmínky, DPA s platebním procesorem, retenci dat o platbách (zákon o účetnictví: 5 let).",
+    },
+]
+
+
+
 CHECKLIST_ITEMS = [
     {
         "id": "secrets",
         "title": "Žádný API klíč ani secret v kódu nebo gitu",
         "hint": ".env je v .gitignore, service_role klíč nikdy ve frontend bundlu.",
         "anchor": "section-secrets",
+        "applies_to": ["all"],
     },
     {
         "id": "rls",
-        "title": "Supabase / databáze má zapnuté RLS na všech tabulkách s uživatelskými daty",
-        "hint": "Pokud nepoužíváš Supabase, odškrtni jako N/A.",
+        "title": "Databáze má řízený přístup k záznamům (RLS nebo serverová autorizace)",
+        "hint": "Pokud máš DB nebo admin/CMS (Supabase, vlastní Postgres, WordPress, Ghost…) nebo registrace uživatelů: user A nesmí číst data usera B. RLS v Postgres/Supabase, ekvivalent v ORM/middleware. Čistě statický web bez DB → N/A.",
         "anchor": "section-idor",
+        "applies_to": ["blog", "eshop", "booking", "verejnopravni", "saas", "members", "admin"],
     },
     {
         "id": "idor",
-        "title": "API kontroluje vlastnictví záznamu (IDOR test prošel)",
-        "hint": "Přihlásil jsem se jako user A a nemůžu načíst data uživatele B.",
+        "title": "API/admin kontroluje vlastnictví záznamu (IDOR test prošel)",
+        "hint": "Pokud máš jakékoliv API nebo admin s ID v URL (/api/orders/42, /admin/post/13) nebo registrace uživatelů: přihlas se jako user A a ověř, že nepřečteš data usera B. Statický web bez API/adminu → N/A.",
         "anchor": "section-idor",
+        "applies_to": ["blog", "eshop", "booking", "verejnopravni", "saas", "members", "admin"],
     },
     {
         "id": "dpa",
-        "title": "Používám firemní AI účet (Team/Enterprise), ne osobní",
-        "hint": "Osobní účty = consumer terms = trénování zapnuté by default.",
+        "title": "Vím, jaká data dávám AI — pokud jiných lidí, mám firemní účet (Team/Enterprise) s DPA",
+        "hint": "OBSAH určuje, jestli to potřebuješ. Dáváš AI cizí jména v blogu, zákaznické e-maily, exportovaná DB, fotky lidí, support tickety, real produkční data? → musíš mít firemní účet s DPA a vypnutým trénováním. Jen vlastní texty / vlastní kód / syntetická data → N/A.",
         "anchor": "section-ai-gdpr",
+        "applies_to": ["blog", "eshop", "booking", "verejnopravni", "saas", "newsletter", "members", "comments", "forms", "payments"],
     },
     {
         "id": "ratelimit",
         "title": "Rate limiting na citlivých endpointech",
-        "hint": "Login, password reset, registrace, generování API klíče.",
+        "hint": "Login, password reset, registrace, admin, generování API klíče, kontaktní formuláře — kdekoliv kde se dá brute-forcovat nebo zaspamovat.",
         "anchor": "logovani-monitoring",
+        "applies_to": ["eshop", "booking", "verejnopravni", "saas", "members", "forms", "admin"],
     },
     {
         "id": "privacy",
         "title": "Privacy Policy + funkční Cookie consent (CMP, ne jen lišta)",
-        "hint": "_ga / _gid / _fbp se nesmí načíst před souhlasem.",
+        "hint": "Pokud sbíráš jakákoliv osobní data (formulář, newsletter, registrace) nebo používáš tracking (GA, Plausible, FB pixel): PP + consent jsou povinné. _ga/_gid/_fbp se nesmí načíst před souhlasem. Čistě statický web bez cookies/trackingu → N/A.",
         "anchor": "pravni-dokumenty",
+        "applies_to": ["blog", "eshop", "booking", "verejnopravni", "saas", "newsletter", "members", "comments", "analytics", "forms", "payments"],
     },
     {
         "id": "terms",
-        "title": "Terms of Service + Přístupnost (WCAG 2.2 AA, EAA pokud B2C v EU)",
-        "hint": "Pro e-shop, banku, dopravu, telekom je EAA povinná od 28. 6. 2025.",
+        "title": "Terms of Service / Obchodní podmínky",
+        "hint": "Pro e-shop povinné (zákon o ochraně spotřebitele), pro SaaS a placené služby doporučené.",
         "anchor": "pravni-dokumenty",
+        "applies_to": ["eshop", "booking", "saas", "payments"],
+    },
+    {
+        "id": "accessibility",
+        "title": "Přístupnost (WCAG 2.2 AA) + Prohlášení o přístupnosti",
+        "hint": "Veřejnoprávní subjekty: zákon 99/2019 Sb. E-shop, banka, doprava, booking: EAA / 424/2023 Sb. od 28. 6. 2025.",
+        "anchor": "pravni-dokumenty",
+        "applies_to": ["eshop", "booking", "verejnopravni", "saas"],
+    },
+    {
+        "id": "pii-retention",
+        "title": "Retence dat — víš jak dlouho a kdy mažeš osobní údaje",
+        "hint": "GDPR čl. 5(1)(e): jen po nezbytně nutnou dobu. Definuj v interní směrnici a v Privacy Policy. Týká se každé služby která sbírá osobní údaje.",
+        "anchor": "section-retence",
+        "applies_to": ["eshop", "booking", "verejnopravni", "saas", "newsletter", "members", "comments", "forms", "payments"],
     },
 ]
 
@@ -66,6 +161,7 @@ NARRATIVE_SECTIONS = [
         "id": "section-idor",
         "title": "Přístupy a IDOR",
         "subtitle": "Autentizace není autorizace — největší slepé místo vibecoded appek",
+        "relevant_for": ["blog", "eshop", "booking", "verejnopravni", "saas"],
         "blocks": [
             {"type": "p", "html": "Login funguje. Uživatel se přihlásí, UI vypadá správně. Ale pod kapotou API ani databáze neověřují, zda přihlášený uživatel smí číst právě tato data. To je <strong>IDOR — Insecure Direct Object Reference</strong> — a je to nejčastější zranitelnost v aplikacích postavených vibe codingem."},
 
@@ -119,6 +215,7 @@ NARRATIVE_SECTIONS = [
         "id": "section-secrets",
         "title": "Secrets — frontend není trezor",
         "subtitle": "Frontend není trezor, repozitář není trezor, prompt není trezor",
+        "relevant_for": ["all"],
         "blocks": [
             {"type": "p", "html": "API klíč, service-role token nebo databázová URL — pokud je to v kódu, je to veřejné. Tři místa, kde secrets nejčastěji unikají:"},
 
@@ -165,6 +262,7 @@ NARRATIVE_SECTIONS = [
         "id": "section-ai-gdpr",
         "title": "AI nástroje a GDPR",
         "subtitle": "Scanner vidí výstup. Proces tvorby webu může uniknout vedle.",
+        "relevant_for": ["all"],
         "blocks": [
             {"type": "p", "html": "Tvůj klient ti pošle podklady — jméno, e-mail, telefon, IČO, smlouvu. Otevřeš ChatGPT (osobní účet), zkopíruješ text a požádáš o pomoc s článkem na web. Výsledná stránka je čistá: žádný personal data leak v HTML, hezké headery, SSL OK. Ale data klienta už unikla — odešla do OpenAI, kde se mohou stát součástí trénovacího datasetu."},
             {"type": "p", "html": "<strong>Vibescan tohle nezachytí. Žádný scanner tohle nezachytí.</strong> Stalo se to při vývoji, ne v produkci."},
@@ -236,6 +334,7 @@ NARRATIVE_SECTIONS = [
         "id": "section-nis2",
         "title": "NIS2 / ZoKB — klientské riziko",
         "subtitle": "Tvoje appka může být něčí rizikový dodavatel",
+        "relevant_for": ["saas", "eshop", "verejnopravni"],
         "blocks": [
             {"type": "p", "html": "Vibecoded interní nástroj za víkend drží CRM/HR data a běží na osobních AI účtech. Pro tebe je to prototyp. Pro tvého klienta — pokud je regulovaný subjekt — jsi článek v dodavatelském řetězci."},
 
@@ -283,6 +382,7 @@ NARRATIVE_SECTIONS = [
         "id": "section-retence",
         "title": "Retence dat — case law",
         "subtitle": "Reálné pokuty bez jediného úniku dat",
+        "relevant_for": ["eshop", "booking", "verejnopravni", "saas"],
         "blocks": [
             {"type": "p", "html": "GDPR čl. 5(1)(e) říká: <strong>osobní data smaž, jakmile pominul účel</strong>. GDPR ale nestanovuje konkrétní doby — ty vycházejí z judikatury CNIL (francouzský úřad), která se de facto uplatňuje v celé EU."},
 
@@ -827,6 +927,8 @@ def guide(request):
         "security_blocks": SECURITY_BLOCKS,
         "checklist_items": CHECKLIST_ITEMS,
         "narrative_sections": NARRATIVE_SECTIONS,
+        "archetypes": PROJECT_ARCHETYPES,
+        "services": PROJECT_SERVICES,
     })
 
 

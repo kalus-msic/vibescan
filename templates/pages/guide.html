@@ -4,32 +4,112 @@
 {% block canonical %}https://vibescan.cz/guide/{% endblock %}
 
 {% block content %}
-<section class="max-w-3xl mx-auto px-6 py-20">
+<section class="max-w-3xl mx-auto px-6 py-20" x-data="checklist()">
 
   <div class="mb-12">
     <h1 class="text-3xl font-extrabold mb-3">Průvodce zabezpečením</h1>
     <p class="text-slate-500 leading-relaxed">Vyber nástroj, kterým stavíš, a zjisti na co si dát pozor. Prompty na konci stránky fungují ve všech AI nástrojích.</p>
   </div>
 
-  <!-- Rychlý start checklist -->
-  <div x-data="checklist()" class="mb-14">
+  <!-- Rychlý start checklist + archetype picker -->
+  <div class="mb-14">
     <h2 class="text-2xl font-extrabold mb-2">Rychlý start checklist</h2>
     <p class="text-slate-500 text-sm mb-6">
-      Sedm bodů, které by každá vibecoded appka měla mít před nasazením do produkce.
-      Odškrtni si, co máš hotovo — stav se ukládá lokálně ve tvém prohlížeči.
+      Nejdřív řekni, co stavíš — checklist a sekce se přizpůsobí. Pak si odškrtni hotové body.
+      Stav se ukládá lokálně ve tvém prohlížeči.
     </p>
+
+    <!-- Archetype picker -->
+    <div class="bg-white border border-slate-200 rounded-xl p-5 mb-6">
+      <div class="font-semibold text-sm mb-1">Co stavíš?</div>
+      <p class="text-xs text-slate-500 mb-2">Můžeš vybrat víc archetypů (např. e-shop s blogem). Když nevybereš nic, ukážeme vše.</p>
+      <p class="text-xs text-slate-500 mb-3">
+        <strong>Tip:</strong> „Veřejnoprávní subjekt" je o <em>provozovateli</em>, ne o typu obsahu — i blog obecní knihovny nebo vizitka kraje pod to spadají.
+        Kombinuj: blog obecní knihovny = <code>blog</code> + <code>veřejnoprávní</code>; e-shop veřejné nemocnice = <code>e-shop</code> + <code>veřejnoprávní</code>.
+      </p>
+      <div class="flex flex-wrap gap-2">
+        {% for arch in archetypes %}
+        <div class="relative group inline-block">
+          <button type="button"
+                  @click="toggleArchetype('{{ arch.id }}')"
+                  :class="archetypes.includes('{{ arch.id }}') ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-300 hover:border-slate-400'"
+                  class="text-xs font-medium border rounded-full px-3 py-1.5 transition-colors"
+                  aria-describedby="tooltip-{{ arch.id }}">
+            {{ arch.label }}
+          </button>
+          <div id="tooltip-{{ arch.id }}"
+               role="tooltip"
+               class="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 w-72 z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity">
+            <div class="bg-slate-900 text-white text-xs rounded-lg p-3 shadow-xl leading-relaxed">
+              {{ arch.description }}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Services picker -->
+      <div class="mt-5 pt-5 border-t border-slate-100">
+        <div class="font-semibold text-sm mb-1">Doplňkové funkce / služby</div>
+        <p class="text-xs text-slate-500 mb-3">
+          Co dalšího na webu máš? Každá služba zpracovává osobní data jiných lidí — odemkne v checklistu věci, které by ti chyběly (consent, DPA s providerem, retenci…).
+        </p>
+        <div class="flex flex-wrap gap-2">
+          {% for svc in services %}
+          <div class="relative group inline-block">
+            <button type="button"
+                    @click="toggleService('{{ svc.id }}')"
+                    :class="services.includes('{{ svc.id }}') ? 'bg-violet-600 text-white border-violet-600' : 'bg-white text-slate-700 border-slate-300 hover:border-slate-400'"
+                    class="text-xs font-medium border rounded-full px-3 py-1.5 transition-colors"
+                    aria-describedby="tooltip-service-{{ svc.id }}">
+              {{ svc.label }}
+            </button>
+            <div id="tooltip-service-{{ svc.id }}"
+                 role="tooltip"
+                 class="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 w-72 z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity">
+              <div class="bg-slate-900 text-white text-xs rounded-lg p-3 shadow-xl leading-relaxed">
+                {{ svc.description }}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Filter toggles -->
+      <div x-show="archetypes.length > 0 || services.length > 0" class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap gap-4 text-xs">
+        <label class="inline-flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" x-model="hideIrrelevant" @change="persistFilters()" class="rounded border-slate-300">
+          <span class="text-slate-600">Skrýt nerelevantní položky checklistu</span>
+        </label>
+        <label class="inline-flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" x-model="filterSections" @change="persistFilters()" class="rounded border-slate-300">
+          <span class="text-slate-600">Filtrovat i sekce průvodce</span>
+        </label>
+      </div>
+    </div>
 
     <ul class="space-y-2 mb-6">
       {% for item in checklist_items %}
       <li @click="toggle('{{ item.id }}')"
-          :class="checked['{{ item.id }}'] ? 'bg-green-50 border-green-300' : 'bg-white border-slate-200 hover:border-slate-300'"
+          x-show="!hideIrrelevant || isRelevantItem({{ item.applies_to|safe }})"
+          :class="[
+            checked['{{ item.id }}'] ? 'bg-green-50 border-green-300' : 'bg-white border-slate-200 hover:border-slate-300',
+            !isRelevantItem({{ item.applies_to|safe }}) ? 'opacity-50' : ''
+          ]"
           class="border rounded-xl p-4 cursor-pointer transition-colors flex gap-3 items-start">
         <div class="flex-shrink-0 mt-0.5">
           <span x-show="!checked['{{ item.id }}']" class="block w-5 h-5 border-2 border-slate-300 rounded"></span>
           <span x-show="checked['{{ item.id }}']" class="w-5 h-5 bg-green-500 rounded flex items-center justify-center text-white text-xs font-bold">✓</span>
         </div>
         <div class="flex-1">
-          <div class="font-semibold text-sm">{{ item.title }}</div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-semibold text-sm">{{ item.title }}</span>
+            <span x-show="!isRelevantItem({{ item.applies_to|safe }})"
+                  class="text-[10px] uppercase tracking-wide bg-slate-200 text-slate-600 rounded px-1.5 py-0.5">
+              pravděpodobně neřešíš
+            </span>
+          </div>
           <div class="text-xs text-slate-500 mt-1">
             {{ item.hint }}
             <a href="#{{ item.anchor }}" @click.stop class="text-blue-600 underline ml-1">Více →</a>
@@ -54,10 +134,53 @@
           try { return JSON.parse(localStorage.getItem('vibescan-checklist') || '{}'); }
           catch(e) { return {}; }
         })(),
+        archetypes: (() => {
+          try { return JSON.parse(localStorage.getItem('vibescan-archetype') || '[]'); }
+          catch(e) { return []; }
+        })(),
+        services: (() => {
+          try { return JSON.parse(localStorage.getItem('vibescan-services') || '[]'); }
+          catch(e) { return []; }
+        })(),
+        hideIrrelevant: (() => {
+          try { return localStorage.getItem('vibescan-hide-irrelevant') === 'true'; }
+          catch(e) { return false; }
+        })(),
+        filterSections: (() => {
+          try { return localStorage.getItem('vibescan-filter-sections') === 'true'; }
+          catch(e) { return false; }
+        })(),
         toggle(id) {
           this.checked[id] = !this.checked[id];
           try { localStorage.setItem('vibescan-checklist', JSON.stringify(this.checked)); }
           catch(e) { /* private browsing — pokračujeme v paměti */ }
+        },
+        toggleArchetype(id) {
+          const i = this.archetypes.indexOf(id);
+          if (i >= 0) this.archetypes.splice(i, 1);
+          else this.archetypes.push(id);
+          try { localStorage.setItem('vibescan-archetype', JSON.stringify(this.archetypes)); }
+          catch(e) { /* private browsing — pokračujeme v paměti */ }
+        },
+        toggleService(id) {
+          const i = this.services.indexOf(id);
+          if (i >= 0) this.services.splice(i, 1);
+          else this.services.push(id);
+          try { localStorage.setItem('vibescan-services', JSON.stringify(this.services)); }
+          catch(e) { /* private browsing — pokračujeme v paměti */ }
+        },
+        persistFilters() {
+          try {
+            localStorage.setItem('vibescan-hide-irrelevant', this.hideIrrelevant);
+            localStorage.setItem('vibescan-filter-sections', this.filterSections);
+          } catch(e) { /* private browsing — pokračujeme v paměti */ }
+        },
+        isRelevantItem(appliesTo) {
+          // Žádný výběr = vše relevantní. "all" = vždy relevantní. Jinak průnik se zvolenými archetypy NEBO službami.
+          if (!this.archetypes.length && !this.services.length) return true;
+          if (appliesTo.includes('all')) return true;
+          const selected = this.archetypes.concat(this.services);
+          return appliesTo.some(a => selected.includes(a));
         }
       }
     }
@@ -188,7 +311,9 @@
   <!-- Narativní sekce: IDOR, Secrets, NIS2, Retence -->
   <div class="mb-14 space-y-10">
     {% for section in narrative_sections %}
-    <section id="{{ section.id }}" class="bg-white border border-slate-200 rounded-2xl p-6 scroll-mt-20">
+    <section id="{{ section.id }}"
+             x-show="!filterSections || isRelevantItem({{ section.relevant_for|safe }})"
+             class="bg-white border border-slate-200 rounded-2xl p-6 scroll-mt-20">
       <h2 class="text-2xl font-extrabold mb-1">{{ section.title }}</h2>
       <p class="text-slate-500 text-sm mb-6 italic">{{ section.subtitle }}</p>
       {% for block in section.blocks %}
