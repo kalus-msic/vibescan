@@ -88,29 +88,33 @@ def scan_status(request, pk):
     return render(request, "scanner/partials/progress.html", {"scan": scan})
 
 
-@require_http_methods(["GET"])
-def scan_export_txt(request, pk):
-    scan = get_object_or_404(ScanResult, pk=pk, status=ScanStatus.DONE)
-    category = ScoreCategory.from_score(scan.vibe_score)
+def build_export_txt(scan):
+    """Render the AI export markdown for a finished scan and return it as a string."""
+    from django.template.loader import render_to_string
 
+    category = ScoreCategory.from_score(scan.vibe_score)
     active = [f for f in scan.findings if not f.get("dismissed")]
     dismissed = [f for f in scan.findings if f.get("dismissed")]
 
-    # Group active findings by category
     categories = {}
     for f in active:
         cat = f.get("category", "other")
         categories.setdefault(cat, []).append(f)
     findings_by_category = sorted(categories.items())
 
-    domain = urlparse(scan.url).hostname or "scan"
-    content = render(request, "scanner/export_txt.md", {
+    return render_to_string("scanner/export_txt.md", {
         "scan": scan,
         "category": {"label": category.value},
         "findings_by_category": findings_by_category,
         "dismissed": dismissed,
-    }).content.decode("utf-8")
+    })
 
+
+@require_http_methods(["GET"])
+def scan_export_txt(request, pk):
+    scan = get_object_or_404(ScanResult, pk=pk, status=ScanStatus.DONE)
+    content = build_export_txt(scan)
+    domain = urlparse(scan.url).hostname or "scan"
     response = HttpResponse(content, content_type="text/plain; charset=utf-8")
     response["Content-Disposition"] = f'attachment; filename="vibescan-report-{domain}.txt"'
     return response

@@ -80,3 +80,10 @@ def dismissed_findings(findings):
 def dismiss_reason_label(reason):
     """Translate dismiss reason value to Czech label."""
     return DISMISS_REASON_LABELS.get(reason, reason)
+
+
+@register.simple_tag
+def export_txt_preview(scan):
+    """Render the same markdown that the TXT export produces, for inline preview."""
+    from scanner.views import build_export_txt
+    return build_export_txt(scan)
