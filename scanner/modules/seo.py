@@ -1,7 +1,7 @@
 import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
-from .base import BaseScanModule, Finding, Severity
+from .base import BaseScanModule, Finding, Severity, guide_url
 
 
 class SEOScanner(BaseScanModule):
@@ -33,7 +33,7 @@ class SEOScanner(BaseScanModule):
                 description="Str\u00e1nka nem\u00e1 nastaven\u00fd <title>. Titulek je z\u00e1kladn\u00ed SEO element \u2014 zobrazuje se ve v\u00fdsledc\u00edch vyhled\u00e1v\u00e1n\u00ed a v z\u00e1lo\u017ek\u00e1ch prohl\u00ed\u017ee\u010de.",
                 severity=Severity.WARNING,
                 category="seo",
-                fix_url="/guide/#seo-zaklady",
+                fix_url=guide_url("seo-zaklady"),
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/title",
             )
         text = title.get_text(strip=True)
@@ -45,7 +45,7 @@ class SEOScanner(BaseScanModule):
                 description="Doporu\u010den\u00e1 d\u00e9lka titulku je 50\u201360 znak\u016f. Del\u0161\u00ed titulek se ve v\u00fdsledc\u00edch vyhled\u00e1v\u00e1n\u00ed o\u0159\u00edzne.",
                 severity=Severity.INFO,
                 category="seo",
-                fix_url="/guide/#seo-zaklady",
+                fix_url=guide_url("seo-zaklady"),
                 detail=text[:80],
             )
         return Finding(
@@ -66,7 +66,7 @@ class SEOScanner(BaseScanModule):
                 description="Str\u00e1nka nem\u00e1 meta description. Vyhled\u00e1va\u010de ho zobrazuj\u00ed jako popisek ve v\u00fdsledc\u00edch \u2014 bez n\u011bj si Google vybere vlastn\u00ed text ze str\u00e1nky.",
                 severity=Severity.WARNING,
                 category="seo",
-                fix_url="/guide/#seo-zaklady",
+                fix_url=guide_url("seo-zaklady"),
                 doc_url="https://developer.mozilla.org/en-US/docs/Learn/HTML/Introduction_to_HTML/The_head_metadata_in_HTML#adding_an_author_and_description",
             )
         content = meta["content"].strip()
@@ -78,7 +78,7 @@ class SEOScanner(BaseScanModule):
                 description="Doporu\u010den\u00e1 d\u00e9lka meta description je 120\u2013160 znak\u016f. Del\u0161\u00ed text se o\u0159\u00edzne.",
                 severity=Severity.INFO,
                 category="seo",
-                fix_url="/guide/#seo-zaklady",
+                fix_url=guide_url("seo-zaklady"),
                 detail=content[:180],
             )
         return Finding(
@@ -99,7 +99,7 @@ class SEOScanner(BaseScanModule):
                 description="Str\u00e1nka nem\u00e1 <link rel=\"canonical\">. Canonical URL \u0159\u00edk\u00e1 vyhled\u00e1va\u010d\u016fm, kter\u00e1 verze str\u00e1nky je hlavn\u00ed \u2014 p\u0159edch\u00e1z\u00ed probl\u00e9m\u016fm s duplicitn\u00edm obsahem.",
                 severity=Severity.INFO,
                 category="seo",
-                fix_url="/guide/#seo-zaklady",
+                fix_url=guide_url("seo-zaklady"),
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel#canonical",
             )
         return Finding(
@@ -126,7 +126,7 @@ class SEOScanner(BaseScanModule):
                 description="Open Graph tagy ur\u010duj\u00ed, jak str\u00e1nka vypad\u00e1 p\u0159i sd\u00edlen\u00ed na soci\u00e1ln\u00edch s\u00edt\u00edch (Facebook, LinkedIn, Slack). Bez nich se zobraz\u00ed genericky.",
                 severity=Severity.INFO,
                 category="seo",
-                fix_url="/guide/#seo-zaklady",
+                fix_url=guide_url("seo-zaklady"),
                 doc_url="https://ogp.me/",
                 detail=", ".join(missing),
             )
@@ -147,7 +147,7 @@ class SEOScanner(BaseScanModule):
                 description="Str\u00e1nka nem\u00e1 \u017e\u00e1dn\u00fd <h1> nadpis. Ka\u017ed\u00e1 str\u00e1nka by m\u011bla m\u00edt pr\u00e1v\u011b jeden <h1>, kter\u00fd popisuje jej\u00ed hlavn\u00ed obsah.",
                 severity=Severity.INFO,
                 category="seo",
-                fix_url="/guide/#seo-zaklady",
+                fix_url=guide_url("seo-zaklady"),
             )
         # HTML5 spec povoluje multiple <h1> v sectioning roots od r. 2014.
         # Google potvrdil, \u017ee to neovliv\u0148uje SEO. \u017d\u00e1dn\u00e1 penalty.

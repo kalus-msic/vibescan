@@ -1,6 +1,6 @@
 import re
 from bs4 import BeautifulSoup
-from .base import BaseScanModule, Finding, Severity
+from .base import BaseScanModule, Finding, Severity, guide_url
 
 
 CONSENT_SCRIPT_PATTERNS = (
@@ -109,7 +109,7 @@ class LegalScanner(BaseScanModule):
             description="Nenašli jsme cookie consent lištu ani známou consent knihovnu. Podle GDPR musí web zobrazit souhlas s cookies před jejich uložením. Tlačítka pro přijetí a odmítnutí musí mít stejnou vizuální váhu. Ověřte, zda se tento prvek nachází na jiné stránce vašeho webu.",
             severity=Severity.INFO,
             category="legal",
-            fix_url="/guide/#pravni-dokumenty",
+            fix_url=guide_url("pravni-dokumenty"),
             doc_url="https://gdpr.eu/cookies/",
         )
 
@@ -141,6 +141,6 @@ class LegalScanner(BaseScanModule):
             description="Nenašli jsme odkaz na stránku s informacemi o ochraně osobních údajů (GDPR). Každý web musí mít dostupnou stránku popisující práva návštěvníků ohledně jejich dat. Ověřte, zda se tento odkaz nachází na jiné stránce vašeho webu.",
             severity=Severity.INFO,
             category="legal",
-            fix_url="/guide/#pravni-dokumenty",
+            fix_url=guide_url("pravni-dokumenty"),
             doc_url="https://www.uoou.cz/",
         )

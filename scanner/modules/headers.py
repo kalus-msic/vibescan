@@ -1,4 +1,4 @@
-from .base import BaseScanModule, Finding, Severity
+from .base import BaseScanModule, Finding, Severity, guide_url
 
 
 REQUIRED_HEADERS = [
@@ -11,7 +11,7 @@ REQUIRED_HEADERS = [
         "ok_title": "Content-Security-Policy nastaven",
         "ok_description": "CSP header je přítomen.",
         "doc_url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP",
-        "fix_url": "/guide/#http-security-headers",
+        "fix_url": guide_url("http-security-headers"),
     },
     {
         "id": "missing-hsts",
@@ -22,7 +22,7 @@ REQUIRED_HEADERS = [
         "ok_title": "HSTS nastaven",
         "ok_description": "Strict-Transport-Security header je přítomen.",
         "doc_url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security",
-        "fix_url": "/guide/#http-security-headers",
+        "fix_url": guide_url("http-security-headers"),
     },
     {
         "id": "missing-x-frame",
@@ -33,7 +33,7 @@ REQUIRED_HEADERS = [
         "ok_title": "X-Frame-Options nastaven",
         "ok_description": "X-Frame-Options header je přítomen.",
         "doc_url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options",
-        "fix_url": "/guide/#http-security-headers",
+        "fix_url": guide_url("http-security-headers"),
     },
     {
         "id": "missing-xcto",
@@ -44,7 +44,7 @@ REQUIRED_HEADERS = [
         "ok_title": "X-Content-Type-Options nastaven",
         "ok_description": "nosniff header je přítomen.",
         "doc_url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options",
-        "fix_url": "/guide/#http-security-headers",
+        "fix_url": guide_url("http-security-headers"),
     },
     {
         "id": "missing-referrer",
@@ -55,7 +55,7 @@ REQUIRED_HEADERS = [
         "ok_title": "Referrer-Policy nastavena",
         "ok_description": "Referrer-Policy header je přítomen.",
         "doc_url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy",
-        "fix_url": "/guide/#http-security-headers",
+        "fix_url": guide_url("http-security-headers"),
     },
     {
         "id": "missing-permissions",
@@ -66,7 +66,7 @@ REQUIRED_HEADERS = [
         "ok_title": "Permissions-Policy nastavena",
         "ok_description": "Permissions-Policy header je přítomen.",
         "doc_url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy",
-        "fix_url": "/guide/#http-security-headers",
+        "fix_url": guide_url("http-security-headers"),
     },
 ]
 

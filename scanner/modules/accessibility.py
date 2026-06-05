@@ -1,7 +1,7 @@
 import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
-from .base import BaseScanModule, Finding, Severity
+from .base import BaseScanModule, Finding, Severity, guide_url
 
 
 KNOWN_SKIP_HREFS = {"#main", "#content", "#main-content"}
@@ -106,7 +106,7 @@ class AccessibilityScanner(BaseScanModule):
                 description="Odkaz pro přeskočení navigace (skip link) umožňuje uživatelům klávesnice a hlasových čteček přeskočit opakující se menu a přejít přímo na hlavní obsah. Je to základní požadavek přístupnosti (WCAG 2.4.1). Ověřte, zda váš web tento prvek obsahuje.",
                 severity=Severity.INFO,
                 category="accessibility",
-                fix_url="/guide/#pravni-dokumenty",
+                fix_url=guide_url("pravni-dokumenty"),
                 doc_url="https://pristupne-stranky.cz/zakon-a-standardy/",
             ))
 
@@ -144,7 +144,7 @@ class AccessibilityScanner(BaseScanModule):
                 description=desc,
                 severity=severity,
                 category="accessibility",
-                fix_url="/guide/#pravni-dokumenty",
+                fix_url=guide_url("pravni-dokumenty"),
                 doc_url="https://pristupne-stranky.cz/zakon-a-standardy/",
             ))
 
@@ -165,7 +165,7 @@ class AccessibilityScanner(BaseScanModule):
                 description="Element <html> nemá nastaven atribut lang. Hlasové čtečky potřebují znát jazyk stránky pro správnou výslovnost. Přidejte např. <html lang=\"cs\">.",
                 severity=Severity.INFO,
                 category="accessibility",
-                fix_url="/guide/#pravni-dokumenty",
+                fix_url=guide_url("pravni-dokumenty"),
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/lang",
             ))
 
@@ -182,7 +182,7 @@ class AccessibilityScanner(BaseScanModule):
                 description="Obrázky bez alt atributu jsou neviditelné pro hlasové čtečky a zhoršují SEO. Každý <img> musí mít alt \u2014 pro dekorativní obrázky použijte alt=\"\".",
                 severity=Severity.INFO,
                 category="accessibility",
-                fix_url="/guide/#pravni-dokumenty",
+                fix_url=guide_url("pravni-dokumenty"),
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/img#alt",
                 detail=", ".join(imgs_without_alt[:5]),
             ))
@@ -218,7 +218,7 @@ class AccessibilityScanner(BaseScanModule):
                 description="Formul\u00e1\u0159ov\u00e9 prvky nemaj\u00ed p\u0159i\u0159azen\u00fd <label>, aria-label ani aria-labelledby. Hlasov\u00e9 \u010dte\u010dky nedok\u00e1\u017e\u00ed u\u017eivateli sd\u011blit, co m\u00e1 do pole zadat.",
                 severity=Severity.INFO,
                 category="accessibility",
-                fix_url="/guide/#pravni-dokumenty",
+                fix_url=guide_url("pravni-dokumenty"),
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/label",
                 detail=", ".join(inputs_without_label[:5]),
             ))
@@ -245,7 +245,7 @@ class AccessibilityScanner(BaseScanModule):
                 description="Odkazy nebo tla\u010d\u00edtka nemaj\u00ed \u017e\u00e1dn\u00fd text, aria-label ani title. Hlasov\u00e9 \u010dte\u010dky je ozna\u010d\u00ed jako \u201eodkaz\u201c nebo \u201etla\u010d\u00edtko\u201c bez dal\u0161\u00edho kontextu.",
                 severity=Severity.INFO,
                 category="accessibility",
-                fix_url="/guide/#pravni-dokumenty",
+                fix_url=guide_url("pravni-dokumenty"),
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#accessibility",
                 detail=", ".join(empty_interactive[:5]),
             ))
@@ -265,7 +265,7 @@ class AccessibilityScanner(BaseScanModule):
                 description="Nadpisy p\u0159eskakuj\u00ed \u00farovn\u011b (nap\u0159. z h1 na h3). Spr\u00e1vn\u00e1 hierarchie nadpis\u016f pom\u00e1h\u00e1 hlasov\u00fdm \u010dte\u010dk\u00e1m a zlep\u0161uje SEO.",
                 severity=Severity.INFO,
                 category="accessibility",
-                fix_url="/guide/#pravni-dokumenty",
+                fix_url=guide_url("pravni-dokumenty"),
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Heading_Elements",
                 detail=", ".join(skipped[:5]),
             ))

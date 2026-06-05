@@ -1,6 +1,6 @@
 import re
 from bs4 import BeautifulSoup
-from .base import BaseScanModule, Finding, Severity
+from .base import BaseScanModule, Finding, Severity, guide_url
 
 
 class HTMLScanner(BaseScanModule):
@@ -29,7 +29,7 @@ class HTMLScanner(BaseScanModule):
                 description="HTML komentáře obsahují klíčová slova jako TODO, password nebo api_key. Komentáře jsou viditelné v zdrojovém kódu stránky — mohou prozradit interní informace, testovací účty nebo zapomenuté API klíče.",
                 severity=Severity.WARNING,
                 category="html",
-                fix_url="/guide/#html-bezpecnost",
+                fix_url=guide_url("html-bezpecnost"),
                 detail=flagged_comments[0],
             ))
 

@@ -1,6 +1,6 @@
 import re
 from bs4 import BeautifulSoup
-from .base import BaseScanModule, Finding, Severity
+from .base import BaseScanModule, Finding, Severity, guide_url
 
 
 VERSION_PATTERN = re.compile(r"[\d]+(?:\.[\d]+)+")
@@ -35,7 +35,7 @@ class MetaTagScanner(BaseScanModule):
                 description=f"Meta tag generator obsahuje '{content}'. Útočník vyhledá v CVE databázi známé zranitelnosti pro tuto verzi a zneužije je automatizovaným nástrojem.",
                 severity=Severity.WARNING,
                 category="meta",
-                fix_url="/guide/#meta-informace",
+                fix_url=guide_url("meta-informace"),
                 doc_url="https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/01-Information_Gathering/08-Fingerprint_Web_Application_Framework",
                 detail=content,
             ))
@@ -46,7 +46,7 @@ class MetaTagScanner(BaseScanModule):
                 description=f"Meta tag generator obsahuje '{content}'. Odhaluje použitý systém, ale bez verze.",
                 severity=Severity.INFO,
                 category="meta",
-                fix_url="/guide/#meta-informace",
+                fix_url=guide_url("meta-informace"),
                 detail=content,
             ))
 

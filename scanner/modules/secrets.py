@@ -1,6 +1,6 @@
 import re
 from bs4 import BeautifulSoup
-from .base import BaseScanModule, Finding, Severity
+from .base import BaseScanModule, Finding, Severity, guide_url
 
 
 CSRF_NAME_PATTERNS = ("csrf", "xsrf", "_token", "-token", "nonce")
@@ -102,7 +102,7 @@ class SecretLeakageScanner(BaseScanModule):
                     description=f"V HTML stránky byl nalezen {label}. Kdokoliv může otevřít zdrojový kód stránky (Ctrl+U) a klíč zkopírovat. Přesuňte na server a použijte environment variables.",
                     severity=Severity.CRITICAL,
                     category="secrets",
-                    fix_url="/guide/#secrets-env",
+                    fix_url=guide_url("secrets-env"),
                     doc_url="https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_credentials",
                     detail="\n".join(matches[:5]) + (f"\n… a {len(matches) - 5} dalších" if len(matches) > 5 else ""),
                 ))
@@ -123,7 +123,7 @@ class SecretLeakageScanner(BaseScanModule):
                     description=config["description"],
                     severity=Severity.WARNING,
                     category="secrets",
-                    fix_url="/guide/#secrets-env",
+                    fix_url=guide_url("secrets-env"),
                     doc_url="https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_credentials",
                     detail="\n".join(matches[:5]) + (f"\n… a {len(matches) - 5} dalších" if len(matches) > 5 else ""),
                 ))
@@ -160,7 +160,7 @@ class SecretLeakageScanner(BaseScanModule):
                 description="V HTML nebo inline JS byly nalezeny řetězce typu password='...', secret='...' nebo apikey='...'. I pokud jde o testovací hodnoty, nemají být v klientském kódu.",
                 severity=Severity.WARNING,
                 category="secrets",
-                fix_url="/guide/#secrets-env",
+                fix_url=guide_url("secrets-env"),
                 doc_url="https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_credentials",
                 detail="\n".join(generic_matches[:5]) + (f"\n… a {len(generic_matches) - 5} dalších" if len(generic_matches) > 5 else ""),
             ))

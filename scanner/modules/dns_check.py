@@ -1,7 +1,7 @@
 import httpx
 import dns.resolver
 from urllib.parse import urlparse
-from .base import BaseScanModule, Finding, Severity
+from .base import BaseScanModule, Finding, Severity, guide_url
 
 
 COMMON_DKIM_SELECTORS = [
@@ -93,7 +93,7 @@ class DNSScanner(BaseScanModule):
             description=f"Bez SPF může kdokoliv posílat emaily jako by šly z vaší domény (email spoofing). Útočník pošle phishing email z vasi-domena.cz a příjemce ho považuje za legitimní.{sub_note}",
             severity=Severity.INFO if is_sub else Severity.WARNING,
             category="dns",
-            fix_url="/guide/#dns-emaily",
+            fix_url=guide_url("dns-emaily"),
             doc_url="https://www.cloudflare.com/learning/dns/dns-records/dns-spf-record/",
         )
 
@@ -131,7 +131,7 @@ class DNSScanner(BaseScanModule):
                                 severity=Severity.INFO if (is_sub or strong_sub) else Severity.WARNING,
                                 category="dns",
                                 detail=raw,
-                                fix_url="/guide/#dns-emaily",
+                                fix_url=guide_url("dns-emaily"),
                                 doc_url="https://developer.mozilla.org/en-US/docs/Glossary/DMARC",
                             )
                         return Finding(
@@ -149,7 +149,7 @@ class DNSScanner(BaseScanModule):
                             description='Záznam na _dmarc existuje, ale nezačíná "v=DMARC1". Zkontrolujte formát podle RFC 7489.',
                             severity=Severity.INFO if is_sub else Severity.WARNING,
                             category="dns",
-                            fix_url="/guide/#dns-emaily",
+                            fix_url=guide_url("dns-emaily"),
                             detail=raw,
                         )
         except Exception:
@@ -161,7 +161,7 @@ class DNSScanner(BaseScanModule):
             description=f"Bez DMARC nemá příjemce emailu jak ověřit, zda email skutečně pochází z vaší domény. Útočník může posílat phishingové emaily vaším jménem.{sub_note}",
             severity=Severity.INFO if is_sub else Severity.WARNING,
             category="dns",
-            fix_url="/guide/#dns-emaily",
+            fix_url=guide_url("dns-emaily"),
             doc_url="https://www.cloudflare.com/learning/dns/dns-records/dns-dmarc-record/",
         )
 
@@ -218,7 +218,7 @@ class DNSScanner(BaseScanModule):
                 description="CAA záznam omezuje, které certifikační autority mohou vydat certifikát pro doménu. Bez CAA může certifikát vydat jakákoliv CA.",
                 severity=Severity.INFO,
                 category="dns",
-                fix_url="/guide/#dns-emaily",
+                fix_url=guide_url("dns-emaily"),
             )
         except Exception:
             return None
@@ -241,7 +241,7 @@ class DNSScanner(BaseScanModule):
                 description="DNSSEC chrání DNS záznamy před manipulací. Doporučujeme aktivovat, zejména pro .cz domény.",
                 severity=Severity.INFO,
                 category="dns",
-                fix_url="/guide/#dns-emaily",
+                fix_url=guide_url("dns-emaily"),
             )
         except Exception:
             return None
@@ -307,7 +307,7 @@ class DNSScanner(BaseScanModule):
             severity=Severity.WARNING,
             category="dns",
             detail=detail,
-            fix_url="/guide/#dns-emaily",
+            fix_url=guide_url("dns-emaily"),
             doc_url="https://developers.google.com/search/docs/crawling-indexing/robots/intro",
         )
 
@@ -332,6 +332,6 @@ class DNSScanner(BaseScanModule):
             description="Bezpečnostní výzkumníci nemají kam hlásit nalezené zranitelnosti. Soubor security.txt (RFC 9116) na /.well-known/security.txt obsahuje kontaktní email pro zodpovědné hlášení.",
             severity=Severity.WARNING,
             category="dns",
-            fix_url="/guide/#dns-emaily",
+            fix_url=guide_url("dns-emaily"),
             doc_url="https://securitytxt.org/",
         )

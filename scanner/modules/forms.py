@@ -1,7 +1,7 @@
 import re
 
 from bs4 import BeautifulSoup
-from .base import BaseScanModule, Finding, Severity
+from .base import BaseScanModule, Finding, Severity, guide_url
 
 
 CSRF_TOKEN_NAMES = {
@@ -132,7 +132,7 @@ class FormScanner(BaseScanModule):
                 description="Formulář odesílá POST bez CSRF tokenu. Pokud formulář provádí citlivou akci (přihlášení, změna údajů, platba), útočník může vytvořit stránku s neviditelným formulářem, který se automaticky odešle — prohlížeč přiloží cookies a akce proběhne za přihlášeného uživatele. U veřejných formulářů (newsletter, vyhledávání) je riziko minimální.",
                 severity=Severity.WARNING,
                 category="forms",
-                fix_url="/guide/#csrf-forms",
+                fix_url=guide_url("csrf-forms"),
                 doc_url="https://owasp.org/www-community/attacks/csrf",
                 detail=detail,
             ))

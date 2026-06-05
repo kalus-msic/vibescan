@@ -1,4 +1,4 @@
-from .base import BaseScanModule, Finding, Severity
+from .base import BaseScanModule, Finding, Severity, guide_url
 
 
 class CORSScanner(BaseScanModule):
@@ -25,7 +25,7 @@ class CORSScanner(BaseScanModule):
                     description="Access-Control-Allow-Origin: * s Allow-Credentials: true = jakákoliv stránka na internetu může posílat requesty na váš server a číst odpovědi za přihlášeného uživatele. Útočník vytvoří web, který fetch() stáhne data z vašeho API včetně session cookies.",
                     severity=Severity.CRITICAL,
                     category="cors",
-                    fix_url="/guide/#http-security-headers",
+                    fix_url=guide_url("http-security-headers"),
                     doc_url="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS",
                 ))
             else:
@@ -35,7 +35,7 @@ class CORSScanner(BaseScanModule):
                     description="Access-Control-Allow-Origin: * povoluje jakékoli doméně číst odpovědi serveru. Pokud API vrací citlivá data, omezte na konkrétní domény (např. https://vasapp.com).",
                     severity=Severity.WARNING,
                     category="cors",
-                    fix_url="/guide/#http-security-headers",
+                    fix_url=guide_url("http-security-headers"),
                     doc_url="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS",
                 ))
         else:
