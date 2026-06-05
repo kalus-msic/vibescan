@@ -31,12 +31,9 @@
       PDF report
     </a>
     <span class="text-slate-300">·</span>
-    <a href="{% url 'scanner:export_txt' scan.id %}" class="text-slate-500 hover:text-slate-900 font-medium transition-colors inline-flex flex-col items-start" title="Celý report pro AI opravu">
-      <span class="inline-flex items-center gap-1">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/></svg>
-        Export pro AI
-      </span>
-      <span class="text-[10px] text-slate-400 font-normal">Celý report pro AI opravu</span>
+    <a href="{% url 'scanner:export_txt' scan.id %}" class="text-slate-500 hover:text-slate-900 font-medium transition-colors inline-flex items-center gap-1" title="Celý report pro AI opravu">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/></svg>
+      Export pro AI
     </a>
   </div>
   {% endif %}
