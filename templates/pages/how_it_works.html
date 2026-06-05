@@ -62,6 +62,73 @@
     </div>
   </div>
 
+  <!-- V čem se lišíme od ostatních skenerů -->
+  <div class="mb-12">
+    <h2 class="text-2xl font-extrabold mb-3">V čem se lišíme od ostatních skenerů</h2>
+    <p class="text-slate-500 leading-relaxed mb-6">
+      Většinu věcí, které Vibescan kontroluje, umí i jiné veřejně dostupné nástroje. Každý se ale obvykle zaměřuje na jednu konkrétní oblast a výsledky jsou v angličtině, technickým jazykem, bez konkrétního návrhu řešení.
+    </p>
+
+    <div class="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-sm">
+      <div class="font-bold text-sm text-slate-900 mb-4">Specializované nástroje, které děláme podobně</div>
+      <ul class="space-y-3 text-sm">
+        <li class="flex flex-col sm:flex-row sm:gap-3">
+          <a href="https://securityheaders.com" target="_blank" rel="noopener noreferrer" class="font-mono text-blue-600 hover:underline flex-shrink-0 sm:w-48">securityheaders.com</a>
+          <span class="text-slate-500">HTTP bezpečnostní hlavičky (CSP, HSTS, X-Frame-Options)</span>
+        </li>
+        <li class="flex flex-col sm:flex-row sm:gap-3">
+          <a href="https://www.ssllabs.com/ssltest/" target="_blank" rel="noopener noreferrer" class="font-mono text-blue-600 hover:underline flex-shrink-0 sm:w-48">ssllabs.com/ssltest</a>
+          <span class="text-slate-500">Kvalita SSL/TLS konfigurace a certifikátu</span>
+        </li>
+        <li class="flex flex-col sm:flex-row sm:gap-3">
+          <a href="https://observatory.mozilla.org" target="_blank" rel="noopener noreferrer" class="font-mono text-blue-600 hover:underline flex-shrink-0 sm:w-48">observatory.mozilla.org</a>
+          <span class="text-slate-500">Bezpečnostní audit od Mozilly (hlavičky, cookies, TLS)</span>
+        </li>
+        <li class="flex flex-col sm:flex-row sm:gap-3">
+          <a href="https://www.hardenize.com" target="_blank" rel="noopener noreferrer" class="font-mono text-blue-600 hover:underline flex-shrink-0 sm:w-48">hardenize.com</a>
+          <span class="text-slate-500">Komplexní kontrola hlaviček, TLS, DNS, e-mailových záznamů</span>
+        </li>
+        <li class="flex flex-col sm:flex-row sm:gap-3">
+          <a href="https://dnschecker.org" target="_blank" rel="noopener noreferrer" class="font-mono text-blue-600 hover:underline flex-shrink-0 sm:w-48">dnschecker.org</a>
+          <span class="text-slate-500">DNS záznamy (SPF, DKIM, DMARC, MX)</span>
+        </li>
+        <li class="flex flex-col sm:flex-row sm:gap-3">
+          <a href="https://hstspreload.org" target="_blank" rel="noopener noreferrer" class="font-mono text-blue-600 hover:underline flex-shrink-0 sm:w-48">hstspreload.org</a>
+          <span class="text-slate-500">Kontrola HSTS preload listu</span>
+        </li>
+        <li class="flex flex-col sm:flex-row sm:gap-3">
+          <a href="https://builtwith.com" target="_blank" rel="noopener noreferrer" class="font-mono text-blue-600 hover:underline flex-shrink-0 sm:w-48">builtwith.com</a>
+          <span class="text-slate-500">Detekce použitých technologií a frameworků</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4 mb-6">
+      <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5">
+        <div class="font-bold text-sm text-blue-700 mb-2">Vše na jednom místě</div>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Místo abys obíhal sedm různých webů, projel jich kvůli tobě dvanáct najednou. Jeden URL, jedno skóre, jeden sdílitelný odkaz pro klienta nebo tým.
+        </p>
+      </div>
+      <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5">
+        <div class="font-bold text-sm text-blue-700 mb-2">Řešení k zkopírování</div>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          U každého nálezu máš česky vysvětlené, proč je to problém, a konkrétní příklad konfigurace (Nginx, Apache, Django…), který stačí zkopírovat do projektu.
+        </p>
+      </div>
+    </div>
+
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+      <div class="font-bold text-sm text-amber-800 mb-2">Některé nálezy nemusí odpovídat realitě — a to je v pořádku</div>
+      <p class="text-sm text-slate-700 leading-relaxed mb-3">
+        Vibescan je externí skener bez přístupu ke kódu. Jeho úkolem je <strong>upozornit na potenciální rizika</strong>, ne tvrdit, že každý nález je reálný problém. Když používáme heuristiku na detekci například technologie podle hlaviček, můžeme se splést.
+      </p>
+      <p class="text-sm text-slate-700 leading-relaxed">
+        Proto si stáhni <strong>TXT export pro AI</strong> a vlož ho do nástroje, se kterým aplikaci vyvíjíš (Claude Code, Cursor, Copilot). AI zná tvůj kód a sama ti řekne: „Tenhle nález ignoruj, používáme jinou knihovnu" nebo „Tohle opravdu chybí, opravím to." Zafiltruje šum a soustředí se na to, co je v tvém kontextu skutečně relevantní.
+      </p>
+    </div>
+  </div>
+
   <!-- Co konkrétně kontrolujeme -->
   <div class="mb-12">
     <h2 class="text-2xl font-extrabold mb-6">Co konkrétně kontrolujeme</h2>
