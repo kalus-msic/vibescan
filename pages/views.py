@@ -1242,6 +1242,9 @@ SITEMAP_URLS = [
     ("scanner:home", 1.0, "weekly"),
     ("pages:how_it_works", 0.8, "monthly"),
     ("pages:guide", 0.8, "monthly"),
+    ("pages:guide_tools", 0.7, "monthly"),
+    ("pages:guide_prompts", 0.8, "monthly"),
+    ("pages:guide_topics", 0.7, "monthly"),
     ("pages:review", 0.7, "monthly"),
     ("pages:roadmap", 0.6, "weekly"),
     ("pages:privacy", 0.3, "yearly"),
@@ -1330,6 +1333,10 @@ ROADMAP_ITEMS = [
             {
                 "title": "Multi-page scan",
                 "description": "Kontrola více URL na jedné doméně najednou.",
+            },
+            {
+                "title": "Personalizace stránky Témata",
+                "description": "Na /guide/topics/ filtrovat nebo přeskupit narativní sekce podle archetypů/služeb vybraných na hubu — zobrazit jen relevantní, případně zvýraznit a seřadit nahoru.",
             },
         ],
     },

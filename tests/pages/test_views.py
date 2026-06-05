@@ -494,3 +494,15 @@ class TestGuideHubLinkResolver:
         parsed = json.loads(r.context["anchor_page_map_json"])
         assert parsed["csrf-forms"] == "prompts"
         assert parsed["section-idor"] == "topics"
+
+
+class TestSitemapAndRoadmapUpdates:
+    def test_sitemap_includes_new_guide_pages(self):
+        body = Client().get("/sitemap.xml").content.decode()
+        assert "/guide/tools/" in body
+        assert "/guide/prompts/" in body
+        assert "/guide/topics/" in body
+
+    def test_roadmap_mentions_topics_personalization(self):
+        body = Client().get("/roadmap/").content.decode()
+        assert "Personalizace stránky Témata" in body or "personalizac" in body.lower()
