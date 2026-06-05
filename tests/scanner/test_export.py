@@ -107,6 +107,29 @@ class TxtExportTest(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
+class OkFindingsFilterTest(TestCase):
+
+    def test_ok_findings_returns_only_ok_severity(self):
+        from scanner.templatetags.scan_tags import ok_findings
+        findings = [
+            {"severity": "critical", "title": "A"},
+            {"severity": "ok", "title": "B"},
+            {"severity": "warning", "title": "C"},
+            {"severity": "ok", "title": "D"},
+        ]
+        result = ok_findings(findings)
+        self.assertEqual([f["title"] for f in result], ["B", "D"])
+
+    def test_ok_findings_empty_when_no_ok_severity(self):
+        from scanner.templatetags.scan_tags import ok_findings
+        findings = [{"severity": "critical", "title": "A"}]
+        self.assertEqual(ok_findings(findings), [])
+
+    def test_ok_findings_empty_list_returns_empty(self):
+        from scanner.templatetags.scan_tags import ok_findings
+        self.assertEqual(ok_findings([]), [])
+
+
 class PdfExportTest(TestCase):
 
     def test_pdf_export_returns_200_with_pdf_content_type(self):

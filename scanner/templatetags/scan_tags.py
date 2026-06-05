@@ -71,6 +71,12 @@ def active_findings(findings):
 
 
 @register.filter
+def ok_findings(findings):
+    """Return findings with severity 'ok'."""
+    return [f for f in findings if f.get("severity") == "ok"]
+
+
+@register.filter
 def dismissed_findings(findings):
     """Return only dismissed findings."""
     return [f for f in findings if f.get("dismissed")]
