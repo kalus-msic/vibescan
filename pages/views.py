@@ -1049,7 +1049,7 @@ SCAN_CHECKS = [
         ],
         "detail_footer": mark_safe(
             'Našli jsme zranitelné balíčky? Podívejte se do '
-            '<a href="/guide/#zavislosti-cve" class="underline hover:text-slate-600">průvodce opravami</a> '
+            '<a href="/guide/prompts/#zavislosti-cve" class="underline hover:text-slate-600">průvodce opravami</a> '
             'pro konkrétní kroky jak je aktualizovat.'
         ),
     },
