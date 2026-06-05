@@ -1,7 +1,33 @@
 {% extends "base.html" %}
-{% block title %}Témata: IDOR, NIS2, GDPR, retence dat{% endblock %}
+{% block title %}Hluboká témata: IDOR, NIS2, GDPR, retence dat — Vibescan{% endblock %}
+{% block meta_description %}Co AI sama nevyřeší: IDOR a kontrola autorizace, GDPR a AI nástroje, NIS2 / ZoKB, retenční doby. Vysvětleno na konkrétních případech.{% endblock %}
+{% block canonical %}https://vibescan.cz/guide/topics/{% endblock %}
+
 {% block content %}
 <section class="max-w-3xl mx-auto px-6 py-20">
-  <h1 class="text-3xl font-extrabold mb-3">Hluboká témata</h1>
+
+  <div class="mb-8">
+    <a href="{% url 'pages:guide' %}" class="text-sm text-slate-500 hover:text-slate-900 inline-flex items-center gap-1">
+      ← Zpět na průvodce
+    </a>
+  </div>
+
+  <div class="mb-12">
+    <h1 class="text-3xl font-extrabold mb-3">Hluboká témata</h1>
+    <p class="text-slate-500 leading-relaxed">Témata, která AI nástroje za tebe nevyřeší: autorizace, regulace, retenční doby. Vysvětleno na konkrétních případech a sankcích.</p>
+  </div>
+
+  <div class="space-y-10">
+    {% for section in narrative_sections %}
+    <section id="{{ section.id }}" class="bg-white border border-slate-200 rounded-2xl p-6 scroll-mt-20">
+      <h2 class="text-2xl font-extrabold mb-1">{{ section.title }}</h2>
+      <p class="text-slate-500 text-sm mb-6 italic">{{ section.subtitle }}</p>
+      {% for block in section.blocks %}
+        {% include "pages/partials/narrative_block.html" with block=block %}
+      {% endfor %}
+    </section>
+    {% endfor %}
+  </div>
+
 </section>
 {% endblock %}

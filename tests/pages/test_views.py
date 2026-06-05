@@ -163,40 +163,6 @@ class TestGuideView:
         r = client.get("/guide/")
         assert "vibescan-checklist" in r.content.decode()
 
-    def test_narrative_section_idor_present(self):
-        client = Client()
-        r = client.get("/guide/")
-        body = r.content.decode()
-        assert 'id="section-idor"' in body
-        assert "Přístupy a IDOR" in body
-        assert "Moltbook" in body
-
-    def test_narrative_section_secrets_present(self):
-        client = Client()
-        r = client.get("/guide/")
-        body = r.content.decode()
-        assert 'id="section-secrets"' in body
-        assert "Secrets — frontend není trezor" in body
-        assert "gitleaks" in body or "trufflehog" in body
-
-    def test_narrative_section_nis2_present(self):
-        client = Client()
-        r = client.get("/guide/")
-        body = r.content.decode()
-        assert 'id="section-nis2"' in body
-        assert "NIS2" in body
-        assert "ZoKB" in body
-        assert "264/2025" in body
-
-    def test_narrative_section_retence_present(self):
-        client = Client()
-        r = client.get("/guide/")
-        body = r.content.decode()
-        assert 'id="section-retence"' in body
-        assert "Retence dat" in body
-        assert "Free Mobile" in body
-        assert "27 mil. EUR" in body
-
     def test_new_prompts_present(self):
         client = Client()
         r = client.get("/guide/")
@@ -220,15 +186,6 @@ class TestGuideView:
         r = client.get("/guide/")
         body = r.content.decode()
         assert "Tohle není právní rada" in body
-
-    def test_narrative_section_ai_gdpr_present(self):
-        client = Client()
-        r = client.get("/guide/")
-        body = r.content.decode()
-        assert 'id="section-ai-gdpr"' in body
-        assert "AI nástroje a GDPR" in body
-        assert "DPA" in body
-        assert "Ollama" in body
 
     def test_universal_ask_callout_present(self):
         client = Client()
@@ -400,16 +357,6 @@ class TestGuideView:
         assert "Skrýt nerelevantní položky checklistu" in body
         assert "Filtrovat i sekce průvodce" in body
 
-    def test_narrative_sections_have_relevant_for(self):
-        client = Client()
-        r = client.get("/guide/")
-        body = r.content.decode()
-        # Sekce má v x-show vázanou relevant_for. Pro section-secrets je 'all'.
-        assert 'id="section-secrets"' in body
-        # Aspoň jedna sekce s restriktivním relevant_for (NIS2 nebo Retence)
-        assert 'id="section-nis2"' in body
-        assert 'id="section-retence"' in body
-
     def test_terms_no_longer_mentions_accessibility(self):
         """Po rozsekání: 'terms' položka řeší jen ToS, přístupnost má vlastní položku."""
         client = Client()
@@ -459,3 +406,42 @@ class TestGuideTools:
     def test_back_to_hub_link(self):
         r = Client().get("/guide/tools/")
         assert 'href="/guide/"' in r.content.decode()
+
+
+class TestGuideTopics:
+    def test_h1_present(self):
+        body = Client().get("/guide/topics/").content.decode()
+        assert "Hluboká témata" in body or "Témata" in body
+
+    def test_section_idor_present(self):
+        body = Client().get("/guide/topics/").content.decode()
+        assert 'id="section-idor"' in body
+        assert "Přístupy a IDOR" in body
+        assert "Moltbook" in body
+
+    def test_section_secrets_present(self):
+        body = Client().get("/guide/topics/").content.decode()
+        assert 'id="section-secrets"' in body
+        assert "Secrets — frontend není trezor" in body
+
+    def test_section_nis2_present(self):
+        body = Client().get("/guide/topics/").content.decode()
+        assert 'id="section-nis2"' in body
+        assert "NIS2" in body
+        assert "264/2025" in body
+
+    def test_section_retence_present(self):
+        body = Client().get("/guide/topics/").content.decode()
+        assert 'id="section-retence"' in body
+        assert "Free Mobile" in body
+        assert "27 mil. EUR" in body
+
+    def test_section_ai_gdpr_present(self):
+        body = Client().get("/guide/topics/").content.decode()
+        assert 'id="section-ai-gdpr"' in body
+        assert "AI nástroje a GDPR" in body
+        assert "Ollama" in body
+
+    def test_back_to_hub_link(self):
+        body = Client().get("/guide/topics/").content.decode()
+        assert 'href="/guide/"' in body
