@@ -301,14 +301,8 @@ class TestGuideView:
         body = r.content.decode()
         assert "vibescan-archetype" in body
         assert "vibescan-hide-irrelevant" in body
-        assert "vibescan-filter-sections" in body
-
-    def test_filter_toggles_present(self):
-        client = Client()
-        r = client.get("/guide/")
-        body = r.content.decode()
-        assert "Skrýt nerelevantní položky checklistu" in body
-        assert "Filtrovat i sekce průvodce" in body
+        # vibescan-filter-sections key removed (filterSections toggle dropped)
+        assert "vibescan-filter-sections" not in body
 
     def test_terms_no_longer_mentions_accessibility(self):
         """Po rozsekání: 'terms' položka řeší jen ToS, přístupnost má vlastní položku."""
@@ -318,6 +312,25 @@ class TestGuideView:
         # ToS položka neobsahuje "WCAG" v titulku (může být jinde na stránce)
         # Hledáme přesný název položky checklistu
         assert "Terms of Service / Obchodní podmínky" in body
+
+    def test_three_cards_to_subpages(self):
+        body = Client().get("/guide/").content.decode()
+        assert 'href="/guide/tools/"' in body
+        assert 'href="/guide/prompts/"' in body
+        assert 'href="/guide/topics/"' in body
+
+    def test_no_old_inline_sections(self):
+        """Hub už nemá narrativní sekce ani granulární prompty inline."""
+        body = Client().get("/guide/").content.decode()
+        assert 'id="section-idor"' not in body
+        assert 'id="csrf-forms"' not in body
+        assert "Prompty pro konkrétní oblasti" not in body
+        assert "Jak zabezpečit projekt od začátku" not in body
+
+    def test_hash_redirect_script_present(self):
+        body = Client().get("/guide/").content.decode()
+        assert "location.hash" in body
+        assert "location.replace" in body
 
 
 class TestGuideSubpagesReturn200:

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Průvodce zabezpečením — prompty pro AI nástroje{% endblock %}
-{% block meta_description %}Copy-paste prompty pro zabezpečení projektů v Cursor, Claude Code, Lovable, Bolt a dalších AI nástrojích. Headers, cookies, CSRF, DNS a další.{% endblock %}
+{% block title %}Průvodce zabezpečením vibecoded projektů — Vibescan{% endblock %}
+{% block meta_description %}Personalizovaný checklist zabezpečení podle typu projektu. AI nástroje, prompty pro Cursor/Claude Code/Lovable a hluboká témata (IDOR, NIS2, GDPR).{% endblock %}
 {% block canonical %}https://vibescan.cz/guide/{% endblock %}
 
 {% block content %}
@@ -8,14 +8,14 @@
 
   <div class="mb-12">
     <h1 class="text-3xl font-extrabold mb-3">Průvodce zabezpečením</h1>
-    <p class="text-slate-500 leading-relaxed">Vyber nástroj, kterým stavíš, a zjisti na co si dát pozor. Prompty na konci stránky fungují ve všech AI nástrojích.</p>
+    <p class="text-slate-500 leading-relaxed">Vyber co stavíš a projdi si checklist — pak se ponoř do konkrétních oblastí.</p>
   </div>
 
   <!-- Rychlý start checklist + archetype picker -->
   <div class="mb-14">
     <h2 class="text-2xl font-extrabold mb-2">Rychlý start checklist</h2>
     <p class="text-slate-500 text-sm mb-6">
-      Nejdřív řekni, co stavíš — checklist a sekce se přizpůsobí. Pak si odškrtni hotové body.
+      Nejdřív řekni, co stavíš — checklist se přizpůsobí. Pak si odškrtni hotové body.
       Stav se ukládá lokálně ve tvém prohlížeči.
     </p>
 
@@ -82,15 +82,11 @@
         </div>
       </div>
 
-      <!-- Filter toggles -->
+      <!-- Filter toggle (filterSections odstraněn dle specu, zůstává jen hideIrrelevant) -->
       <div x-show="archetypes.length > 0 || services.length > 0" class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap gap-4 text-xs">
         <label class="inline-flex items-center gap-2 cursor-pointer">
           <input type="checkbox" x-model="hideIrrelevant" @change="persistFilters()" class="rounded border-slate-300">
           <span class="text-slate-600">Skrýt nerelevantní položky checklistu</span>
-        </label>
-        <label class="inline-flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" x-model="filterSections" @change="persistFilters()" class="rounded border-slate-300">
-          <span class="text-slate-600">Filtrovat i sekce průvodce</span>
         </label>
       </div>
     </div>
@@ -118,7 +114,7 @@
           </div>
           <div class="text-xs text-slate-500 mt-1">
             {{ item.hint }}
-            <a href="#{{ item.anchor }}" @click.stop class="text-blue-600 underline ml-1">Více →</a>
+            <a href="{{ item.link_url }}" @click.stop class="text-blue-600 underline ml-1">Více →</a>
           </div>
         </div>
       </li>
@@ -133,7 +129,36 @@
     </div>
   </div>
 
+  <!-- Rozcestník — 3 karty -->
+  <div class="mb-14 grid md:grid-cols-3 gap-4">
+    <a href="{% url 'pages:guide_tools' %}" class="block bg-white border border-slate-200 hover:border-blue-400 rounded-2xl p-6 shadow-sm transition-colors">
+      <div class="font-bold text-base mb-1">S čím stavíš?</div>
+      <p class="text-sm text-slate-500 mb-3 leading-relaxed">8 AI nástrojů a jejich bezpečnostní rizika.</p>
+      <span class="text-sm text-blue-600 font-medium">Lovable, Cursor, … →</span>
+    </a>
+    <a href="{% url 'pages:guide_prompts' %}" class="block bg-white border border-slate-200 hover:border-blue-400 rounded-2xl p-6 shadow-sm transition-colors">
+      <div class="font-bold text-base mb-1">Prompty pro AI</div>
+      <p class="text-sm text-slate-500 mb-3 leading-relaxed">Starter + 18 cílených promptů.</p>
+      <span class="text-sm text-blue-600 font-medium">Copy-paste do Claude / Cursor →</span>
+    </a>
+    <a href="{% url 'pages:guide_topics' %}" class="block bg-white border border-slate-200 hover:border-blue-400 rounded-2xl p-6 shadow-sm transition-colors">
+      <div class="font-bold text-base mb-1">Hluboká témata</div>
+      <p class="text-sm text-slate-500 mb-3 leading-relaxed">IDOR, NIS2, GDPR, retence dat.</p>
+      <span class="text-sm text-blue-600 font-medium">Co AI sama nevyřeší →</span>
+    </a>
+  </div>
+
   <script>
+    // Hash redirect pro staré bookmarky /guide/#anchor → /guide/{prompts|topics}/#anchor
+    (function() {
+      if (!location.hash) return;
+      const anchor = location.hash.slice(1);
+      const map = {{ anchor_page_map_json|safe }};
+      if (map[anchor]) {
+        location.replace('/guide/' + map[anchor] + '/#' + anchor);
+      }
+    })();
+
     function checklist() {
       return {
         checked: (() => {
@@ -152,37 +177,30 @@
           try { return localStorage.getItem('vibescan-hide-irrelevant') === 'true'; }
           catch(e) { return false; }
         })(),
-        filterSections: (() => {
-          try { return localStorage.getItem('vibescan-filter-sections') === 'true'; }
-          catch(e) { return false; }
-        })(),
         toggle(id) {
           this.checked[id] = !this.checked[id];
           try { localStorage.setItem('vibescan-checklist', JSON.stringify(this.checked)); }
-          catch(e) { /* private browsing — pokračujeme v paměti */ }
+          catch(e) {}
         },
         toggleArchetype(id) {
           const i = this.archetypes.indexOf(id);
           if (i >= 0) this.archetypes.splice(i, 1);
           else this.archetypes.push(id);
           try { localStorage.setItem('vibescan-archetype', JSON.stringify(this.archetypes)); }
-          catch(e) { /* private browsing — pokračujeme v paměti */ }
+          catch(e) {}
         },
         toggleService(id) {
           const i = this.services.indexOf(id);
           if (i >= 0) this.services.splice(i, 1);
           else this.services.push(id);
           try { localStorage.setItem('vibescan-services', JSON.stringify(this.services)); }
-          catch(e) { /* private browsing — pokračujeme v paměti */ }
+          catch(e) {}
         },
         persistFilters() {
-          try {
-            localStorage.setItem('vibescan-hide-irrelevant', this.hideIrrelevant);
-            localStorage.setItem('vibescan-filter-sections', this.filterSections);
-          } catch(e) { /* private browsing — pokračujeme v paměti */ }
+          try { localStorage.setItem('vibescan-hide-irrelevant', this.hideIrrelevant); }
+          catch(e) {}
         },
         isRelevantItem(appliesTo) {
-          // Žádný výběr = vše relevantní. "all" = vždy relevantní. Jinak průnik se zvolenými archetypy NEBO službami.
           if (!this.archetypes.length && !this.services.length) return true;
           if (appliesTo.includes('all')) return true;
           const selected = this.archetypes.concat(this.services);
@@ -191,173 +209,6 @@
       }
     }
   </script>
-
-  <!-- Jaký nástroj používáš -->
-  <div class="mb-14">
-    <h2 class="text-2xl font-extrabold mb-2">S čím stavíš?</h2>
-    <p class="text-slate-500 text-sm mb-6">Každý nástroj má jiné možnosti a jiná rizika. Vyber kategorii, která ti sedí.</p>
-
-    {% for category in tool_categories %}
-    <div class="mb-10">
-      <div class="mb-4">
-        <h3 class="text-lg font-bold">{{ category.title }}</h3>
-        <p class="text-sm text-slate-500">{{ category.subtitle }}</p>
-      </div>
-
-      <div class="space-y-3">
-        {% for tool in category.tools %}
-        <details class="bg-white border border-slate-200 rounded-xl shadow-sm group">
-          <summary class="px-5 py-4 cursor-pointer flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <span class="font-semibold text-sm">{{ tool.name }}</span>
-              <span class="text-xs text-slate-400">{{ tool.url }}</span>
-            </div>
-            <svg class="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
-          </summary>
-          <div class="px-5 pb-5 border-t border-slate-100 pt-4">
-            <div class="grid grid-cols-2 gap-x-6 gap-y-3 text-sm mb-4">
-              <div>
-                <div class="text-xs text-slate-400 font-medium mb-0.5">Stack</div>
-                <div class="text-slate-700">{{ tool.stack }}</div>
-              </div>
-              <div>
-                <div class="text-xs text-slate-400 font-medium mb-0.5">Hosting</div>
-                <div class="text-slate-700">{{ tool.hosting }}</div>
-              </div>
-              <div>
-                <div class="text-xs text-slate-400 font-medium mb-0.5">Pro koho</div>
-                <div class="text-slate-700">{{ tool.audience }}</div>
-              </div>
-              <div>
-                <div class="text-xs text-slate-400 font-medium mb-0.5">Cena</div>
-                <div class="text-slate-700">{{ tool.price }}</div>
-              </div>
-            </div>
-
-            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
-              <div class="text-xs font-semibold text-amber-700 mb-1">Bezpečnost</div>
-              <div class="text-xs text-amber-800 leading-relaxed">{{ tool.security_notes }}</div>
-            </div>
-
-            {% if tool.vibescan_limits %}
-            <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-              <div class="text-xs font-semibold text-red-700 mb-1">Co Vibescan detekuje, ale na této platformě neopravíš</div>
-              <div class="space-y-1">
-                {% for limit in tool.vibescan_limits %}
-                <div class="flex gap-1.5 text-xs text-red-800">
-                  <span class="text-red-400 flex-shrink-0">!</span> {{ limit }}
-                </div>
-                {% endfor %}
-              </div>
-            </div>
-            {% endif %}
-
-            <div class="grid grid-cols-2 gap-4 text-xs">
-              <div>
-                <div class="font-semibold text-green-600 mb-1.5">Výhody</div>
-                {% for pro in tool.pros %}
-                <div class="flex gap-1.5 mb-1 text-slate-600">
-                  <span class="text-green-500 flex-shrink-0">+</span> {{ pro }}
-                </div>
-                {% endfor %}
-              </div>
-              <div>
-                <div class="font-semibold text-red-500 mb-1.5">Nevýhody</div>
-                {% for con in tool.cons %}
-                <div class="flex gap-1.5 mb-1 text-slate-600">
-                  <span class="text-red-400 flex-shrink-0">−</span> {{ con }}
-                </div>
-                {% endfor %}
-              </div>
-            </div>
-          </div>
-        </details>
-        {% endfor %}
-      </div>
-    </div>
-    {% endfor %}
-
-    <div class="bg-slate-100 border border-slate-200 rounded-xl p-5 text-sm text-slate-600 leading-relaxed">
-      <span class="font-semibold text-slate-900">Společné pro všechny nástroje:</span> Žádný z nich neřeší bezpečnost automaticky a kompletně. AI vygeneruje kód, který funguje — ale fungující neznamená bezpečný. Prompty níže ti pomohou říct AI přesně co zabezpečit.
-    </div>
-  </div>
-
-  <!-- Jak zabezpečit projekt od začátku -->
-  <div class="mb-14">
-    <h2 class="text-2xl font-extrabold mb-2">Jak zabezpečit projekt od začátku</h2>
-    <p class="text-slate-500 text-sm mb-6">AI nástroje neřeší bezpečnost automaticky. Musíš jim říct co mají dodržovat — a nejlépe hned na začátku, ne až po nasazení. Výzkum ukazuje, že fázovaný přístup (pravidla na začátku + review na konci) snižuje zranitelnosti až 10×.</p>
-
-    <div class="space-y-4">
-      {% for block in security_blocks %}
-      <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-        <div class="px-5 py-4 border-b border-slate-100">
-          <div class="flex items-center justify-between mb-1">
-            <span class="font-semibold text-sm">{{ block.title }}</span>
-            <button onclick="navigator.clipboard.writeText(this.closest('.bg-white').querySelector('pre').textContent.trim()); this.textContent='Zkopírováno!'; setTimeout(() => this.textContent='Kopírovat', 2000)"
-              class="text-xs text-slate-400 hover:text-blue-600 font-medium transition-colors cursor-pointer">Kopírovat</button>
-          </div>
-          <p class="text-xs text-slate-500">{{ block.subtitle }}</p>
-        </div>
-        <div class="p-5">
-          <pre class="text-xs text-slate-700 bg-slate-50 rounded-lg p-4 leading-relaxed whitespace-pre-wrap font-mono border border-slate-100">{{ block.content }}</pre>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-
-    <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 text-sm text-blue-800 leading-relaxed mt-6">
-      <span class="font-semibold">Tip:</span> Starter prompt zadej na začátek konverzace s AI. Security pravidla ulož jako soubor do projektu (CLAUDE.md, .cursorrules). Self-review prompt použij pokaždé když AI vygeneruje nový kód.
-    </div>
-
-    <div class="bg-slate-100 border border-slate-200 rounded-xl p-5 text-sm text-slate-600 leading-relaxed mt-4">
-      <span class="font-semibold text-slate-900">Chceš projít svůj projekt krok po kroku?</span> Podívej se na <a href="{% url 'pages:review' %}" class="text-blue-600 hover:text-blue-800 font-medium underline">Security Review</a> — 7 kroků s konkrétními příklady co hledat a jak to opravit.
-    </div>
-  </div>
-
-  <!-- Narativní sekce: IDOR, Secrets, NIS2, Retence -->
-  <div class="mb-14 space-y-10">
-    {% for section in narrative_sections %}
-    <section id="{{ section.id }}"
-             x-show="!filterSections || isRelevantItem({{ section.relevant_for|safe }})"
-             class="bg-white border border-slate-200 rounded-2xl p-6 scroll-mt-20">
-      <h2 class="text-2xl font-extrabold mb-1">{{ section.title }}</h2>
-      <p class="text-slate-500 text-sm mb-6 italic">{{ section.subtitle }}</p>
-      {% for block in section.blocks %}
-        {% include "pages/partials/narrative_block.html" with block=block %}
-      {% endfor %}
-    </section>
-    {% endfor %}
-  </div>
-
-  <!-- Granulární prompty -->
-  <div>
-    <h2 class="text-2xl font-extrabold mb-2">Prompty pro konkrétní oblasti</h2>
-    <p class="text-slate-500 text-sm mb-6">Použij ve chvíli kdy pracuješ na konkrétní části — formuláře, autentizace, deploy. Kopíruj do Claude Code, Cursoru, Lovable, Boltu nebo jakéhokoliv AI nástroje.</p>
-
-    <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 text-sm text-blue-900 leading-relaxed mb-6">
-      <strong>Konvence:</strong> Tyto prompty jsou univerzální. Některé vyžadují kontext (framework, sektor, stack, jurisdikce) — u nich má prompt na začátku blok „Než začneš". AI má z toho bloku zjistit kontext z konverzace, <code>CLAUDE.md</code>, <code>AGENTS.md</code> nebo <code>GEMINI.md</code> — a pokud informace chybí, <strong>zeptat se přímo tebe</strong>, neodhadovat.
-    </div>
-
-    <div class="space-y-4">
-      {% for prompt in prompts %}
-      <div {% if prompt.id %}id="{{ prompt.id }}"{% endif %} class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm scroll-mt-20">
-        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-          <span class="font-semibold text-sm">{{ prompt.title }}</span>
-          <button onclick="navigator.clipboard.writeText(this.closest('.bg-white').querySelector('pre').textContent.trim()); this.textContent='Zkopírováno!'; setTimeout(() => this.textContent='Kopírovat', 2000)"
-            class="text-xs text-slate-400 hover:text-blue-600 font-medium transition-colors cursor-pointer">Kopírovat</button>
-        </div>
-        {% if prompt.disclaimer %}
-        <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mx-5 mt-3 text-xs text-amber-800">
-          ⚠ <strong>{{ prompt.disclaimer_title }}</strong> {{ prompt.disclaimer|safe }}
-        </div>
-        {% endif %}
-        <div class="p-5">
-          <pre class="text-xs text-slate-700 bg-slate-50 rounded-lg p-4 leading-relaxed whitespace-pre-wrap font-mono border border-slate-100">{{ prompt.content }}</pre>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
 
   <div class="bg-slate-900 text-white rounded-2xl p-6 mt-14">
     <div class="font-bold text-sm mb-2">Ověř si, jak na tom jsi</div>
