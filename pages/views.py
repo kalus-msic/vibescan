@@ -314,7 +314,13 @@ GUIDE_PROMPTS = [
     {
         "id": "http-security-headers",
         "title": "HTTP Security Headers",
-        "content": "Přidej HTTP security headers: HSTS, CSP bez unsafe-inline, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy strict-origin-when-cross-origin. Pro Django použij django-csp.",
+        "content": """Než začneš, potřebuješ vědět (pokud to není jasné z konverzace, CLAUDE.md, AGENTS.md ani GEMINI.md, ZEPTEJ SE UŽIVATELE — neodhaduj):
+- Jaký framework / runtime / webserver projekt používá (Django + Nginx, Next.js + Vercel, Rails + Caddy, Flask + Gunicorn, ...)?
+- Načítají se třetí strany (Google Analytics, Stripe, fonts, embeds, iframes)? Které?
+- CSP strategie: nonces (dynamicky vkládané), hashes (statický markup), nebo žádné inline scripty?
+- Provozuješ subdomény, které potřebují HSTS includeSubDomains?
+
+Přidej HTTP security headers: HSTS, CSP bez unsafe-inline, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy strict-origin-when-cross-origin. Pro Django použij django-csp.""",
     },
     {
         "id": "secrets-env",
@@ -339,12 +345,25 @@ GUIDE_PROMPTS = [
     {
         "id": "autentizace-sessions",
         "title": "Autentizace & Sessions",
-        "content": "Session cookies musí mít HttpOnly=True, Secure=True, SameSite=Strict. Přidej session_regenerate po každém přihlášení. Nikdy neberi user ID z URL parametrů — vždy ze session.",
+        "content": """Než začneš, potřebuješ vědět (pokud to není jasné z konverzace, CLAUDE.md, AGENTS.md ani GEMINI.md, ZEPTEJ SE UŽIVATELE — neodhaduj):
+- Jaký framework / language používá projekt?
+- Vyžaduje se MFA / 2FA (TOTP, WebAuthn, SMS)?
+- Sociální login / OAuth / SSO (Google, GitHub, Microsoft, Apple, ...)? Pokud ano, kteří provideři?
+- Passwordless (magic links, passkeys), nebo klasické e-mail + heslo?
+- Existují role / permissions (admin, user, ...)?
+
+Session cookies musí mít HttpOnly=True, Secure=True, SameSite=Strict. Přidej session_regenerate po každém přihlášení. Nikdy neberi user ID z URL parametrů — vždy ze session.""",
     },
     {
         "id": "zavislosti-cve",
         "title": "Závislosti & CVE",
-        "content": """Zkontroluj závislosti projektu na známé zranitelnosti. Spusť příslušný audit příkaz pro svůj ekosystém:
+        "content": """Než začneš, potřebuješ vědět (pokud to není jasné z konverzace, CLAUDE.md, AGENTS.md ani GEMINI.md, ZEPTEJ SE UŽIVATELE — neodhaduj):
+- Jaký jazyk / ekosystém používá projekt (Python/pip/poetry, Node/npm/pnpm/yarn, Ruby/gem, PHP/composer, Go, Rust, ...)?
+- Jaký lockfile existuje (package-lock.json, poetry.lock, requirements.txt, Gemfile.lock, ...)?
+- Je k dispozici CI / CD (GitHub Actions, GitLab CI, ...)?
+- Chceš automatické aktualizace přes Dependabot / Renovate, nebo jen manuální audit?
+
+Zkontroluj závislosti projektu na známé zranitelnosti. Spusť příslušný audit příkaz pro svůj ekosystém:
 
 - Python: pip audit
 - Node.js: npm audit
@@ -376,7 +395,7 @@ Nastav automatické kontroly závislostí v CI/CD (Dependabot, Renovate nebo Sny
     {
         "id": "dns-emaily",
         "title": "DNS z\u00e1znamy & ochrana email\u016f",
-        "content": "Nastav DNS z\u00e1znamy pro ochranu dom\u00e9ny proti email spoofingu:\n\n1. **SPF** \u2014 TXT z\u00e1znam na root dom\u00e9n\u011b: v=spf1 include:_spf.google.com ~all (uprav podle poskytovatele emailu)\n2. **DMARC** \u2014 TXT z\u00e1znam na _dmarc.domena.cz: v=DMARC1; p=reject; rua=mailto:dmarc@domena.cz (za\u010dni s p=none pro monitoring, pak p=quarantine, nakonec p=reject)\n3. **DKIM** \u2014 nastav podle poskytovatele emailu (Google Workspace, Microsoft 365)\n4. **CAA** \u2014 omez kter\u00e9 certifika\u010dn\u00ed autority mohou vydat certifik\u00e1t: 0 issue \"letsencrypt.org\"\n5. **DNSSEC** \u2014 aktivuj u registr\u00e1tora dom\u00e9ny\n6. **security.txt** \u2014 vytvo\u0159 /.well-known/security.txt s kontaktn\u00edm emailem pro hl\u00e1\u0161en\u00ed zranitelnost\u00ed (RFC 9116)\n7. **robots.txt** \u2014 neprozrazuj citliv\u00e9 cesty (/admin, /backup, /.env) v Disallow pravidlech",
+        "content": "Ne\u017e za\u010dne\u0161, pot\u0159ebuje\u0161 v\u011bd\u011bt (pokud to nen\u00ed jasn\u00e9 z konverzace, CLAUDE.md, AGENTS.md ani GEMINI.md, ZEPTEJ SE U\u017dIVATELE \u2014 neodhaduj):\n- Odes\u00edl\u00e1 web e-maily? Odkud (transak\u010dn\u00ed SMTP, Mailgun, SES, SendGrid, Postmark, Mailjet, ...)?\n- Z jak\u00e9 dom\u00e9ny / subdom\u00e9ny odes\u00edl\u00e1?\n- Marketingov\u00e9 maily p\u0159es extern\u00ed slu\u017ebu (Mailchimp, Substack, ConvertKit, ...)?\n- M\u00e1\u0161 p\u0159\u00edstup k DNS z\u00f3n\u011b (Cloudflare, Route 53, registr\u00e1tor)?\n\nNastav DNS z\u00e1znamy pro ochranu dom\u00e9ny proti email spoofingu:\n\n1. **SPF** \u2014 TXT z\u00e1znam na root dom\u00e9n\u011b: v=spf1 include:_spf.google.com ~all (uprav podle poskytovatele emailu)\n2. **DMARC** \u2014 TXT z\u00e1znam na _dmarc.domena.cz: v=DMARC1; p=reject; rua=mailto:dmarc@domena.cz (za\u010dni s p=none pro monitoring, pak p=quarantine, nakonec p=reject)\n3. **DKIM** \u2014 nastav podle poskytovatele emailu (Google Workspace, Microsoft 365)\n4. **CAA** \u2014 omez kter\u00e9 certifika\u010dn\u00ed autority mohou vydat certifik\u00e1t: 0 issue \"letsencrypt.org\"\n5. **DNSSEC** \u2014 aktivuj u registr\u00e1tora dom\u00e9ny\n6. **security.txt** \u2014 vytvo\u0159 /.well-known/security.txt s kontaktn\u00edm emailem pro hl\u00e1\u0161en\u00ed zranitelnost\u00ed (RFC 9116)\n7. **robots.txt** \u2014 neprozrazuj citliv\u00e9 cesty (/admin, /backup, /.env) v Disallow pravidlech",
     },
     {
         "id": "meta-informace",
@@ -386,7 +405,14 @@ Nastav automatické kontroly závislostí v CI/CD (Dependabot, Renovate nebo Sny
     {
         "id": "pravni-dokumenty",
         "title": "Právní dokumenty a přístupnost",
-        "content": """Vygeneruj právní dokumenty a základní prvky přístupnosti pro můj web:
+        "content": """Než začneš, potřebuješ vědět (pokud to není jasné z konverzace, CLAUDE.md, AGENTS.md ani GEMINI.md, ZEPTEJ SE UŽIVATELE — neodhaduj):
+- Jsi veřejnoprávní subjekt (orgán veřejné moci, územní samospráva, veřejná VŠ, ČT/ČRo, ČTK, ČNB, dopravní podnik zřízený státem/krajem/obcí, knihovna, divadlo...) nebo soukromá firma?
+- Pokud soukromá: spadáš pod EAA? Tedy provozuješ e-shop, online tržiště, rezervační nebo ticketingový systém (hotely, restaurace, akce, jízdenky, lékař, salóny...), banku či finanční služby (úvěr, platby, investice, e-peníze), dopravu (informační prvky), elektronické komunikace, audiovizuální média nebo e-knihy?
+- Jsi mikropodnik (méně než 10 zaměstnanců A obrat ≤ 2 mil. EUR)?
+- V jakých jazycích a zemích web operuje?
+- Sbíráš osobní data uživatelů (registrace, formuláře, cookies)? Pokud ano, jaké kategorie?
+
+Vygeneruj právní dokumenty a základní prvky přístupnosti pro můj web:
 
 1. **Cookie consent lišta** — Zobraz lištu se souhlasem s cookies před načtením jakýchkoliv tracking skriptů. Tlačítka "Přijmout" a "Odmítnout" musí mít stejnou vizuální váhu (stejná velikost, stejný styl). Tracking skripty (GA, GTM, Facebook Pixel) se smí načíst až po souhlasu.
 
@@ -401,7 +427,23 @@ Nastav automatické kontroly závislostí v CI/CD (Dependabot, Renovate nebo Sny
 
 3. **Patička webu** — V patičce by měly být: odkaz na ochranu osobních údajů, kontakt na provozovatele, IČO. Copyright označení (© rok a název) je tradiční konvence, ale **není legálně povinné** — autorské právo vzniká automaticky vytvořením díla (Bernská úmluva, autorský zákon č. 121/2000 Sb. § 9).
 
-4. **Prohlášení o přístupnosti** — Pokud provozuješ e-shop, banku, dopravu, telekom nebo audiovizuální media, máš podle zákona č. 424/2023 Sb. (EAA, od 28.6.2025) povinnost zveřejnit prohlášení o přístupnosti. Musí obsahovat: stav (ne)souladu s WCAG 2.2, výjimky s odůvodněním (nepřiměřená zátěž), náhradní řešení pro nepřístupné části, kontakt pro hlášení nedostupnosti.
+4. **Přístupnost webu — dva zákonné režimy v ČR**
+
+   **a) Veřejnoprávní subjekty (zákon č. 99/2019 Sb.)** — orgány veřejné moci, územní samospráva, veřejné VŠ, veřejnoprávní instituce (knihovny, divadla, ČT/ČRo, ČTK, ČNB, dopravní podniky zřízené státem/krajem/obcí). Účinnost: 23. 9. 2019 (nové weby) / 23. 9. 2020 (existující). Standard: WCAG 2.1 AA (harmonizováno přes EN 301 549). Dohled: DIA (Digitální a informační agentura). Implementuje EU směrnici 2016/2102.
+
+   **b) Soukromý sektor — EAA (zákon č. 424/2023 Sb., od 28. 6. 2025)** — e-shopy a online tržiště, rezervační a ticketingové systémy (hotely, restaurace, akce, jízdenky, lékařské rezervace, kosmetické salóny — vše, kde se uzavírá smlouva se spotřebitelem na dálku), banky a finanční služby (spotřebitelský úvěr, platby, investice, e-peníze), elektronické komunikace, audiovizuální mediální služby, doprava (informační prvky), e-knihy. Standard: WCAG 2.1 AA. **Výjimka mikropodniky:** méně než 10 zaměstnanců A obrat ≤ 2 mil. EUR (musí platit OBĚ kritéria). Dohled: ČOI. Implementuje EU směrnici 2019/882 (EAA).
+
+   **Klíčové rozlišení:** „Mít prohlášení" ≠ „být přístupný". Web MUSÍ být reálně přístupný; prohlášení o přístupnosti je doprovodný transparentní dokument o stavu. Pokud části nejsou přístupné, prohlášení musí říct KTERÉ a PROČ (výjimka „nepřiměřená zátěž" + ekonomické odůvodnění + náhradní řešení, kterým se uživatel přesto dostane k informacím).
+
+   **Prohlášení o přístupnosti** musí obsahovat:
+   - Stav souladu: plný / částečný / nesoulad — s vyjmenováním nepřístupných částí
+   - Výjimka „nepřiměřená zátěž" — pouze na konkrétní sekce, s odůvodněním a NÁHRADNÍM řešením (uživatel nesmí zůstat bez přístupu k informacím)
+   - Kontakt pro hlášení nedostupnosti (e-mail / formulář)
+   - Datum vytvoření a poslední revize
+   - U veřejnoprávních: postup pro stížnost u DIA
+   - U EAA: postup pro stížnost u ČOI
+
+   Poznámka k WCAG: Zákonný strop je WCAG 2.1 AA (harmonizovaná norma EN 301 549). WCAG 2.2 AA je nejnovější verze (2023), přidává 9 nových kritérií — kdo plní 2.2, plní automaticky i 2.1.
 
 5. **NIS2 / ZoKB (zákon č. 264/2025 Sb.)** — Pokud tvoje appka zpracovává data pro organizaci v regulovaném sektoru (energetika, zdravotnictví, finance, doprava, digitální infrastruktura, IT správa, veřejná správa a další — celkem 15 sektorů), stáváš se článkem dodavatelského řetězce. Regulovaný subjekt musí posoudit bezpečnost svých dodavatelů — tedy i tebe. Povinnosti: dokumentovaná bezpečnostní politika, DPA s každým sub-procesorem, firemní (ne osobní) AI účty, incident response plán. Pokuta: až 250 mil. Kč nebo 2 % celosvětového obratu.
 
@@ -410,7 +452,9 @@ Nastav automatické kontroly závislostí v CI/CD (Dependabot, Renovate nebo Sny
 --- Kde se učit víc ---
 
 - WCAG 2.2 specifikace: https://www.w3.org/TR/WCAG22/
-- EAA (zákon č. 424/2023 Sb.): https://www.zakonyprolidi.cz/cs/2023-424
+- Zákon č. 99/2019 Sb. (přístupnost veřejné správy): https://www.zakonyprolidi.cz/cs/2019-99
+- Zákon č. 424/2023 Sb. (EAA): https://www.zakonyprolidi.cz/cs/2023-424
+- DIA metodický pokyn k přístupnosti: https://www.dia.gov.cz
 - GDPR (vyhledatelně): https://gdpr-info.eu
 - NIS2/ZoKB metodiky (NÚKIB): https://nukib.gov.cz
 - GDPR judikatura ČR (ÚOOÚ): https://uoou.gov.cz

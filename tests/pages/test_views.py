@@ -229,3 +229,26 @@ class TestGuideView:
         assert "AI nástroje a GDPR" in body
         assert "DPA" in body
         assert "Ollama" in body
+
+    def test_universal_ask_callout_present(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert "Konvence:" in body
+        assert "zeptat se přímo tebe" in body
+
+    def test_nez_zacnes_in_decision_prompts(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert body.count("Než začneš, potřebuješ vědět") >= 5
+
+    def test_pravni_dokumenty_has_two_regimes_and_booking(self):
+        client = Client()
+        r = client.get("/guide/")
+        body = r.content.decode()
+        assert "99/2019" in body
+        assert "424/2023" in body
+        assert "rezervační" in body or "Rezervační" in body
+        assert "mikropodnik" in body.lower()
+        assert "Mít prohlášení" in body

@@ -203,6 +203,10 @@
     <h2 class="text-2xl font-extrabold mb-2">Prompty pro konkrétní oblasti</h2>
     <p class="text-slate-500 text-sm mb-6">Použij ve chvíli kdy pracuješ na konkrétní části — formuláře, autentizace, deploy. Kopíruj do Claude Code, Cursoru, Lovable, Boltu nebo jakéhokoliv AI nástroje.</p>
 
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 text-sm text-blue-900 leading-relaxed mb-6">
+      <strong>Konvence:</strong> Tyto prompty jsou univerzální. Některé vyžadují kontext (framework, sektor, stack, jurisdikce) — u nich má prompt na začátku blok „Než začneš". AI má z toho bloku zjistit kontext z konverzace, <code>CLAUDE.md</code>, <code>AGENTS.md</code> nebo <code>GEMINI.md</code> — a pokud informace chybí, <strong>zeptat se přímo tebe</strong>, neodhadovat.
+    </div>
+
     <div class="space-y-4">
       {% for prompt in prompts %}
       <div {% if prompt.id %}id="{{ prompt.id }}"{% endif %} class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm scroll-mt-20">
