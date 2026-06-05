@@ -29,7 +29,7 @@
       </p>
       <div class="flex flex-wrap gap-2">
         {% for arch in archetypes %}
-        <div class="relative group inline-block">
+        <div class="relative inline-block" x-data="{ show: false }" @mouseenter="show = true" @mouseleave="show = false">
           <button type="button"
                   @click="toggleArchetype('{{ arch.id }}')"
                   :class="archetypes.includes('{{ arch.id }}') ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-300 hover:border-slate-400'"
@@ -39,7 +39,10 @@
           </button>
           <div id="tooltip-{{ arch.id }}"
                role="tooltip"
-               class="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 w-72 z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity">
+               x-show="show"
+               x-cloak
+               x-transition.opacity
+               class="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 w-72 z-20">
             <div class="bg-slate-900 text-white text-xs rounded-lg p-3 shadow-xl leading-relaxed">
               {{ arch.description }}
             </div>
@@ -56,7 +59,7 @@
         </p>
         <div class="flex flex-wrap gap-2">
           {% for svc in services %}
-          <div class="relative group inline-block">
+          <div class="relative inline-block" x-data="{ show: false }" @mouseenter="show = true" @mouseleave="show = false">
             <button type="button"
                     @click="toggleService('{{ svc.id }}')"
                     :class="services.includes('{{ svc.id }}') ? 'bg-violet-600 text-white border-violet-600' : 'bg-white text-slate-700 border-slate-300 hover:border-slate-400'"
@@ -66,7 +69,10 @@
             </button>
             <div id="tooltip-service-{{ svc.id }}"
                  role="tooltip"
-                 class="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 w-72 z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity">
+                 x-show="show"
+                 x-cloak
+                 x-transition.opacity
+                 class="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 w-72 z-20">
               <div class="bg-slate-900 text-white text-xs rounded-lg p-3 shadow-xl leading-relaxed">
                 {{ svc.description }}
               </div>
