@@ -157,7 +157,28 @@ def scan_export_txt(request, pk):
 def scan_export_pdf(request, pk):
     import weasyprint
     scan = get_object_or_404(ScanResult, pk=pk, status=ScanStatus.DONE)
-    html_string = render(request, "scanner/export_pdf.html", {"scan": scan}).content.decode("utf-8")
+
+    from .score import _superseded_ids
+    superseded = _superseded_ids(scan.deep_scan_findings or []) if scan.deep_scan_status == "done" else set()
+    active = [f for f in scan.findings if not f.get("dismissed") and f.get("id") not in superseded]
+
+    deep_active = [f for f in (scan.deep_scan_findings or []) if not f.get("dismissed")]
+
+    def _group(findings):
+        cats = {}
+        for f in findings:
+            cats.setdefault(f.get("category", "other"), []).append(f)
+        return sorted(cats.items())
+
+    ctx = {
+        "scan": scan,
+        "findings_by_category": _group(active),
+        "deep_findings_by_category": _group(deep_active),
+        "deep_categories": scan.deep_scan_categories or {},
+        "deep_status": scan.deep_scan_status,
+        "deep_error": scan.deep_scan_error,
+    }
+    html_string = render(request, "scanner/export_pdf.html", ctx).content.decode("utf-8")
     pdf_bytes = weasyprint.HTML(string=html_string).write_pdf()
 
     domain = urlparse(scan.url).hostname or "scan"

@@ -314,6 +314,23 @@ def test_export_txt_excludes_superseded_findings():
 
 
 @pytest.mark.django_db
+def test_export_pdf_renders_with_deep_scan(client):
+    from scanner.models import ScanResult
+    scan = ScanResult.objects.create(
+        url="https://example.com", status="done", vibe_score=72,
+        findings=[],
+        deep_scan_status="done",
+        deep_scan_findings=[{"id": "lh-lcp", "title": "LCP pomalý", "category": "performance", "severity": "warning", "description": "x"}],
+        deep_scan_categories={"performance": 55, "accessibility": 90, "best-practices": 80, "seo": 95},
+    )
+    response = client.get(reverse("scanner:export_pdf", kwargs={"pk": scan.id}))
+    assert response.status_code == 200
+    assert response["Content-Type"] == "application/pdf"
+    # PDF is binary; just verify generation didn't crash
+    assert len(response.content) > 1000
+
+
+@pytest.mark.django_db
 def test_export_txt_preview_matches_download():
     """The inline preview (template tag) must produce the same output as the downloadable file."""
     from scanner.models import ScanResult

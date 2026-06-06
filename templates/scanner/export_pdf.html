@@ -54,6 +54,21 @@
   .dismissed-finding { padding: 6px 14px; border-bottom: 1px solid #f1f5f9; font-size: 10px; color: #94a3b8; }
   .dismissed-finding:last-child { border-bottom: none; }
   .dismissed-reason { font-size: 9px; color: #cbd5e1; margin-left: 8px; }
+
+  .lh-section { margin-top: 24px; page-break-inside: avoid; }
+  .lh-heading { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 10px; }
+  .lh-cats { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+  .lh-cats td { border: 1px solid #e2e8f0; padding: 8px; text-align: center; }
+  .lh-cat-key { font-size: 9px; text-transform: uppercase; color: #64748b; font-weight: 600; }
+  .lh-cat-val { font-size: 16px; font-weight: 700; margin-top: 4px; }
+  .lh-cat-good { color: #16a34a; }
+  .lh-cat-mid { color: #d97706; }
+  .lh-cat-bad { color: #dc2626; }
+  .lh-subheading { font-size: 12px; font-weight: 700; color: #334155; margin-top: 10px; margin-bottom: 6px; }
+  .lh-finding { padding: 6px 0; border-bottom: 1px solid #f1f5f9; font-size: 10px; }
+  .lh-finding:last-child { border-bottom: none; }
+  .lh-sev { font-family: monospace; font-size: 9px; margin-left: 6px; color: #64748b; }
+  .lh-note { font-style: italic; color: #64748b; font-size: 10px; margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -171,6 +186,36 @@
 {% endif %}
 
 {% endwith %}
+
+{% if deep_status == "done" %}
+<div class="lh-section">
+  <div class="lh-heading">Lighthouse hluboký sken</div>
+  <table class="lh-cats">
+    <tr>
+      {% for key, value in deep_categories.items %}
+      <td>
+        <div class="lh-cat-key">{{ key }}</div>
+        <div class="lh-cat-val {% if value >= 90 %}lh-cat-good{% elif value >= 50 %}lh-cat-mid{% else %}lh-cat-bad{% endif %}">{{ value }}/100</div>
+      </td>
+      {% endfor %}
+    </tr>
+  </table>
+
+  {% for category, group in deep_findings_by_category %}
+    <div class="lh-subheading">{{ category|title }}</div>
+    {% for f in group %}
+    <div class="lh-finding">
+      <strong>{{ f.title }}</strong><span class="lh-sev">[{{ f.severity|upper }}]</span>
+      <div class="finding-desc">{{ f.description }}</div>
+    </div>
+    {% endfor %}
+  {% endfor %}
+</div>
+{% elif deep_status == "running" or deep_status == "pending" %}
+<p class="lh-note">Hluboký sken: probíhá. PDF byl vygenerován před dokončením.</p>
+{% elif deep_status == "failed" or deep_status == "timeout" %}
+<p class="lh-note">Hluboký sken: selhal ({{ deep_error|default:"unknown"|truncatechars:200 }}). Tento PDF neobsahuje Lighthouse data.</p>
+{% endif %}
 
 <div class="footer">
   Vygenerováno nástrojem Vibescan.cz · {{ scan.completed_at|date:"j. n. Y H:i" }}
