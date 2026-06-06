@@ -1,10 +1,13 @@
+import json
 import logging
 import re
+import subprocess
 
 import httpx
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 from celery import shared_task
+from django.utils import timezone as _timezone
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +60,8 @@ from .modules.accessibility import AccessibilityScanner
 from .modules.legal import LegalScanner
 from .modules.dns_check import DNSScanner
 from .modules.seo import SEOScanner
-from .score import calculate_vibe_score
+from .lighthouse_mapper import LighthouseMapper
+from .score import calculate_vibe_score, recalculate_with_deep_scan
 from .validator import validate_resolved_ip, validate_scan_url, SSRFError
 
 # Max response size we're willing to process (5 MB)
@@ -211,14 +215,6 @@ def run_scan(self, scan_id: str):
     scan.save(update_fields=["findings", "vibe_score", "status", "progress", "completed_at"])
 
 
-import json as _json
-import subprocess as _subprocess
-from django.utils import timezone as _timezone
-
-from .lighthouse_mapper import LighthouseMapper
-from .score import recalculate_with_deep_scan
-
-
 @shared_task(bind=True, max_retries=0)
 def run_lighthouse_scan(self, scan_id: str):
     try:
@@ -231,7 +227,7 @@ def run_lighthouse_scan(self, scan_id: str):
     scan.save(update_fields=["deep_scan_status", "deep_scan_started_at"])
 
     try:
-        proc = _subprocess.run(
+        proc = subprocess.run(
             [
                 "lighthouse", scan.url,
                 "--output=json", "--quiet",
@@ -243,17 +239,17 @@ def run_lighthouse_scan(self, scan_id: str):
         )
         if proc.returncode != 0:
             raise RuntimeError(f"Lighthouse exit {proc.returncode}: {proc.stderr[:500]}")
-        data = _json.loads(proc.stdout)
+        data = json.loads(proc.stdout)
         if data.get("runtimeError"):
             raise RuntimeError(f"Lighthouse runtime: {data['runtimeError'].get('message', 'unknown')}")
         findings, categories = LighthouseMapper().map(data)
         scan.deep_scan_findings = findings
         scan.deep_scan_categories = categories
         scan.deep_scan_status = "done"
-    except _subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired:
         scan.deep_scan_status = "timeout"
         scan.deep_scan_error = "Lighthouse překročil 60 s"
-    except _json.JSONDecodeError:
+    except json.JSONDecodeError:
         scan.deep_scan_status = "failed"
         scan.deep_scan_error = "Neplatný výstup Lighthouse (JSON parse error)"
         logger.exception("Lighthouse JSON parse failed for %s", scan_id)
