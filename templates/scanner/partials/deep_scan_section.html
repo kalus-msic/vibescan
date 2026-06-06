@@ -1,116 +1,115 @@
 {% load scan_tags %}
-<div id="deep-scan-section"
-     {% if scan.deep_scan_status == 'pending' or scan.deep_scan_status == 'running' %}
-     hx-get="{% url 'scanner:deep_status' scan.id %}"
-     hx-trigger="every 5s"
-     hx-swap="outerHTML"
-     {% endif %}>
+{% if scan.deep_scan_status == 'pending' %}
+  {# Sticky pill — root element IS the sticky element so position:sticky works against #scan-content #}
+  <div id="deep-scan-section"
+       hx-get="{% url 'scanner:deep_status' scan.id %}"
+       hx-trigger="every 5s"
+       hx-swap="outerHTML"
+       class="sticky top-14 z-40 flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 mb-4 text-xs text-blue-600 shadow-sm">
+    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <span>Hluboký sken (Lighthouse) čeká ve frontě…</span>
+  </div>
 
-  {% if scan.deep_scan_status == 'pending' %}
-    {# Sticky pill — matches the existing Tip block style #}
-    <div class="sticky top-14 z-40 flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 mb-4 text-xs text-blue-600 shadow-sm">
-      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      <span>Hluboký sken (Lighthouse) čeká ve frontě…</span>
+{% elif scan.deep_scan_status == 'running' %}
+  <div id="deep-scan-section"
+       hx-get="{% url 'scanner:deep_status' scan.id %}"
+       hx-trigger="every 5s"
+       hx-swap="outerHTML"
+       class="sticky top-14 z-40 flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 mb-4 text-xs text-blue-600 shadow-sm">
+    <svg class="w-4 h-4 flex-shrink-0 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+    <span><span class="font-semibold">Hluboký sken probíhá</span> — Lighthouse analyzuje výkon, přístupnost a SEO. Stránka se sama aktualizuje (~30 s).</span>
+  </div>
+
+{% elif scan.deep_scan_status == 'done' %}
+  {% deep_scan_summary scan as ds %}
+  <div id="deep-scan-section" class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm mb-4">
+    <div class="flex items-center gap-2 mb-3">
+      <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+      <span class="text-sm font-semibold text-slate-700">Hluboký sken (Lighthouse)</span>
+      <span class="text-xs text-slate-400">dokončen</span>
     </div>
 
-  {% elif scan.deep_scan_status == 'running' %}
-    {# Sticky pill — matches the existing Tip block style #}
-    <div class="sticky top-14 z-40 flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 mb-4 text-xs text-blue-600 shadow-sm">
-      <svg class="w-4 h-4 flex-shrink-0 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
-      <span><span class="font-semibold">Hluboký sken probíhá</span> — Lighthouse analyzuje výkon, přístupnost a SEO. Stránka se sama aktualizuje (~30 s).</span>
-    </div>
-
-  {% elif scan.deep_scan_status == 'done' %}
-    {% deep_scan_summary scan as ds %}
-    {# White card — matches the score+summary card pattern (rounded-2xl, white bg, soft border, shadow-sm) #}
-    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm mb-4">
-      <div class="flex items-center gap-2 mb-3">
-        <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-        <span class="text-sm font-semibold text-slate-700">Hluboký sken (Lighthouse)</span>
-        <span class="text-xs text-slate-400">dokončen</span>
-      </div>
-
-      {# Findings summary lines — only render if meaningful #}
-      {% if ds.delta is not None and ds.delta != 0 or ds.new_total > 0 or ds.superseded_count > 0 %}
-      <div class="space-y-1.5 text-xs text-slate-500 mb-4 leading-relaxed">
-        {% if ds.delta is not None %}
-          {% if ds.delta < 0 %}
-            <div>Vibe score upraveno z <span class="font-semibold text-slate-700">{{ ds.pre_score }}</span> na <span class="font-semibold text-slate-700">{{ ds.current_score }}</span> <span class="text-red-500 font-medium">({{ ds.delta }} bodů)</span></div>
-          {% elif ds.delta == 0 %}
-            <div>Skóre beze změny — vše už zachytil rychlý sken.</div>
-          {% else %}
-            <div>Vibe score upraveno z <span class="font-semibold text-slate-700">{{ ds.pre_score }}</span> na <span class="font-semibold text-slate-700">{{ ds.current_score }}</span> <span class="text-green-500 font-medium">(+{{ ds.delta }} bodů)</span></div>
-          {% endif %}
+    {% if ds.delta is not None and ds.delta != 0 or ds.new_total > 0 or ds.superseded_count > 0 %}
+    <div class="space-y-1.5 text-xs text-slate-500 mb-4 leading-relaxed">
+      {% if ds.delta is not None %}
+        {% if ds.delta < 0 %}
+          <div>Vibe score upraveno z <span class="font-semibold text-slate-700">{{ ds.pre_score }}</span> na <span class="font-semibold text-slate-700">{{ ds.current_score }}</span> <span class="text-red-500 font-medium">({{ ds.delta }} bodů)</span></div>
+        {% elif ds.delta == 0 %}
+          <div>Skóre beze změny — vše už zachytil rychlý sken.</div>
+        {% else %}
+          <div>Vibe score upraveno z <span class="font-semibold text-slate-700">{{ ds.pre_score }}</span> na <span class="font-semibold text-slate-700">{{ ds.current_score }}</span> <span class="text-green-500 font-medium">(+{{ ds.delta }} bodů)</span></div>
         {% endif %}
-
-        {% if ds.new_total > 0 %}
-          <div>
-            Nalezeno <span class="font-semibold text-slate-700">{{ ds.new_total }}</span> {% if ds.new_total == 1 %}nový nález{% elif ds.new_total < 5 %}nové nálezy{% else %}nových nálezů{% endif %}:
-            {% if ds.new_counts.critical %}<span class="text-red-500 font-medium">{{ ds.new_counts.critical }}× kritický</span>{% endif %}{% if ds.new_counts.critical and ds.new_counts.warning %}, {% endif %}
-            {% if ds.new_counts.warning %}<span class="text-amber-500 font-medium">{{ ds.new_counts.warning }}× varování</span>{% endif %}{% if ds.new_counts.warning and ds.new_counts.info %}, {% endif %}
-            {% if ds.new_counts.info %}<span class="text-blue-500 font-medium">{{ ds.new_counts.info }}× upozornění</span>{% endif %}
-          </div>
-        {% endif %}
-
-        {% if ds.superseded_count > 0 %}
-          <div>Nahrazeno <span class="font-semibold text-slate-700">{{ ds.superseded_count }}</span> {% if ds.superseded_count == 1 %}obecný nález přesnějším{% else %}obecných nálezů přesnějšími{% endif %}.</div>
-        {% endif %}
-      </div>
       {% endif %}
 
-      {% if scan.deep_scan_categories %}
-        {# Category mini-cards — mirror the count cards style (smaller variant) #}
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {% for key, value in scan.deep_scan_categories.items %}
-            <div class="bg-white border rounded-xl p-3 text-center
-                        {% if value >= 90 %}border-green-200
-                        {% elif value >= 50 %}border-amber-200
-                        {% else %}border-red-200{% endif %}">
-              <div class="text-2xl font-extrabold mb-0.5
-                          {% if value >= 90 %}text-green-500
-                          {% elif value >= 50 %}text-amber-500
-                          {% else %}text-red-500{% endif %}">{{ value }}</div>
-              <div class="text-[10px] uppercase tracking-wide text-slate-400 font-medium">{{ key }}</div>
-            </div>
-          {% endfor %}
+      {% if ds.new_total > 0 %}
+        <div>
+          Nalezeno <span class="font-semibold text-slate-700">{{ ds.new_total }}</span> {% if ds.new_total == 1 %}nový nález{% elif ds.new_total < 5 %}nové nálezy{% else %}nových nálezů{% endif %}:
+          {% if ds.new_counts.critical %}<span class="text-red-500 font-medium">{{ ds.new_counts.critical }}× kritický</span>{% endif %}{% if ds.new_counts.critical and ds.new_counts.warning %}, {% endif %}
+          {% if ds.new_counts.warning %}<span class="text-amber-500 font-medium">{{ ds.new_counts.warning }}× varování</span>{% endif %}{% if ds.new_counts.warning and ds.new_counts.info %}, {% endif %}
+          {% if ds.new_counts.info %}<span class="text-blue-500 font-medium">{{ ds.new_counts.info }}× upozornění</span>{% endif %}
         </div>
       {% endif %}
-    </div>
 
-  {% elif scan.deep_scan_status == 'failed' %}
-    {# Warning pill — matches ephemeral warning style #}
-    <div class="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 mb-4 text-xs text-red-700">
-      <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
-      <div class="flex-1 leading-relaxed">
-        <span class="font-semibold">Hluboký sken selhal.</span>
-        {% if scan.deep_scan_error %} <span class="text-red-600/80">{{ scan.deep_scan_error|truncatechars:160 }}</span>{% endif %}
-        <form method="post" action="{% url 'scanner:deep_retry' scan.id %}" class="inline">
-          {% csrf_token %}
-          <button type="submit" class="underline font-medium hover:text-red-800 ml-1">Zkusit znovu</button>
-        </form>
+      {% if ds.superseded_count > 0 %}
+        <div>Nahrazeno <span class="font-semibold text-slate-700">{{ ds.superseded_count }}</span> {% if ds.superseded_count == 1 %}obecný nález přesnějším{% else %}obecných nálezů přesnějšími{% endif %}.</div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if scan.deep_scan_categories %}
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {% for key, value in scan.deep_scan_categories.items %}
+          <div class="bg-white border rounded-xl p-3 text-center
+                      {% if value >= 90 %}border-green-200
+                      {% elif value >= 50 %}border-amber-200
+                      {% else %}border-red-200{% endif %}">
+            <div class="text-2xl font-extrabold mb-0.5
+                        {% if value >= 90 %}text-green-500
+                        {% elif value >= 50 %}text-amber-500
+                        {% else %}text-red-500{% endif %}">{{ value }}</div>
+            <div class="text-[10px] uppercase tracking-wide text-slate-400 font-medium">{{ key }}</div>
+          </div>
+        {% endfor %}
       </div>
-    </div>
+    {% endif %}
+  </div>
 
-  {% elif scan.deep_scan_status == 'timeout' %}
-    <div class="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-4 text-xs text-amber-700">
-      <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      <div class="flex-1 leading-relaxed">
-        <span class="font-semibold">Hluboký sken: vypršel časový limit.</span>
-        Lighthouse neukončil analýzu do 60 s — pomalejší servery někdy potřebují víc pokusů.
-        <form method="post" action="{% url 'scanner:deep_retry' scan.id %}" class="inline">
-          {% csrf_token %}
-          <button type="submit" class="underline font-medium hover:text-amber-800 ml-1">Zkusit znovu</button>
-        </form>
-      </div>
+{% elif scan.deep_scan_status == 'failed' %}
+  <div id="deep-scan-section" class="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 mb-4 text-xs text-red-700">
+    <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+    <div class="flex-1 leading-relaxed">
+      <span class="font-semibold">Hluboký sken selhal.</span>
+      {% if scan.deep_scan_error %} <span class="text-red-600/80">{{ scan.deep_scan_error|truncatechars:160 }}</span>{% endif %}
+      <form method="post" action="{% url 'scanner:deep_retry' scan.id %}" class="inline">
+        {% csrf_token %}
+        <button type="submit" class="underline font-medium hover:text-red-800 ml-1">Zkusit znovu</button>
+      </form>
     </div>
+  </div>
 
-  {% elif scan.deep_scan_status == 'skipped' %}
-    <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 mb-4 text-xs text-slate-500">
-      <svg class="w-4 h-4 flex-shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
-      <span>Hluboký sken byl přeskočen (jednorázový sken).</span>
+{% elif scan.deep_scan_status == 'timeout' %}
+  <div id="deep-scan-section" class="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-4 text-xs text-amber-700">
+    <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <div class="flex-1 leading-relaxed">
+      <span class="font-semibold">Hluboký sken: vypršel časový limit.</span>
+      Lighthouse neukončil analýzu do 60 s — pomalejší servery někdy potřebují víc pokusů.
+      <form method="post" action="{% url 'scanner:deep_retry' scan.id %}" class="inline">
+        {% csrf_token %}
+        <button type="submit" class="underline font-medium hover:text-amber-800 ml-1">Zkusit znovu</button>
+      </form>
     </div>
-  {% endif %}
-</div>
+  </div>
+
+{% elif scan.deep_scan_status == 'skipped' %}
+  <div id="deep-scan-section" class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 mb-4 text-xs text-slate-500">
+    <svg class="w-4 h-4 flex-shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+    <span>Hluboký sken byl přeskočen (jednorázový sken).</span>
+  </div>
+
+{% else %}
+  {# Defensive: empty wrapper for legacy scans with deep_scan_status=None #}
+  <div id="deep-scan-section"></div>
+{% endif %}
 
 {# Out-of-band swap: keep #export-warning in sync with deep scan status #}
 {% include "scanner/partials/export_warning_oob.html" %}
