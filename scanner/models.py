@@ -9,6 +9,15 @@ class ScanStatus(models.TextChoices):
     FAILED = "failed", "Failed"
 
 
+class DeepScanStatus(models.TextChoices):
+    PENDING = "pending", "Čeká"
+    RUNNING = "running", "Probíhá"
+    DONE = "done", "Dokončen"
+    FAILED = "failed", "Selhal"
+    TIMEOUT = "timeout", "Vypršel"
+    SKIPPED = "skipped", "Přeskočen"
+
+
 class ScanResult(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     url = models.URLField(max_length=2000)
@@ -24,16 +33,10 @@ class ScanResult(models.Model):
     ephemeral = models.BooleanField(default=False)
     client_ip = models.GenericIPAddressField(null=True, blank=True)
 
-    DEEP_SCAN_STATUS_CHOICES = [
-        ("pending", "Čeká"),
-        ("running", "Probíhá"),
-        ("done", "Dokončen"),
-        ("failed", "Selhal"),
-        ("timeout", "Vypršel"),
-        ("skipped", "Přeskočen"),
-    ]
     deep_scan_status = models.CharField(
-        max_length=10, choices=DEEP_SCAN_STATUS_CHOICES, default="pending"
+        max_length=10,
+        choices=DeepScanStatus.choices,
+        default=DeepScanStatus.PENDING,
     )
     deep_scan_findings = models.JSONField(default=list, blank=True)
     deep_scan_categories = models.JSONField(default=dict, blank=True)
