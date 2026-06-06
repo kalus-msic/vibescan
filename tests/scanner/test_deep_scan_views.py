@@ -109,3 +109,32 @@ def test_deep_scan_summary_tag_computes_delta(client):
     rendered = Template("{% load scan_tags %}{% deep_scan_summary scan as ds %}{{ ds.delta }}|{{ ds.new_total }}|{{ ds.superseded_count }}").render(Context({"scan": scan}))
     # delta = 72 - 80 = -8; new_total = 2 (CRITICAL + WARNING); superseded = 1 (missing-title)
     assert rendered == "-8|2|1"
+
+
+@pytest.mark.django_db
+def test_deep_status_response_includes_oob_export_warning(client):
+    """The deep_status endpoint must include the OOB export warning for HTMX to swap."""
+    scan = ScanResult.objects.create(
+        url="https://example.com", status="done",
+        deep_scan_status="done",
+        deep_scan_categories={"performance": 80, "accessibility": 90, "best-practices": 85, "seo": 95},
+    )
+    response = client.get(reverse("scanner:deep_status", kwargs={"pk": scan.id}))
+    assert response.status_code == 200
+    assert b'hx-swap-oob="true"' in response.content
+    assert b'id="export-warning"' in response.content
+    assert b"obsahuje i v\xc3\xbdsledky hlubok\xc3\xa9ho skenu" in response.content
+
+
+@pytest.mark.django_db
+def test_deep_status_response_warning_says_running(client):
+    """While running, the warning should still mention 'běží' / 'počkej'."""
+    scan = ScanResult.objects.create(
+        url="https://example.com", status="done",
+        deep_scan_status="running",
+    )
+    response = client.get(reverse("scanner:deep_status", kwargs={"pk": scan.id}))
+    assert response.status_code == 200
+    # OOB warning should be present with the amber message
+    assert b'id="export-warning"' in response.content
+    assert b"je\xc5\xa1t\xc4\x9b b\xc4\x9b\xc5\xbe\xc3\xad" in response.content or b"b\xc4\x9b\xc5\xbe\xc3\xad" in response.content
