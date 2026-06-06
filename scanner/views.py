@@ -97,22 +97,39 @@ def scan_status(request, pk):
 def build_export_txt(scan):
     """Render the AI export markdown for a finished scan and return it as a string."""
     from django.template.loader import render_to_string
+    from .score import _superseded_ids
 
     category = ScoreCategory.from_score(scan.vibe_score)
-    active = [f for f in scan.findings if not f.get("dismissed")]
+
+    # Deep scan data (only used when status=done)
+    deep_active = []
+    deep_dismissed = []
+    superseded = set()
+    if scan.deep_scan_status == "done":
+        for f in (scan.deep_scan_findings or []):
+            (deep_dismissed if f.get("dismissed") else deep_active).append(f)
+        superseded = _superseded_ids(scan.deep_scan_findings or [])
+
+    # Fast findings, with superseded ones excluded
+    active = [f for f in scan.findings if not f.get("dismissed") and f.get("id") not in superseded]
     dismissed = [f for f in scan.findings if f.get("dismissed")]
 
-    categories = {}
-    for f in active:
-        cat = f.get("category", "other")
-        categories.setdefault(cat, []).append(f)
-    findings_by_category = sorted(categories.items())
+    def _group(findings):
+        cats = {}
+        for f in findings:
+            cats.setdefault(f.get("category", "other"), []).append(f)
+        return sorted(cats.items())
 
     return render_to_string("scanner/export_txt.md", {
         "scan": scan,
         "category": {"label": category.value},
-        "findings_by_category": findings_by_category,
+        "findings_by_category": _group(active),
+        "deep_findings_by_category": _group(deep_active),
+        "deep_categories": scan.deep_scan_categories or {},
+        "deep_status": scan.deep_scan_status,
+        "deep_error": scan.deep_scan_error,
         "dismissed": dismissed,
+        "deep_dismissed": deep_dismissed,
     })
 
 

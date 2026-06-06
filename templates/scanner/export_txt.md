@@ -61,6 +61,27 @@ Vibescan.cz a máš ho převést na akční doporučení pro majitele/tvůrce we
 
 {% for f in ok_list %}- {{ f.title }}{% if f.detail %} — {{ f.detail }}{% endif %}
 {% endfor %}{% endif %}{% endwith %}
+{% if deep_status == "done" %}
+## 🔍 Lighthouse hluboký sken
+
+**Skóre podle Lighthouse kategorií:**
+{% for key, value in deep_categories.items %}- {{ key }}: {{ value }}/100
+{% endfor %}
+
+{% for category, group in deep_findings_by_category %}
+### {{ category|title }}
+{% for f in group %}- **{{ f.title }}** [{{ f.severity|upper }}]: {{ f.description }}
+{% endfor %}
+{% endfor %}
+{% elif deep_status == "running" or deep_status == "pending" %}
+
+> Hluboký sken: probíhá. Tento export neobsahuje výsledky hloubkové analýzy.
+
+{% elif deep_status == "failed" or deep_status == "timeout" %}
+
+> Hluboký sken: selhal ({{ deep_error|default:"unknown"|truncatechars:200 }}). Výsledky neobsahují kontrasty, performance metriky ani další Lighthouse zjištění.
+
+{% endif %}
 {% if dismissed %}
 ## Zamítnuté nálezy
 

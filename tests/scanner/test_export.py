@@ -1,3 +1,4 @@
+import pytest
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -245,3 +246,68 @@ class PdfExportTest(TestCase):
             reverse("scanner:export_pdf", args=[uuid.uuid4()])
         )
         self.assertEqual(response.status_code, 404)
+
+
+@pytest.mark.django_db
+def test_export_txt_includes_deep_scan_when_done():
+    from scanner.models import ScanResult
+    from scanner.views import build_export_txt
+    scan = ScanResult.objects.create(
+        url="https://example.com", status="done", vibe_score=72,
+        findings=[{"id": "a", "title": "Fast finding", "category": "headers", "severity": "info", "description": "x"}],
+        deep_scan_status="done",
+        deep_scan_findings=[{"id": "lh-lcp", "title": "LCP pomalý", "category": "performance", "severity": "warning", "description": "LCP > 4 s"}],
+        deep_scan_categories={"performance": 55, "accessibility": 90, "best-practices": 80, "seo": 95},
+    )
+    out = build_export_txt(scan)
+    assert "Fast finding" in out
+    assert "LCP pomalý" in out
+    assert "Hluboký sken" in out or "Lighthouse" in out
+
+
+@pytest.mark.django_db
+def test_export_txt_warns_when_deep_scan_running():
+    from scanner.models import ScanResult
+    from scanner.views import build_export_txt
+    scan = ScanResult.objects.create(
+        url="https://example.com", status="done", vibe_score=78,
+        findings=[],
+        deep_scan_status="running",
+    )
+    out = build_export_txt(scan)
+    assert "probíhá" in out.lower()
+
+
+@pytest.mark.django_db
+def test_export_txt_notes_failed_deep_scan():
+    from scanner.models import ScanResult
+    from scanner.views import build_export_txt
+    scan = ScanResult.objects.create(
+        url="https://example.com", status="done", vibe_score=78,
+        findings=[],
+        deep_scan_status="failed",
+        deep_scan_error="Chrome crashed",
+    )
+    out = build_export_txt(scan)
+    assert "selhal" in out.lower()
+
+
+@pytest.mark.django_db
+def test_export_txt_excludes_superseded_findings():
+    from scanner.models import ScanResult
+    from scanner.views import build_export_txt
+    scan = ScanResult.objects.create(
+        url="https://example.com", status="done", vibe_score=80,
+        findings=[
+            {"id": "missing-title", "title": "Fast: chybí title", "category": "seo", "severity": "warning", "description": "x"},
+            {"id": "other", "title": "Other finding", "category": "headers", "severity": "info", "description": "x"},
+        ],
+        deep_scan_status="done",
+        deep_scan_findings=[
+            {"id": "lh-document-title", "title": "LH: chybí title", "category": "seo", "severity": "critical", "description": "x"},
+        ],
+    )
+    out = build_export_txt(scan)
+    assert "Fast: chybí title" not in out  # superseded
+    assert "LH: chybí title" in out
+    assert "Other finding" in out
