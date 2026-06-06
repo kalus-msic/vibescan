@@ -270,7 +270,19 @@ def restore_finding(request, pk, finding_id):
 
 def deep_scan_status(request, pk):
     scan = get_object_or_404(ScanResult, pk=pk)
-    return render(request, "scanner/partials/deep_scan_section.html", {"scan": scan})
+    # Terminal states need a FULL refresh — vibe score, severity counts, finding
+    # sections, export preview all live outside #deep-scan-section. Use HTMX
+    # retargeting to swap the entire #scan-content instead.
+    if scan.deep_scan_status in ("done", "failed", "timeout"):
+        response = render(request, "scanner/partials/results.html", {"scan": scan})
+        response["HX-Reswap"] = "outerHTML"
+        response["HX-Retarget"] = "#scan-content"
+        return response
+    return render(
+        request,
+        "scanner/partials/deep_scan_section.html",
+        {"scan": scan, "include_oob": True},
+    )
 
 
 @require_http_methods(["POST"])

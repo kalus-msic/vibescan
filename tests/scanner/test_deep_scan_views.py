@@ -113,17 +113,75 @@ def test_deep_scan_summary_tag_computes_delta(client):
 
 @pytest.mark.django_db
 def test_deep_status_response_includes_oob_export_warning(client):
-    """The deep_status endpoint must include the OOB export warning for HTMX to swap."""
+    """While the deep scan is still running, the endpoint must include the OOB export warning for HTMX to swap."""
     scan = ScanResult.objects.create(
         url="https://example.com", status="done",
-        deep_scan_status="done",
-        deep_scan_categories={"performance": 80, "accessibility": 90, "best-practices": 85, "seo": 95},
+        deep_scan_status="running",
     )
     response = client.get(reverse("scanner:deep_status", kwargs={"pk": scan.id}))
     assert response.status_code == 200
     assert b'hx-swap-oob="true"' in response.content
     assert b'id="export-warning"' in response.content
-    assert b"obsahuje i v\xc3\xbdsledky hlubok\xc3\xa9ho skenu" in response.content
+
+
+@pytest.mark.django_db
+def test_deep_status_done_retargets_full_scan_content(client):
+    """When deep scan finishes, response retargets #scan-content with HX-Retarget."""
+    scan = ScanResult.objects.create(
+        url="https://example.com", status="done",
+        vibe_score=72,
+        deep_scan_status="done",
+        deep_scan_categories={"performance": 80, "accessibility": 90, "best-practices": 85, "seo": 95},
+    )
+    response = client.get(reverse("scanner:deep_status", kwargs={"pk": scan.id}))
+    assert response.status_code == 200
+    assert response.get("HX-Retarget") == "#scan-content"
+    assert response.get("HX-Reswap") == "outerHTML"
+    # Response body is the full results partial
+    assert b'id="scan-content"' in response.content
+
+
+@pytest.mark.django_db
+def test_deep_status_failed_retargets_full_scan_content(client):
+    scan = ScanResult.objects.create(
+        url="https://example.com", status="done",
+        vibe_score=72,
+        deep_scan_status="failed",
+        deep_scan_error="boom",
+    )
+    response = client.get(reverse("scanner:deep_status", kwargs={"pk": scan.id}))
+    assert response.status_code == 200
+    assert response.get("HX-Retarget") == "#scan-content"
+
+
+@pytest.mark.django_db
+def test_deep_status_running_does_not_retarget(client):
+    scan = ScanResult.objects.create(
+        url="https://example.com", status="done",
+        deep_scan_status="running",
+    )
+    response = client.get(reverse("scanner:deep_status", kwargs={"pk": scan.id}))
+    assert response.status_code == 200
+    assert response.get("HX-Retarget") is None
+    assert response.get("HX-Reswap") is None
+    # Response body is the small section partial, not the full scan content
+    # (It should contain hx-trigger for continued polling)
+    assert b'hx-trigger="every 5s"' in response.content
+
+
+@pytest.mark.django_db
+def test_initial_page_render_has_no_duplicate_export_warning_ids(client):
+    """Initial scan_detail must NOT have duplicate #export-warning IDs."""
+    scan = ScanResult.objects.create(
+        url="https://example.com", status="done",
+        vibe_score=72,
+        deep_scan_status="running",
+    )
+    response = client.get(reverse("scanner:scan_detail", kwargs={"pk": scan.id}))
+    assert response.status_code == 200
+    # Count occurrences of id="export-warning" in HTML
+    count = response.content.count(b'id="export-warning"')
+    assert count == 1, f"Expected exactly 1 #export-warning element, got {count}"
 
 
 @pytest.mark.django_db

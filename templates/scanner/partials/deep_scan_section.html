@@ -113,5 +113,7 @@
   <div id="deep-scan-section"></div>
 {% endif %}
 
-{# Out-of-band swap: keep #export-warning in sync with deep scan status #}
+{% if include_oob %}
+{# Out-of-band swap: keep #export-warning in sync with deep scan status (HTMX response only) #}
 {% include "scanner/partials/export_warning_oob.html" %}
+{% endif %}
