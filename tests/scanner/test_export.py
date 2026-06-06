@@ -351,3 +351,44 @@ def test_export_txt_preview_matches_download():
     assert "LCP" in preview_text
     # And the preview should be substring-identical or equal to the download (allow whitespace tolerance)
     assert preview_text.strip() == download_text.strip()
+
+
+@pytest.mark.django_db
+def test_export_pdf_excludes_superseded_fast_findings(client):
+    """Fast finding superseded by Lighthouse should not appear in PDF body."""
+    from scanner.models import ScanResult
+    from urllib.parse import urlparse  # ensure available
+    scan = ScanResult.objects.create(
+        url="https://example.com", status="done", vibe_score=80,
+        findings=[
+            {"id": "missing-title", "title": "Fast finding: chybí title XYZUNIQUE", "category": "seo", "severity": "warning", "description": "x"},
+        ],
+        deep_scan_status="done",
+        deep_scan_findings=[
+            {"id": "lh-document-title", "title": "Lighthouse: chybí title ABCUNIQUE", "category": "seo", "severity": "critical", "description": "x"},
+        ],
+    )
+    # Render the HTML template directly (faster than WeasyPrint roundtrip)
+    from django.template.loader import render_to_string
+    from scanner.score import _superseded_ids
+    superseded = _superseded_ids(scan.deep_scan_findings or [])
+    active = [f for f in scan.findings if not f.get("dismissed") and f.get("id") not in superseded]
+    deep_active = [f for f in (scan.deep_scan_findings or []) if not f.get("dismissed")]
+
+    def _group(findings):
+        cats = {}
+        for f in findings:
+            cats.setdefault(f.get("category", "other"), []).append(f)
+        return sorted(cats.items())
+
+    html = render_to_string("scanner/export_pdf.html", {
+        "scan": scan,
+        "findings_by_category": _group(active),
+        "deep_findings_by_category": _group(deep_active),
+        "deep_categories": {},
+        "deep_status": "done",
+        "deep_error": "",
+        "active_findings_filtered": active,
+    })
+    assert "XYZUNIQUE" not in html  # superseded — should be gone
+    assert "ABCUNIQUE" in html  # Lighthouse finding present

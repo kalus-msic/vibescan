@@ -74,7 +74,7 @@
 <body>
 
 {% with category=scan.vibe_score|score_category %}
-{% with active=scan.findings|active_findings dismissed=scan.findings|dismissed_findings counts=active|finding_counts %}
+{% with active=active_findings_filtered dismissed=scan.findings|dismissed_findings counts=active_findings_filtered|finding_counts %}
 
 <div class="header">
   <h1>Vibescan – Bezpečnostní report</h1>

@@ -177,6 +177,7 @@ def scan_export_pdf(request, pk):
         "deep_categories": scan.deep_scan_categories or {},
         "deep_status": scan.deep_scan_status,
         "deep_error": scan.deep_scan_error,
+        "active_findings_filtered": active,
     }
     html_string = render(request, "scanner/export_pdf.html", ctx).content.decode("utf-8")
     pdf_bytes = weasyprint.HTML(string=html_string).write_pdf()
