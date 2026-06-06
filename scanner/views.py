@@ -185,3 +185,14 @@ def restore_finding(request, pk, finding_id):
     scan.vibe_score = recalculate_from_findings_dicts(scan.findings)
     scan.save(update_fields=["findings", "vibe_score"])
     return render(request, "scanner/partials/results.html", {"scan": scan})
+
+
+def deep_scan_status(request, pk):
+    scan = get_object_or_404(ScanResult, pk=pk)
+    return render(request, "scanner/partials/deep_scan_section.html", {"scan": scan})
+
+
+@require_http_methods(["POST"])
+def deep_scan_retry(request, pk):
+    """Stub — will be properly implemented in Task 11."""
+    return redirect("scanner:scan_detail", pk=pk)

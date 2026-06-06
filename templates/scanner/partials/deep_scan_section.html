@@ -1,0 +1,52 @@
+{% load scan_tags %}
+<div id="deep-scan-section"
+     {% if scan.deep_scan_status == 'pending' or scan.deep_scan_status == 'running' %}
+     hx-get="{% url 'scanner:deep_status' scan.id %}"
+     hx-trigger="every 5s"
+     hx-swap="outerHTML"
+     {% endif %}
+     >
+  {% if scan.deep_scan_status == 'pending' %}
+    <div class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-700">
+      🔵 Hluboký sken: ve frontě
+    </div>
+  {% elif scan.deep_scan_status == 'running' %}
+    <div class="rounded-lg bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-900">
+      🔵 Hluboký sken probíhá… (~30 s) <span class="inline-block animate-spin">⏳</span>
+    </div>
+  {% elif scan.deep_scan_status == 'done' %}
+    <div class="rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-xs text-green-900">
+      🟢 Hluboký sken: dokončen
+    </div>
+    {% if scan.deep_scan_categories %}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
+      {% for key, value in scan.deep_scan_categories.items %}
+        <div class="rounded border border-slate-200 px-3 py-2 text-center">
+          <div class="text-xs uppercase text-slate-500">{{ key }}</div>
+          <div class="text-lg font-semibold">{{ value }}</div>
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% elif scan.deep_scan_status == 'failed' %}
+    <div class="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-900">
+      🔴 Hluboký sken selhal{% if scan.deep_scan_error %} — {{ scan.deep_scan_error|truncatechars:120 }}{% endif %}
+      <form method="post" action="{% url 'scanner:deep_retry' scan.id %}" class="inline">
+        {% csrf_token %}
+        <button type="submit" class="ml-2 underline">Opakovat</button>
+      </form>
+    </div>
+  {% elif scan.deep_scan_status == 'timeout' %}
+    <div class="rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 text-xs text-orange-900">
+      🟠 Hluboký sken: vypršel časový limit
+      <form method="post" action="{% url 'scanner:deep_retry' scan.id %}" class="inline">
+        {% csrf_token %}
+        <button type="submit" class="ml-2 underline">Opakovat</button>
+      </form>
+    </div>
+  {% elif scan.deep_scan_status == 'skipped' %}
+    <div class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-700">
+      ⚪ Hluboký sken: přeskočen
+    </div>
+  {% endif %}
+</div>

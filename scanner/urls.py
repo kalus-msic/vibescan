@@ -12,4 +12,6 @@ urlpatterns = [
     path("scan/<uuid:pk>/export/pdf/", views.scan_export_pdf, name="export_pdf"),
     path("scan/<uuid:pk>/finding/<str:finding_id>/dismiss/", views.dismiss_finding, name="dismiss_finding"),
     path("scan/<uuid:pk>/finding/<str:finding_id>/restore/", views.restore_finding, name="restore_finding"),
+    path("scan/<uuid:pk>/deep-status/", views.deep_scan_status, name="deep_status"),
+    path("scan/<uuid:pk>/deep-scan/retry/", views.deep_scan_retry, name="deep_retry"),
 ]
