@@ -87,3 +87,25 @@ def test_deep_retry_only_for_failed_or_timeout(client):
     scan = ScanResult.objects.create(url="https://example.com", status="done", deep_scan_status="running")
     response = client.post(reverse("scanner:deep_retry", kwargs={"pk": scan.id}))
     assert response.status_code == 409  # conflict — already running
+
+
+@pytest.mark.django_db
+def test_deep_scan_summary_tag_computes_delta(client):
+    """Sanity check for the deep_scan_summary template tag."""
+    from django.template import Template, Context
+    from scanner.models import ScanResult
+    scan = ScanResult.objects.create(
+        url="https://example.com", status="done",
+        vibe_score=72, pre_deep_scan_score=80,
+        findings=[
+            {"id": "missing-title", "title": "X", "category": "seo", "severity": "warning", "description": "x"},
+        ],
+        deep_scan_status="done",
+        deep_scan_findings=[
+            {"id": "lh-document-title", "title": "Y", "category": "seo", "severity": "critical", "description": "y"},
+            {"id": "lh-lcp", "title": "L", "category": "performance", "severity": "warning", "description": "l"},
+        ],
+    )
+    rendered = Template("{% load scan_tags %}{% deep_scan_summary scan as ds %}{{ ds.delta }}|{{ ds.new_total }}|{{ ds.superseded_count }}").render(Context({"scan": scan}))
+    # delta = 72 - 80 = -8; new_total = 2 (CRITICAL + WARNING); superseded = 1 (missing-title)
+    assert rendered == "-8|2|1"

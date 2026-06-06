@@ -80,9 +80,7 @@
   </div>
 
   {# ── Deep scan section: status badge + Lighthouse categories ── #}
-  <div class="mb-4">
-    {% include "scanner/partials/deep_scan_section.html" %}
-  </div>
+  {% include "scanner/partials/deep_scan_section.html" %}
 
   {% if scan.vibe_score < 100 %}
   {% if not scan.ephemeral %}

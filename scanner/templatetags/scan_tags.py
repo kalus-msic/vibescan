@@ -99,3 +99,38 @@ def export_txt_preview(scan):
     """Render the same markdown that the TXT export produces, for inline preview."""
     from scanner.views import build_export_txt
     return build_export_txt(scan)
+
+
+@register.simple_tag
+def deep_scan_summary(scan):
+    """Return summary stats for the deep scan: score delta, new finding counts, superseded count."""
+    from scanner.score import _superseded_ids
+
+    deep_findings = scan.deep_scan_findings or []
+    active_deep = [f for f in deep_findings if not f.get("dismissed")]
+
+    new_counts = {
+        "critical": sum(1 for f in active_deep if f.get("severity") == "critical"),
+        "warning":  sum(1 for f in active_deep if f.get("severity") == "warning"),
+        "info":     sum(1 for f in active_deep if f.get("severity") == "info"),
+    }
+    new_total = sum(new_counts.values())
+
+    superseded = _superseded_ids(deep_findings)
+    superseded_count = sum(
+        1 for f in scan.findings
+        if not f.get("dismissed") and f.get("id") in superseded
+    )
+
+    pre_score = scan.pre_deep_scan_score
+    current = scan.vibe_score
+    delta = (current - pre_score) if pre_score is not None else None
+
+    return {
+        "pre_score": pre_score,
+        "current_score": current,
+        "delta": delta,
+        "new_counts": new_counts,
+        "new_total": new_total,
+        "superseded_count": superseded_count,
+    }
