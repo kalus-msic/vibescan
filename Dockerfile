@@ -8,7 +8,12 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc libpq-dev curl \
     libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 libffi-dev \
+    chromium nodejs npm \
+    fonts-liberation ca-certificates \
+    && npm install -g lighthouse@12 \
     && rm -rf /var/lib/apt/lists/*
+
+ENV CHROME_PATH=/usr/bin/chromium
 
 # Download Tailwind CSS v3 standalone CLI (auto-detect arch)
 RUN ARCH=$(dpkg --print-architecture) && \
