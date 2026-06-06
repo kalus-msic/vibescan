@@ -35,6 +35,10 @@
             Poskytuje orientační skóre a doporučení
           </li>
           <li class="flex gap-2">
+            <svg class="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+            Provádí hluboký sken výkonu a přístupnosti pomocí nástroje Lighthouse (Apache 2.0)
+          </li>
+          <li class="flex gap-2">
             <svg class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             Nejedná se o penetrační test ani komplexní bezpečnostní audit
           </li>
@@ -76,6 +80,30 @@
       <p class="text-sm text-slate-600 leading-relaxed">
         Vibescan je hobby projekt a jeho dostupnost není garantována.
         Provozovatel si vyhrazuje právo službu kdykoliv pozastavit, změnit nebo ukončit bez předchozího upozornění.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold mb-3">Open-source komponenty</h2>
+      <p class="text-sm text-slate-600 leading-relaxed mb-3">
+        Vibescan staví na řadě open-source nástrojů. Klíčové komponenty zpracovávající vstupy uživatele:
+      </p>
+      <ul class="space-y-2 text-sm text-slate-600">
+        <li class="flex gap-2"><span class="text-slate-300">·</span>
+          <span><a href="https://developer.chrome.com/docs/lighthouse/overview" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">Lighthouse</a> (Apache 2.0) — hluboký sken výkonu, přístupnosti a SEO; běží lokálně na našich serverech.</span>
+        </li>
+        <li class="flex gap-2"><span class="text-slate-300">·</span>
+          <span><a href="https://www.chromium.org/" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">Chromium</a> (BSD-3-Clause) — prohlížečový engine pro Lighthouse.</span>
+        </li>
+        <li class="flex gap-2"><span class="text-slate-300">·</span>
+          <span><a href="https://www.djangoproject.com/" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">Django</a> (BSD-3-Clause), <a href="https://docs.celeryq.dev/" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">Celery</a> (BSD-3-Clause) — webový framework a fronta úloh.</span>
+        </li>
+        <li class="flex gap-2"><span class="text-slate-300">·</span>
+          <span><a href="https://weasyprint.org/" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">WeasyPrint</a> (BSD-3-Clause) — generování PDF reportů.</span>
+        </li>
+      </ul>
+      <p class="text-xs text-slate-500 leading-relaxed mt-3">
+        Plný seznam knihoven a jejich licencí najdete v <code class="font-mono bg-slate-100 px-1 rounded">requirements.txt</code> a <code class="font-mono bg-slate-100 px-1 rounded">package.json</code> repozitáře. Použití těchto komponent nepředává vaše data jejich autorům — všechny běží lokálně na naší infrastruktuře.
       </p>
     </div>
 
