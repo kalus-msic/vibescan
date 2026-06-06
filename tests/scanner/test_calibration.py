@@ -578,10 +578,10 @@ class TestModulePenaltyCap:
             Finding(id="c2", title="t2", description="", severity=Severity.WARNING, category="cookies"),
             Finding(id="c3", title="t3", description="", severity=Severity.WARNING, category="cookies"),
         ]
-        # Naivní: -24. S capem (16): -16, score=84.
+        # Naivní: 3×5 = -15. S capem (10): -10, score=90.
         score = calculate_vibe_score(findings)
-        assert score >= 84, (
-            f"Cookies modul má být capped — 3× WARNING (-24) by mělo být max -16. "
+        assert score >= 90, (
+            f"Cookies modul má být capped — 3× WARNING (-15) by mělo být max -10. "
             f"Aktuální score: {score}"
         )
 
@@ -589,12 +589,12 @@ class TestModulePenaltyCap:
         """Mnoho INFO findings v a11y (drobné nedostatky) nemá zničit skóre."""
         findings = [
             Finding(id=f"a{i}", title=f"t{i}", description="", severity=Severity.INFO, category="accessibility")
-            for i in range(6)
+            for i in range(8)
         ]
-        # Naivní: -12. S capem (8): -8, score=92.
+        # Naivní: 8×1 = -8. S capem (5): -5, score=95.
         score = calculate_vibe_score(findings)
-        assert score >= 92, (
-            f"6× a11y INFO (-12) by mělo být max -8. Aktuální score: {score}"
+        assert score >= 95, (
+            f"8× a11y INFO (-8) by mělo být max -5. Aktuální score: {score}"
         )
 
     def test_cap_does_not_increase_score(self):
@@ -603,7 +603,7 @@ class TestModulePenaltyCap:
             Finding(id="x1", title="t", description="", severity=Severity.WARNING, category="cookies"),
         ]
         score = calculate_vibe_score(findings)
-        assert score == 92  # -8 max, žádný cap effect
+        assert score == 95  # -5 (WARNING), bez cap effectu
 
     def test_different_categories_sum_independently(self):
         """Cap se aplikuje per kategorie, ne globálně."""
@@ -612,9 +612,9 @@ class TestModulePenaltyCap:
             Finding(id="h1", title="t", description="", severity=Severity.WARNING, category="headers"),
             Finding(id="s1", title="t", description="", severity=Severity.WARNING, category="sri"),
         ]
-        # Každá kategorie -8 (pod capem). Total -24.
+        # Každá kategorie -5 (pod capem). Total -15.
         score = calculate_vibe_score(findings)
-        assert score == 76
+        assert score == 85
 
 
 # --------------------------------------------------------------------------

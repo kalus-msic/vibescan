@@ -3,32 +3,32 @@ from scanner.modules.base import Finding, Severity
 
 
 SEVERITY_PENALTY = {
-    Severity.CRITICAL: 20,
-    Severity.WARNING: 8,
-    Severity.INFO: 2,
+    Severity.CRITICAL: 12,
+    Severity.WARNING: 5,
+    Severity.INFO: 1,
     Severity.OK: 0,
 }
 
 # Maximální penalty per kategorie. Brání tomu, aby kumulace drobných nálezů
 # v jediném modulu dominovala skóre (např. 1 cookie bez 3 flagů = -24).
 MODULE_PENALTY_CAP = {
-    "cookies": 16,        # 2× WARNING
-    "accessibility": 8,   # 4× INFO (kumulace drobností)
-    "sri": 10,            # 1× WARNING + 1× INFO
-    "seo": 4,             # SEO nemá ovlivnit bezpečnostní skóre víc
-    "legal": 6,
-    "headers": 24,        # CSP + HSTS + frame = až -60, cap pro férovost
-    "dns": 16,
-    "html": 8,
-    "meta": 8,
-    "forms": 16,
-    "tech": 24,
-    "cors": 20,           # wildcard + credentials = CRITICAL, ostatní méně
+    "cookies": 10,         # 2× WARNING
+    "accessibility": 5,    # 5× INFO (kumulace drobností)
+    "sri": 6,              # 1× WARNING + 1× INFO
+    "seo": 3,              # SEO nemá ovlivnit bezpečnostní skóre víc
+    "legal": 4,
+    "headers": 15,         # CSP + HSTS + frame = až -36, cap pro férovost
+    "dns": 10,
+    "html": 5,
+    "meta": 5,
+    "forms": 10,
+    "tech": 15,
+    "cors": 12,            # wildcard + credentials = CRITICAL, ostatní méně
     # Lighthouse kategorie — bezpečnostní skóre by performance/UX/SEO nemělo
     # převálcovat. Nálezy se stále zobrazují, jen jejich příspěvek do vibe
     # score je limitovaný.
-    "performance": 10,    # LCP/CLS/TBT — primárně UX, max 1× CRITICAL ekvivalent
-    "best-practices": 16, # CSP, vulnerable libs, mixed content — částečně bezpečnostní
+    "performance": 6,      # LCP/CLS/TBT — primárně UX, max 1× CRITICAL ekvivalent
+    "best-practices": 10,  # CSP, vulnerable libs, mixed content — částečně bezpečnostní
 }
 
 

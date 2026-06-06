@@ -14,7 +14,7 @@ SAMPLE_FINDINGS = [
         "description": "Bez CSP hlavičky je web náchylný na XSS útoky.",
         "severity": "critical",
         "category": "headers",
-        "penalty": 20,
+        "penalty": 12,
         "fix_url": "/guide/#csp",
         "detail": "Header nenalezen",
         "doc_url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP",
@@ -36,7 +36,7 @@ SAMPLE_FINDINGS = [
         "description": "DNS neobsahuje DMARC záznam.",
         "severity": "warning",
         "category": "dns",
-        "penalty": 8,
+        "penalty": 5,
         "fix_url": "/guide/#dmarc",
         "detail": None,
         "doc_url": "https://developer.mozilla.org/en-US/docs/Glossary/DMARC",
@@ -47,7 +47,7 @@ SAMPLE_FINDINGS = [
         "description": "Bez Referrer-Policy hlavičky.",
         "severity": "info",
         "category": "headers",
-        "penalty": 2,
+        "penalty": 1,
         "fix_url": "/guide/#referrer",
         "detail": None,
         "doc_url": None,
@@ -61,7 +61,7 @@ def _create_done_scan(**kwargs):
     defaults = dict(
         url="https://example.com",
         status=ScanStatus.DONE,
-        vibe_score=70,
+        vibe_score=82,
         findings=copy.deepcopy(SAMPLE_FINDINGS),
         completed_at=timezone.now(),
     )
@@ -73,16 +73,17 @@ class RecalculateScoreTest(TestCase):
 
     def test_score_without_dismissed(self):
         score = recalculate_from_findings_dicts(SAMPLE_FINDINGS)
-        # 100 - 20 (critical) - 8 (warning) - 2 (info) = 70
-        self.assertEqual(score, 70)
+        # 100 - 12 (critical/headers) - 5 (warning/dns) - 1 (info/headers) = 82
+        # headers má 2 findings: 12+1=13, pod capem 15. dns má 5, pod capem 10.
+        self.assertEqual(score, 82)
 
     def test_score_excludes_dismissed_findings(self):
         findings = copy.deepcopy(SAMPLE_FINDINGS)
-        findings[0]["dismissed"] = True  # critical, -20
+        findings[0]["dismissed"] = True  # critical, -12
         findings[0]["dismiss_reason"] = "false_positive"
         score = recalculate_from_findings_dicts(findings)
-        # 100 - 8 (warning) - 2 (info) = 90
-        self.assertEqual(score, 90)
+        # 100 - 5 (warning/dns) - 1 (info/headers) = 94
+        self.assertEqual(score, 94)
 
     def test_score_floors_at_zero(self):
         many_critical = [
@@ -155,14 +156,14 @@ class DismissFindingTest(TestCase):
 
     def test_dismiss_recalculates_vibe_score(self):
         scan = _create_done_scan()
-        self.assertEqual(scan.vibe_score, 70)
+        self.assertEqual(scan.vibe_score, 82)
         self.client.post(
             reverse("scanner:dismiss_finding", args=[scan.id, "missing-csp"]),
             {"reason": "not_applicable"},
         )
         scan.refresh_from_db()
-        # 100 - 8 (warning) - 2 (info) = 90 (critical dismissed)
-        self.assertEqual(scan.vibe_score, 90)
+        # 100 - 5 (warning/dns) - 1 (info/headers) = 94 (critical dismissed)
+        self.assertEqual(scan.vibe_score, 94)
 
     def test_dismiss_returns_htmx_partial(self):
         scan = _create_done_scan()
@@ -251,8 +252,8 @@ class RestoreFindingTest(TestCase):
             reverse("scanner:restore_finding", args=[scan.id, "missing-csp"]),
         )
         scan.refresh_from_db()
-        # Back to original: 100 - 20 - 8 - 2 = 70
-        self.assertEqual(scan.vibe_score, 70)
+        # Back to original: 100 - 12 (critical/headers) - 5 (warning/dns) - 1 (info/headers) = 82
+        self.assertEqual(scan.vibe_score, 82)
 
     def test_restore_returns_htmx_partial(self):
         scan = _create_done_scan()
