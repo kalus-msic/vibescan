@@ -209,3 +209,62 @@ def run_scan(self, scan_id: str):
     scan.progress = progress
     scan.completed_at = datetime.now(timezone.utc)
     scan.save(update_fields=["findings", "vibe_score", "status", "progress", "completed_at"])
+
+
+import json as _json
+import subprocess as _subprocess
+from django.utils import timezone as _timezone
+
+from .lighthouse_mapper import LighthouseMapper
+from .score import recalculate_with_deep_scan
+
+
+@shared_task(bind=True, max_retries=0)
+def run_lighthouse_scan(self, scan_id: str):
+    try:
+        scan = ScanResult.objects.get(id=scan_id)
+    except ScanResult.DoesNotExist:
+        return
+
+    scan.deep_scan_status = "running"
+    scan.deep_scan_started_at = _timezone.now()
+    scan.save(update_fields=["deep_scan_status", "deep_scan_started_at"])
+
+    try:
+        proc = _subprocess.run(
+            [
+                "lighthouse", scan.url,
+                "--output=json", "--quiet",
+                "--chrome-flags=--headless --no-sandbox --disable-gpu",
+                "--max-wait-for-load=30000",
+                "--only-categories=performance,accessibility,best-practices,seo",
+            ],
+            capture_output=True, text=True, timeout=60,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(f"Lighthouse exit {proc.returncode}: {proc.stderr[:500]}")
+        data = _json.loads(proc.stdout)
+        if data.get("runtimeError"):
+            raise RuntimeError(f"Lighthouse runtime: {data['runtimeError'].get('message', 'unknown')}")
+        findings, categories = LighthouseMapper().map(data)
+        scan.deep_scan_findings = findings
+        scan.deep_scan_categories = categories
+        scan.deep_scan_status = "done"
+    except _subprocess.TimeoutExpired:
+        scan.deep_scan_status = "timeout"
+        scan.deep_scan_error = "Lighthouse překročil 60 s"
+    except _json.JSONDecodeError:
+        scan.deep_scan_status = "failed"
+        scan.deep_scan_error = "Neplatný výstup Lighthouse (JSON parse error)"
+        logger.exception("Lighthouse JSON parse failed for %s", scan_id)
+    except Exception as e:
+        scan.deep_scan_status = "failed"
+        scan.deep_scan_error = str(e)[:500]
+        logger.exception("Lighthouse scan failed for %s", scan_id)
+
+    scan.deep_scan_finished_at = _timezone.now()
+    if scan.deep_scan_status == "done":
+        if scan.pre_deep_scan_score is None:
+            scan.pre_deep_scan_score = scan.vibe_score  # snapshot for "78 → 72 (−6)" tooltip
+        scan.vibe_score = recalculate_with_deep_scan(scan.findings, scan.deep_scan_findings)
+    scan.save()
