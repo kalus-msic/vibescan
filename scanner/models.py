@@ -24,6 +24,25 @@ class ScanResult(models.Model):
     ephemeral = models.BooleanField(default=False)
     client_ip = models.GenericIPAddressField(null=True, blank=True)
 
+    DEEP_SCAN_STATUS_CHOICES = [
+        ("pending", "Čeká"),
+        ("running", "Probíhá"),
+        ("done", "Dokončen"),
+        ("failed", "Selhal"),
+        ("timeout", "Vypršel"),
+        ("skipped", "Přeskočen"),
+    ]
+    deep_scan_status = models.CharField(
+        max_length=10, choices=DEEP_SCAN_STATUS_CHOICES, default="pending"
+    )
+    deep_scan_findings = models.JSONField(default=list, blank=True)
+    deep_scan_categories = models.JSONField(default=dict, blank=True)
+    deep_scan_started_at = models.DateTimeField(null=True, blank=True)
+    deep_scan_finished_at = models.DateTimeField(null=True, blank=True)
+    deep_scan_error = models.TextField(blank=True, default="")
+    deep_scan_retry_count = models.PositiveSmallIntegerField(default=0)
+    pre_deep_scan_score = models.IntegerField(null=True, blank=True)
+
     class Meta:
         ordering = ["-created_at"]
 
