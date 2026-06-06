@@ -311,3 +311,26 @@ def test_export_txt_excludes_superseded_findings():
     assert "Fast: chybí title" not in out  # superseded
     assert "LH: chybí title" in out
     assert "Other finding" in out
+
+
+@pytest.mark.django_db
+def test_export_txt_preview_matches_download():
+    """The inline preview (template tag) must produce the same output as the downloadable file."""
+    from scanner.models import ScanResult
+    from scanner.views import build_export_txt
+    from django.template import Template, Context
+
+    scan = ScanResult.objects.create(
+        url="https://example.com", status="done", vibe_score=80,
+        findings=[{"id": "x", "title": "X", "category": "headers", "severity": "info", "description": "y"}],
+        deep_scan_status="done",
+        deep_scan_findings=[{"id": "lh-lcp", "title": "LCP", "category": "performance", "severity": "warning", "description": "z"}],
+        deep_scan_categories={"performance": 50, "accessibility": 90, "best-practices": 80, "seo": 95},
+    )
+    download_text = build_export_txt(scan)
+    preview_text = Template("{% load scan_tags %}{% export_txt_preview scan %}").render(Context({"scan": scan}))
+    # Both should include Lighthouse content
+    assert "LCP" in download_text
+    assert "LCP" in preview_text
+    # And the preview should be substring-identical or equal to the download (allow whitespace tolerance)
+    assert preview_text.strip() == download_text.strip()
