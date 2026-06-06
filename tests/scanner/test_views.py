@@ -1,3 +1,4 @@
+import pytest
 from unittest.mock import patch
 from django.test import TestCase, Client
 from django.urls import reverse
@@ -48,3 +49,26 @@ class ScanDetailViewTest(TestCase):
             HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 200)
+
+
+@pytest.mark.django_db
+def test_submit_dispatches_both_tasks(client):
+    with patch("scanner.views.run_scan.delay") as fast_delay, \
+         patch("scanner.views.run_lighthouse_scan.delay") as deep_delay:
+        response = client.post(reverse("scanner:home"), {"url": "https://example.com"})
+    assert response.status_code == 302  # redirect to detail
+    fast_delay.assert_called_once()
+    deep_delay.assert_called_once()
+    # Same scan id passed to both
+    assert fast_delay.call_args[0][0] == deep_delay.call_args[0][0]
+
+
+@pytest.mark.django_db
+def test_submit_skips_deep_scan_for_ephemeral(client):
+    with patch("scanner.views.run_scan.delay"), \
+         patch("scanner.views.run_lighthouse_scan.delay") as deep_delay:
+        client.post(reverse("scanner:home"), {"url": "https://example.com", "ephemeral": "on"})
+    deep_delay.assert_not_called()
+    # And the scan has deep_scan_status == "skipped"
+    scan = ScanResult.objects.latest("created_at")
+    assert scan.deep_scan_status == "skipped"

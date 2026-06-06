@@ -5,7 +5,7 @@ from django_ratelimit.decorators import ratelimit
 from urllib.parse import urlparse
 from .models import ScanResult, ScanLog, ScanStatus
 from .forms import ScanForm
-from .tasks import run_scan
+from .tasks import run_scan, run_lighthouse_scan
 from scanner.score import ScoreCategory, recalculate_from_findings_dicts
 
 
@@ -35,6 +35,11 @@ def home(request):
             ephemeral=ephemeral,
         )
         run_scan.delay(str(scan.id))
+        if ephemeral:
+            scan.deep_scan_status = "skipped"
+            scan.save(update_fields=["deep_scan_status"])
+        else:
+            run_lighthouse_scan.delay(str(scan.id))
         return redirect("scanner:scan_detail", pk=scan.id)
     return render(request, "scanner/home.html", {"form": form})
 
@@ -59,6 +64,7 @@ def scan_rescan(request, pk):
     original = get_object_or_404(ScanResult, pk=pk)
     scan = ScanResult.objects.create(url=original.url)
     run_scan.delay(str(scan.id))
+    run_lighthouse_scan.delay(str(scan.id))
     return redirect("scanner:scan_detail", pk=scan.id)
 
 
