@@ -82,3 +82,40 @@ def recalculate_from_findings_dicts(findings: list[dict]) -> int:
         for f in findings
         if not f.get("dismissed")
     )
+
+
+def _superseded_ids(deep_findings: list[dict]) -> set[str]:
+    """Return set of original Finding IDs that are superseded by a Lighthouse finding."""
+    from scanner.lighthouse_audits import LIGHTHOUSE_AUDIT_MAP
+
+    # Index AuditMap by finding_id (the lh-* prefix), since deep findings carry lh-* ids
+    by_finding_id = {m.finding_id: m for m in LIGHTHOUSE_AUDIT_MAP.values()}
+
+    superseded: set[str] = set()
+    for f in deep_findings:
+        if f.get("dismissed"):
+            continue
+        mapping = by_finding_id.get(f.get("id", ""))
+        if mapping and mapping.supersedes_id:
+            superseded.add(mapping.supersedes_id)
+    return superseded
+
+
+def recalculate_with_deep_scan(
+    findings: list[dict],
+    deep_findings: list[dict],
+) -> int:
+    """Score from fast + deep findings, with supersede dedup and dismiss exclusion."""
+    superseded = _superseded_ids(deep_findings)
+    active_fast = (
+        (f.get("category", ""), SEVERITY_PENALTY_MAP.get(f.get("severity", ""), 0))
+        for f in findings
+        if not f.get("dismissed") and f.get("id") not in superseded
+    )
+    active_deep = (
+        (f.get("category", ""), SEVERITY_PENALTY_MAP.get(f.get("severity", ""), 0))
+        for f in deep_findings
+        if not f.get("dismissed")
+    )
+    import itertools
+    return _score_from_iter(itertools.chain(active_fast, active_deep))
