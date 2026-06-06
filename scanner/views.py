@@ -114,6 +114,15 @@ def build_export_txt(scan):
     active = [f for f in scan.findings if not f.get("dismissed") and f.get("id") not in superseded]
     dismissed = [f for f in scan.findings if f.get("dismissed")]
 
+    # Combined counts: fast (post-supersede, non-dismissed) + deep (non-dismissed)
+    combined = active + deep_active
+    combined_counts = {
+        "critical": sum(1 for f in combined if f.get("severity") == "critical"),
+        "warning":  sum(1 for f in combined if f.get("severity") == "warning"),
+        "info":     sum(1 for f in combined if f.get("severity") == "info"),
+        "ok":       sum(1 for f in combined if f.get("severity") == "ok"),
+    }
+
     def _group(findings):
         cats = {}
         for f in findings:
@@ -130,6 +139,7 @@ def build_export_txt(scan):
         "deep_error": scan.deep_scan_error,
         "dismissed": dismissed,
         "deep_dismissed": deep_dismissed,
+        "combined_counts": combined_counts,
     })
 
 
