@@ -11,10 +11,43 @@ def test_no_deep_findings_equals_base():
 
 
 def test_deep_findings_add_penalties():
-    findings = [_finding("a", "warning")]  # -8
-    deep = [_finding("lh-x", "critical", category="performance")]  # -20
-    # Different categories, no cap interference
-    assert recalculate_with_deep_scan(findings, deep) == 100 - 8 - 20
+    findings = [_finding("a", "warning", category="cookies")]  # -8 (cookies cap 16, well under)
+    deep = [_finding("lh-x", "critical", category="performance")]  # raw -20, capped at 10
+    # Different categories, no interference. performance critical capped at 10.
+    assert recalculate_with_deep_scan(findings, deep) == 100 - 8 - 10
+
+
+def test_performance_cap_limits_worst_case():
+    """Many critical performance findings should not exceed performance cap (10)."""
+    deep = [
+        _finding("lh-lcp", "critical", category="performance"),
+        _finding("lh-cls", "critical", category="performance"),
+        _finding("lh-tbt", "critical", category="performance"),
+        _finding("lh-si",  "critical", category="performance"),
+    ]
+    # Raw: 4 × 20 = 80. After cap: max 10.
+    assert recalculate_with_deep_scan([], deep) == 100 - 10
+
+
+def test_best_practices_cap_limits_worst_case():
+    """best-practices cap = 16. Two criticals (40 raw) → capped at 16."""
+    deep = [
+        _finding("lh-https",            "critical", category="best-practices"),
+        _finding("lh-vulnerable-libs",  "critical", category="best-practices"),
+    ]
+    assert recalculate_with_deep_scan([], deep) == 100 - 16
+
+
+def test_total_lighthouse_worst_case_is_bounded():
+    """Even if all 4 Lighthouse categories are at their cap, total deduction
+    from Lighthouse alone is bounded (10 + 16 + 8 + 4 = 38)."""
+    deep = [
+        _finding("lh-lcp",     "critical", category="performance"),    # capped 10
+        _finding("lh-bp",      "critical", category="best-practices"), # capped 16
+        _finding("lh-a11y",    "critical", category="accessibility"),  # capped 8
+        _finding("lh-seo",     "critical", category="seo"),            # capped 4
+    ]
+    assert recalculate_with_deep_scan([], deep) == 100 - 10 - 16 - 8 - 4  # = 62
 
 
 def test_supersede_removes_original_finding_from_score():

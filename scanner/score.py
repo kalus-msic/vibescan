@@ -24,6 +24,11 @@ MODULE_PENALTY_CAP = {
     "forms": 16,
     "tech": 24,
     "cors": 20,           # wildcard + credentials = CRITICAL, ostatní méně
+    # Lighthouse kategorie — bezpečnostní skóre by performance/UX/SEO nemělo
+    # převálcovat. Nálezy se stále zobrazují, jen jejich příspěvek do vibe
+    # score je limitovaný.
+    "performance": 10,    # LCP/CLS/TBT — primárně UX, max 1× CRITICAL ekvivalent
+    "best-practices": 16, # CSP, vulnerable libs, mixed content — částečně bezpečnostní
 }
 
 
