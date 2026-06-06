@@ -194,5 +194,19 @@ def deep_scan_status(request, pk):
 
 @require_http_methods(["POST"])
 def deep_scan_retry(request, pk):
-    """Stub — will be properly implemented in Task 11."""
+    scan = get_object_or_404(ScanResult, pk=pk)
+    if scan.deep_scan_status not in ("failed", "timeout"):
+        return HttpResponse("Hluboký sken nelze restartovat v aktuálním stavu", status=409)
+    if scan.deep_scan_retry_count >= 3:
+        return HttpResponse("Překročen limit opakování (3×)", status=429)
+    scan.deep_scan_status = "pending"
+    scan.deep_scan_error = ""
+    scan.deep_scan_started_at = None
+    scan.deep_scan_finished_at = None
+    scan.deep_scan_retry_count += 1
+    scan.save(update_fields=[
+        "deep_scan_status", "deep_scan_error",
+        "deep_scan_started_at", "deep_scan_finished_at", "deep_scan_retry_count",
+    ])
+    run_lighthouse_scan.delay(str(scan.id))
     return redirect("scanner:scan_detail", pk=pk)
