@@ -102,6 +102,32 @@ def export_txt_preview(scan):
 
 
 @register.simple_tag
+def combined_active_findings(scan):
+    """Return fast + deep findings, supersede-deduped, dismiss-filtered.
+    Used so the main Kritické/Varování/Upozornění sections include Lighthouse findings.
+    """
+    from scanner.score import _superseded_ids
+
+    deep = scan.deep_scan_findings or []
+    superseded = _superseded_ids(deep)
+
+    active_fast = [
+        f for f in scan.findings
+        if not f.get("dismissed") and f.get("id") not in superseded
+    ]
+    active_deep = [f for f in deep if not f.get("dismissed")]
+    return active_fast + active_deep
+
+
+@register.simple_tag
+def combined_dismissed_findings(scan):
+    """Dismissed findings from both fast and deep scans, for the dismissed section."""
+    deep_dismissed = [f for f in (scan.deep_scan_findings or []) if f.get("dismissed")]
+    fast_dismissed = [f for f in scan.findings if f.get("dismissed")]
+    return fast_dismissed + deep_dismissed
+
+
+@register.simple_tag
 def deep_scan_summary(scan):
     """Return summary stats for the deep scan: score delta, new finding counts, superseded count."""
     from scanner.score import _superseded_ids

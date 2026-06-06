@@ -1,7 +1,9 @@
 {% load scan_tags %}
 <div id="scan-content">
 
-  {% with category=scan.vibe_score|score_category active=scan.findings|active_findings dismissed=scan.findings|dismissed_findings %}
+  {% combined_active_findings scan as active %}
+  {% combined_dismissed_findings scan as dismissed %}
+  {% with category=scan.vibe_score|score_category %}
   {% if scan.ephemeral %}
   <div class="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-6 text-xs text-amber-700">
     <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -163,7 +165,8 @@
       <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 bg-red-50/50 rounded-t-2xl">
         <div class="w-2 h-2 rounded-full bg-red-500"></div>
         <span class="text-sm font-bold text-red-600">Kritické problémy</span>
-          <span class="text-xs font-mono text-red-400 ml-auto">−{{ critical|total_penalty }}</span>
+          <span class="text-xs font-mono text-red-400 ml-auto"
+                title="Suma syrových penalt podle severity. Skutečná penalizace skóre je limitována per kategorii — viz vibe_score.">−{{ critical|total_penalty }}</span>
       </div>
       <div class="divide-y divide-slate-100">
         {% for f in critical %}
@@ -174,6 +177,7 @@
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-0.5">
               <span class="font-semibold text-sm text-slate-900">{{ f.title }}</span>
+              {% if f.id|slice:":3" == "lh-" %}<span class="text-[10px] uppercase tracking-wide bg-slate-100 text-slate-500 font-medium px-1.5 py-0.5 rounded">Lighthouse</span>{% endif %}
               <span class="text-xs font-mono text-red-500">−{{ f|penalty }}</span>
             </div>
             <div class="text-xs text-slate-500 leading-relaxed">{{ f.description }}</div>
@@ -209,7 +213,8 @@
       <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 bg-amber-50/50 rounded-t-2xl">
         <div class="w-2 h-2 rounded-full bg-amber-400"></div>
         <span class="text-sm font-bold text-amber-600">Varování</span>
-          <span class="text-xs font-mono text-amber-400 ml-auto">−{{ warnings|total_penalty }}</span>
+          <span class="text-xs font-mono text-amber-400 ml-auto"
+                title="Suma syrových penalt podle severity. Skutečná penalizace skóre je limitována per kategorii — viz vibe_score.">−{{ warnings|total_penalty }}</span>
       </div>
       <div class="divide-y divide-slate-100">
         {% for f in warnings %}
@@ -220,6 +225,7 @@
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-0.5">
               <span class="font-semibold text-sm text-slate-900">{{ f.title }}</span>
+              {% if f.id|slice:":3" == "lh-" %}<span class="text-[10px] uppercase tracking-wide bg-slate-100 text-slate-500 font-medium px-1.5 py-0.5 rounded">Lighthouse</span>{% endif %}
               <span class="text-xs font-mono text-amber-500">−{{ f|penalty }}</span>
             </div>
             <div class="text-xs text-slate-500 leading-relaxed">{{ f.description }}</div>
@@ -255,7 +261,8 @@
       <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 bg-blue-50/50 rounded-t-2xl">
         <div class="w-2 h-2 rounded-full bg-blue-400"></div>
         <span class="text-sm font-bold text-blue-600">Upozornění</span>
-          <span class="text-xs font-mono text-blue-400 ml-auto">−{{ infos|total_penalty }}</span>
+          <span class="text-xs font-mono text-blue-400 ml-auto"
+                title="Suma syrových penalt podle severity. Skutečná penalizace skóre je limitována per kategorii — viz vibe_score.">−{{ infos|total_penalty }}</span>
       </div>
       <div class="divide-y divide-slate-100">
         {% for f in infos %}
@@ -266,6 +273,7 @@
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-0.5">
               <span class="font-semibold text-sm text-slate-900">{{ f.title }}</span>
+              {% if f.id|slice:":3" == "lh-" %}<span class="text-[10px] uppercase tracking-wide bg-slate-100 text-slate-500 font-medium px-1.5 py-0.5 rounded">Lighthouse</span>{% endif %}
               <span class="text-xs font-mono text-blue-400">−{{ f|penalty }}</span>
             </div>
             <div class="text-xs text-slate-500 leading-relaxed">{{ f.description }}</div>

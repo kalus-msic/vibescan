@@ -277,3 +277,106 @@ class RestoreFindingTest(TestCase):
             reverse("scanner:restore_finding", args=[scan.id, "missing-csp"]),
         )
         self.assertEqual(response.status_code, 404)
+
+
+import pytest
+
+
+@pytest.mark.django_db
+def test_dismiss_lighthouse_finding(client):
+    """Dismissing a Lighthouse finding marks it dismissed in deep_scan_findings."""
+    scan = ScanResult.objects.create(
+        url="https://example.com",
+        status=ScanStatus.DONE,
+        vibe_score=80,
+        findings=[],
+        deep_scan_status="done",
+        deep_scan_findings=[
+            {
+                "id": "lh-lcp",
+                "title": "LCP",
+                "category": "performance",
+                "severity": "warning",
+                "description": "x",
+            },
+        ],
+        completed_at=timezone.now(),
+    )
+    response = client.post(
+        reverse(
+            "scanner:dismiss_finding",
+            kwargs={"pk": scan.id, "finding_id": "lh-lcp"},
+        ),
+        {"reason": "not_applicable"},
+    )
+    assert response.status_code == 200
+    scan.refresh_from_db()
+    deep = scan.deep_scan_findings[0]
+    assert deep["dismissed"] is True
+    assert deep["dismiss_reason"] == "not_applicable"
+    # Fast findings should remain untouched
+    assert scan.findings == []
+
+
+@pytest.mark.django_db
+def test_restore_lighthouse_finding(client):
+    """Restoring a Lighthouse finding removes dismissed markers."""
+    scan = ScanResult.objects.create(
+        url="https://example.com",
+        status=ScanStatus.DONE,
+        vibe_score=80,
+        findings=[],
+        deep_scan_status="done",
+        deep_scan_findings=[
+            {
+                "id": "lh-lcp",
+                "title": "LCP",
+                "category": "performance",
+                "severity": "warning",
+                "description": "x",
+                "dismissed": True,
+                "dismiss_reason": "other",
+            },
+        ],
+        completed_at=timezone.now(),
+    )
+    response = client.post(
+        reverse(
+            "scanner:restore_finding",
+            kwargs={"pk": scan.id, "finding_id": "lh-lcp"},
+        ),
+    )
+    assert response.status_code == 200
+    scan.refresh_from_db()
+    deep = scan.deep_scan_findings[0]
+    assert deep.get("dismissed") is not True
+    assert "dismiss_reason" not in deep
+
+
+@pytest.mark.django_db
+def test_combined_active_findings_merges_with_dedup():
+    """combined_active_findings merges fast+deep findings, dedups superseded, excludes dismissed."""
+    from django.template import Template, Context
+    scan = ScanResult.objects.create(
+        url="https://example.com",
+        status=ScanStatus.DONE,
+        findings=[
+            {"id": "missing-title", "title": "Fast", "category": "seo", "severity": "warning", "description": "x"},
+            {"id": "kept", "title": "Kept", "category": "headers", "severity": "info", "description": "x"},
+            {"id": "dismissed-one", "title": "D", "category": "headers", "severity": "warning", "description": "x", "dismissed": True},
+        ],
+        deep_scan_status="done",
+        deep_scan_findings=[
+            {"id": "lh-document-title", "title": "LH title", "category": "seo", "severity": "critical", "description": "x"},
+            {"id": "lh-lcp-dismissed", "title": "LH LCP", "category": "performance", "severity": "warning", "description": "x", "dismissed": True},
+        ],
+        completed_at=timezone.now(),
+    )
+    rendered = Template(
+        "{% load scan_tags %}{% combined_active_findings scan as a %}{% for f in a %}{{ f.id }}|{% endfor %}"
+    ).render(Context({"scan": scan}))
+    # missing-title superseded by lh-document-title → excluded
+    # dismissed-one (fast dismissed) → excluded
+    # lh-lcp-dismissed (deep dismissed) → excluded
+    # Remaining: kept, lh-document-title
+    assert rendered == "kept|lh-document-title|"

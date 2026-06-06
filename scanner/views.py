@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from .models import ScanResult, ScanLog, ScanStatus
 from .forms import ScanForm
 from .tasks import run_scan, run_lighthouse_scan
-from scanner.score import ScoreCategory, recalculate_from_findings_dicts
+from scanner.score import ScoreCategory, recalculate_from_findings_dicts, recalculate_with_deep_scan
 
 
 def _session_key(group, request):
@@ -200,18 +200,34 @@ def dismiss_finding(request, pk, finding_id):
     if reason not in VALID_DISMISS_REASONS:
         return HttpResponseBadRequest("Invalid reason")
 
+    # Search both fast and deep findings
     finding = None
+    is_deep = False
     for f in scan.findings:
         if f.get("id") == finding_id:
             finding = f
             break
     if finding is None:
+        for f in (scan.deep_scan_findings or []):
+            if f.get("id") == finding_id:
+                finding = f
+                is_deep = True
+                break
+    if finding is None:
         raise Http404("Finding not found")
 
     finding["dismissed"] = True
     finding["dismiss_reason"] = reason
-    scan.vibe_score = recalculate_from_findings_dicts(scan.findings)
-    scan.save(update_fields=["findings", "vibe_score"])
+
+    scan.vibe_score = recalculate_with_deep_scan(
+        scan.findings, scan.deep_scan_findings or []
+    )
+    update_fields = ["vibe_score"]
+    if is_deep:
+        update_fields.append("deep_scan_findings")
+    else:
+        update_fields.append("findings")
+    scan.save(update_fields=update_fields)
     return render(request, "scanner/partials/results.html", {"scan": scan})
 
 
@@ -221,18 +237,34 @@ def restore_finding(request, pk, finding_id):
         ScanResult, pk=pk, status=ScanStatus.DONE, ephemeral=False
     )
 
+    # Search both fast and deep findings
     finding = None
+    is_deep = False
     for f in scan.findings:
         if f.get("id") == finding_id:
             finding = f
             break
     if finding is None:
+        for f in (scan.deep_scan_findings or []):
+            if f.get("id") == finding_id:
+                finding = f
+                is_deep = True
+                break
+    if finding is None:
         raise Http404("Finding not found")
 
     finding.pop("dismissed", None)
     finding.pop("dismiss_reason", None)
-    scan.vibe_score = recalculate_from_findings_dicts(scan.findings)
-    scan.save(update_fields=["findings", "vibe_score"])
+
+    scan.vibe_score = recalculate_with_deep_scan(
+        scan.findings, scan.deep_scan_findings or []
+    )
+    update_fields = ["vibe_score"]
+    if is_deep:
+        update_fields.append("deep_scan_findings")
+    else:
+        update_fields.append("findings")
+    scan.save(update_fields=update_fields)
     return render(request, "scanner/partials/results.html", {"scan": scan})
 
 

@@ -33,7 +33,9 @@
     <div class="space-y-1.5 text-xs text-slate-500 mb-4 leading-relaxed">
       {% if ds.delta is not None %}
         {% if ds.delta < 0 %}
-          <div>Vibe score upraveno z <span class="font-semibold text-slate-700">{{ ds.pre_score }}</span> na <span class="font-semibold text-slate-700">{{ ds.current_score }}</span> <span class="text-red-500 font-medium">({{ ds.delta }} bodů)</span></div>
+          <div>Vibe score upraveno z <span class="font-semibold text-slate-700">{{ ds.pre_score }}</span> na <span class="font-semibold text-slate-700">{{ ds.current_score }}</span> <span class="text-red-500 font-medium">({{ ds.delta }} bodů)</span>
+          {% if ds.current_score == 0 %}<span class="text-slate-400 text-[10px] block mt-0.5">Skóre dosáhlo minima 0 — některé penalizace už se nezapočítávají.</span>{% endif %}
+          </div>
         {% elif ds.delta == 0 %}
           <div>Skóre beze změny — vše už zachytil rychlý sken.</div>
         {% else %}
