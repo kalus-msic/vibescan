@@ -69,6 +69,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    mem_limit: 2g
     restart: unless-stopped
 
   caddy:
