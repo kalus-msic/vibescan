@@ -1,0 +1,41 @@
+{# Render jednoho non-OK findingu (Critical/Warning/Info) #}
+{# Vyžaduje: f (finding dict), severity_color (red|amber|blue), scan #}
+{% load scan_tags %}
+<div class="px-5 py-4 flex flex-col sm:flex-row gap-3">
+  <div class="w-7 h-7 rounded-lg bg-{{ severity_color }}-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+    {% if severity_color == "red" %}
+    <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+    {% elif severity_color == "amber" %}
+    <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg>
+    {% else %}
+    <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg>
+    {% endif %}
+  </div>
+  <div class="flex-1 min-w-0">
+    <div class="flex items-center gap-2 mb-0.5">
+      <span class="font-semibold text-sm text-slate-900">{{ f.title }}</span>
+      {% if f.id|slice:":3" == "lh-" %}<span class="text-[10px] uppercase tracking-wide bg-slate-100 text-slate-500 font-medium px-1.5 py-0.5 rounded">Lighthouse</span>{% endif %}
+      <span class="text-xs font-mono text-{{ severity_color }}-500">−{{ f|penalty }}</span>
+    </div>
+    <div class="text-xs text-slate-500 leading-relaxed">{{ f.description }}</div>
+    {% if f.detail %}<code class="text-xs bg-slate-100 px-1 rounded font-mono mt-1 block whitespace-pre-wrap break-all overflow-hidden">{{ f.detail }}</code>{% endif %}
+    {% if f.doc_url %}<a href="{{ f.doc_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-slate-600 mt-1 block">Dokumentace →</a>{% endif %}
+  </div>
+  <div class="flex sm:flex-col items-start sm:items-end gap-2 sm:gap-1 flex-shrink-0 mt-2 sm:mt-0.5">
+    <a href="{{ f.fix_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-blue-600 hover:underline font-semibold">Opravit →</a>
+    {% if not scan.ephemeral %}
+    <div class="relative" x-data="{ open: false, above: false }" x-init="$watch('open', v => { if(v){ let r=$el.getBoundingClientRect(); above=r.bottom+140>window.innerHeight } })">
+      <button @click="open = !open" class="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">Není relevantní</button>
+      <div x-show="open" x-cloak @click.outside="open = false" :class="above ? 'bottom-6' : 'top-6'" class="absolute right-0 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-52">
+        <form method="post" action="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-post="{% url 'scanner:dismiss_finding' scan.id f.id %}" hx-target="#scan-content" hx-swap="outerHTML">
+          {% csrf_token %}
+          <button type="submit" name="reason" value="not_applicable" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Nepoužívám tuto funkci</button>
+          <button type="submit" name="reason" value="solved_differently" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Řeším jinak</button>
+          <button type="submit" name="reason" value="false_positive" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Falešný poplach</button>
+          <button type="submit" name="reason" value="other" class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Jiný důvod</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>

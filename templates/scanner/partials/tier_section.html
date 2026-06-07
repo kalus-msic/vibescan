@@ -1,0 +1,81 @@
+{% load scan_tags %}
+{# Tier sekce s findings — zobrazí Kritické/Varování/Upozornění/V pořádku #}
+{# Vyžaduje proměnné: scan, tier_key, tier_findings (list), critical, warnings, info, ok #}
+{% with sub_color=tier_key|tier_color %}
+{% if tier_findings %}
+<section class="mb-6">
+  <div class="flex items-center gap-2 mb-3">
+    <div class="w-3 h-3 rounded-full bg-{{ sub_color }}-500"></div>
+    <h2 class="text-base font-bold text-slate-900">{{ tier_key|tier_label }}</h2>
+    <span class="text-xs text-slate-400">{{ tier_findings|non_ok_count }} nálezů</span>
+  </div>
+
+  <div class="space-y-3">
+
+    {# Critical #}
+    {% if critical %}
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm">
+      <div class="flex items-center gap-2 px-5 py-3 border-b border-slate-100 bg-red-50/50 rounded-t-2xl">
+        <div class="w-2 h-2 rounded-full bg-red-500"></div>
+        <span class="text-sm font-bold text-red-600">Kritické</span>
+        <span class="text-xs font-mono text-red-400 ml-auto">−{{ critical|total_penalty }}</span>
+      </div>
+      <div class="divide-y divide-slate-100">
+        {% for f in critical %}{% include "scanner/partials/_finding_row.html" with f=f severity_color="red" %}{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# Warning #}
+    {% if warnings %}
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm">
+      <div class="flex items-center gap-2 px-5 py-3 border-b border-slate-100 bg-amber-50/50 rounded-t-2xl">
+        <div class="w-2 h-2 rounded-full bg-amber-400"></div>
+        <span class="text-sm font-bold text-amber-600">Varování</span>
+        <span class="text-xs font-mono text-amber-400 ml-auto">−{{ warnings|total_penalty }}</span>
+      </div>
+      <div class="divide-y divide-slate-100">
+        {% for f in warnings %}{% include "scanner/partials/_finding_row.html" with f=f severity_color="amber" %}{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# Info #}
+    {% if info %}
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm">
+      <div class="flex items-center gap-2 px-5 py-3 border-b border-slate-100 bg-blue-50/50 rounded-t-2xl">
+        <div class="w-2 h-2 rounded-full bg-blue-400"></div>
+        <span class="text-sm font-bold text-blue-600">Upozornění</span>
+        <span class="text-xs font-mono text-blue-400 ml-auto">−{{ info|total_penalty }}</span>
+      </div>
+      <div class="divide-y divide-slate-100">
+        {% for f in info %}{% include "scanner/partials/_finding_row.html" with f=f severity_color="blue" %}{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# OK #}
+    {% if ok %}
+    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+      <div class="flex items-center gap-2 px-5 py-3 border-b border-slate-100 bg-green-50/50">
+        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+        <span class="text-sm font-bold text-green-600">V pořádku</span>
+      </div>
+      <div class="divide-y divide-slate-100">
+        {% for f in ok %}
+        <div class="px-5 py-3 flex items-center gap-2.5">
+          <svg class="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+          <span class="text-sm text-slate-600 font-medium flex-1">{{ f.title }}</span>
+          {% if f.fix_url and f.fix_url != "/guide/" %}
+            <a href="{{ f.fix_url }}" class="text-xs text-slate-400 hover:text-blue-600 transition-colors flex-shrink-0">Co testujeme →</a>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endif %}
+{% endwith %}
