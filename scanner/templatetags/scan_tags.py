@@ -160,3 +160,62 @@ def deep_scan_summary(scan):
         "new_total": new_total,
         "superseded_count": superseded_count,
     }
+
+
+from scanner.score import _resolve_tier, resolve_accessibility_tier_from_findings
+
+
+TIER_LABELS = {
+    "security": "Bezpečnost",
+    "legal":    "Právní",
+    "seo":      "SEO a výkon",
+}
+
+TIER_COLORS = {
+    "security": "red",
+    "legal":    "amber",
+    "seo":      "blue",
+}
+
+
+@register.filter
+def findings_by_tier(findings, accessibility_tier):
+    """Rozdělí findings do dict {'security': [...], 'legal': [...], 'seo': [...]}.
+
+    accessibility_tier: "legal" nebo "seo" — určuje, kam padnou accessibility findings.
+    """
+    out = {"security": [], "legal": [], "seo": []}
+    for f in findings:
+        cat = f.get("category", "")
+        tier = _resolve_tier(cat, accessibility_tier)
+        out[tier].append(f)
+    return out
+
+
+@register.filter
+def tier_label(tier_key):
+    """Vrátí český label tieru pro zobrazení."""
+    return TIER_LABELS.get(tier_key, tier_key)
+
+
+@register.filter
+def tier_color(tier_key):
+    """Vrátí Tailwind base color pro tier."""
+    return TIER_COLORS.get(tier_key, "slate")
+
+
+@register.simple_tag
+def has_breakdown(scan):
+    """True pokud scan má per-tier skóre (nový engine), False pro staré scany."""
+    return bool(getattr(scan, "score_breakdown_computed", False))
+
+
+@register.simple_tag
+def accessibility_tier_for_scan(scan):
+    """Vrátí 'legal' nebo 'seo' pro accessibility findings v daném scanu."""
+    fast = list(scan.findings or [])
+    deep = list(scan.deep_scan_findings or [])
+    return resolve_accessibility_tier_from_findings(
+        fast + deep,
+        classification=getattr(scan, "accessibility_classification", "auto"),
+    )
