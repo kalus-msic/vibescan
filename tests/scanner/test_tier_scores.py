@@ -236,3 +236,33 @@ class TestResolveAccessibilityTier:
         assert resolve_accessibility_tier_from_findings(
             findings, classification="auto"
         ) == "legal"
+
+
+from scanner.score import calculate_vibe_score
+
+
+class TestCalculateVibeScoreBackwardCompat:
+    def test_returns_weighted_average(self):
+        """calculate_vibe_score nově vrací vážený průměr per-tier skóre."""
+        # security: -12 (headers CRITICAL) → 88
+        # legal: nic → 100
+        # seo: -1 (seo INFO) → 99
+        # Overall: 0.5×88 + 0.3×100 + 0.2×99 = 44 + 30 + 19.8 = 93.8 → 94
+        findings = [
+            _f("headers", Severity.CRITICAL),
+            _f("seo", Severity.INFO),
+        ]
+        assert calculate_vibe_score(findings) == 94
+
+    def test_no_findings_returns_100(self):
+        assert calculate_vibe_score([]) == 100
+
+    def test_default_accessibility_tier_is_legal(self):
+        """Bez explicitního accessibility_tier předpokládá legal."""
+        findings = [_f("accessibility", Severity.WARNING)]
+        # accessibility → legal (default), cap 5
+        # legal: -5 → 95
+        # security: 100, seo: 100
+        # Overall: 0.5×100 + 0.3×95 + 0.2×100 = 50 + 28.5 + 20 = 98.5 → 98 nebo 99
+        # round(98.5) v Pythonu = 98 (banker's rounding)
+        assert calculate_vibe_score(findings) == 98

@@ -147,10 +147,20 @@ def _score_from_iter(items) -> int:
     return max(0, 100 - total)
 
 
-def calculate_vibe_score(findings: list[Finding]) -> int:
-    return _score_from_iter(
-        (f.category, SEVERITY_PENALTY[f.severity]) for f in findings
+def calculate_vibe_score(
+    findings: list[Finding],
+    accessibility_classification: str = "auto",
+) -> int:
+    """Vrátí vážený průměr per-tier skóre."""
+    findings_dicts = [
+        {"id": f.id, "severity": f.severity.value, "category": f.category}
+        for f in findings
+    ]
+    acc_tier = resolve_accessibility_tier_from_findings(
+        findings_dicts, classification=accessibility_classification
     )
+    tier_scores = calculate_tier_scores(findings, accessibility_tier=acc_tier)
+    return calculate_overall_score(tier_scores)
 
 
 SEVERITY_PENALTY_MAP = {s.value: p for s, p in SEVERITY_PENALTY.items()}
