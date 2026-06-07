@@ -74,6 +74,9 @@
     {% endwith %}
   </div>
 
+  {# Per-tier breakdown — viditelné jen pro nové scany #}
+  {% include "scanner/partials/score_breakdown.html" %}
+
   <!-- Disclaimer -->
   <div class="flex gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-4 text-xs text-slate-500 leading-relaxed">
     <svg class="w-4 h-4 flex-shrink-0 text-slate-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
@@ -135,8 +138,33 @@
   {% endif %}
   {% endif %}
 
-  {% with critical=active|by_severity:"critical" warnings=active|by_severity:"warning" infos=active|by_severity:"info" ok=active|by_severity:"ok" %}
   <div class="space-y-4">
+
+    {# Findings rozdělené do 3 tier-sekcí. Fallback: pokud breakdown_computed=False, ukáže se monolitický seznam jako dřív. #}
+    {% has_breakdown scan as breakdown_ok %}
+    {% accessibility_tier_for_scan scan as acc_tier %}
+    {% if breakdown_ok %}
+
+      {% with by_tier=active|findings_by_tier:acc_tier %}
+
+      {# Renderuj v pevném pořadí Bezpečnost → Právní → SEO #}
+      {% with tier_findings=by_tier.security %}
+        {% include "scanner/partials/tier_section.html" with tier_key="security" tier_findings=tier_findings critical=tier_findings|by_severity:"critical" warnings=tier_findings|by_severity:"warning" info=tier_findings|by_severity:"info" ok=tier_findings|by_severity:"ok" %}
+      {% endwith %}
+
+      {% with tier_findings=by_tier.legal %}
+        {% include "scanner/partials/tier_section.html" with tier_key="legal" tier_findings=tier_findings critical=tier_findings|by_severity:"critical" warnings=tier_findings|by_severity:"warning" info=tier_findings|by_severity:"info" ok=tier_findings|by_severity:"ok" %}
+      {% endwith %}
+
+      {% with tier_findings=by_tier.seo %}
+        {% include "scanner/partials/tier_section.html" with tier_key="seo" tier_findings=tier_findings critical=tier_findings|by_severity:"critical" warnings=tier_findings|by_severity:"warning" info=tier_findings|by_severity:"info" ok=tier_findings|by_severity:"ok" %}
+      {% endwith %}
+
+      {% endwith %}
+
+    {% else %}
+    {# Staré scany bez breakdown — zachovej původní layout #}
+    {% with critical=active|by_severity:"critical" warnings=active|by_severity:"warning" infos=active|by_severity:"info" ok=active|by_severity:"ok" %}
 
     <!-- V pořádku -->
     {% if ok %}
@@ -303,6 +331,9 @@
     </div>
     {% endif %}
 
+    {% endwith %}
+    {% endif %}
+
     <!-- Zamítnuté nálezy -->
     {% if dismissed %}
     <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm opacity-60">
@@ -355,7 +386,6 @@
     </div>
 
   </div>
-  {% endwith %}
   {% endwith %}
 
 </div>
