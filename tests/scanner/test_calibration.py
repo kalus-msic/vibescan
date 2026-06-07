@@ -571,50 +571,48 @@ class TestDynamicHostsExpansion:
 # --------------------------------------------------------------------------
 
 class TestModulePenaltyCap:
+    """Per-category cap se aplikuje i v tier kontextu."""
+
     def test_cookies_module_capped(self):
-        """3× WARNING v jedné kategorii nepřesáhne MODULE_PENALTY_CAP."""
+        """3× WARNING/cookies → cap 10, security=90, overall=95."""
         findings = [
             Finding(id="c1", title="t1", description="", severity=Severity.WARNING, category="cookies"),
             Finding(id="c2", title="t2", description="", severity=Severity.WARNING, category="cookies"),
             Finding(id="c3", title="t3", description="", severity=Severity.WARNING, category="cookies"),
         ]
-        # Naivní: 3×5 = -15. S capem (10): -10, score=90.
+        # cookies → security. 3×5=15, cap 10 → security=90. Overall: 0.5×90 + 0.3×100 + 0.2×100 = 95
         score = calculate_vibe_score(findings)
-        assert score >= 90, (
-            f"Cookies modul má být capped — 3× WARNING (-15) by mělo být max -10. "
-            f"Aktuální score: {score}"
-        )
+        assert score == 95
 
     def test_accessibility_info_capped(self):
-        """Mnoho INFO findings v a11y (drobné nedostatky) nemá zničit skóre."""
+        """8× INFO/accessibility → cap 5, legal tier (default auto bez statement = legal) → legal=95."""
         findings = [
             Finding(id=f"a{i}", title=f"t{i}", description="", severity=Severity.INFO, category="accessibility")
             for i in range(8)
         ]
-        # Naivní: 8×1 = -8. S capem (5): -5, score=95.
+        # accessibility → legal. 8×1=8, cap 5 → legal=95. Overall: 0.5×100 + 0.3×95 + 0.2×100 = 98.5 → 98
         score = calculate_vibe_score(findings)
-        assert score >= 95, (
-            f"8× a11y INFO (-8) by mělo být max -5. Aktuální score: {score}"
-        )
+        assert score == 98
 
     def test_cap_does_not_increase_score(self):
-        """Cap nesmí přidávat body — jen omezovat."""
+        """1× WARNING/cookies → security=95, overall=98."""
         findings = [
             Finding(id="x1", title="t", description="", severity=Severity.WARNING, category="cookies"),
         ]
+        # cookies → security -5 → 95. Overall: 0.5×95 + 0.3×100 + 0.2×100 = 97.5 → 98 (banker's)
         score = calculate_vibe_score(findings)
-        assert score == 95  # -5 (WARNING), bez cap effectu
+        assert score == 98
 
     def test_different_categories_sum_independently(self):
-        """Cap se aplikuje per kategorie, ne globálně."""
+        """3 WARNING v 3 kategoriích — všechny security tier."""
         findings = [
             Finding(id="c1", title="t", description="", severity=Severity.WARNING, category="cookies"),
             Finding(id="h1", title="t", description="", severity=Severity.WARNING, category="headers"),
             Finding(id="s1", title="t", description="", severity=Severity.WARNING, category="sri"),
         ]
-        # Každá kategorie -5 (pod capem). Total -15.
+        # security: 3×5=15 → 85. Overall: 0.5×85 + 0.3×100 + 0.2×100 = 92.5 → 92 (banker's)
         score = calculate_vibe_score(findings)
-        assert score == 85
+        assert score == 92
 
 
 # --------------------------------------------------------------------------
