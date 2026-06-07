@@ -6,7 +6,33 @@ from urllib.parse import urlparse
 from .models import ScanResult, ScanLog, ScanStatus
 from .forms import ScanForm
 from .tasks import run_scan, run_lighthouse_scan
-from scanner.score import ScoreCategory, recalculate_from_findings_dicts, recalculate_with_deep_scan
+from scanner.score import (
+    ScoreCategory,
+    recalculate_with_deep_scan_tiered,
+)
+
+
+def _apply_tiered_scores(scan):
+    """Recalc per-tier + overall scores, store on scan.
+
+    Returns list of fields the caller must include in scan.save(update_fields=...).
+    Caller is responsible for also adding findings/deep_scan_findings as needed.
+    """
+    deep = scan.deep_scan_findings if scan.deep_scan_status == "done" else []
+    result = recalculate_with_deep_scan_tiered(
+        scan.findings, deep or [],
+        classification=scan.accessibility_classification,
+    )
+    scan.score_security = result["security"]
+    scan.score_legal = result["legal"]
+    scan.score_seo = result["seo"]
+    scan.vibe_score = result["overall"]
+    scan.score_breakdown_computed = True
+    return [
+        "vibe_score",
+        "score_security", "score_legal", "score_seo",
+        "score_breakdown_computed",
+    ]
 
 
 def _session_key(group, request):
@@ -219,10 +245,7 @@ def dismiss_finding(request, pk, finding_id):
     finding["dismissed"] = True
     finding["dismiss_reason"] = reason
 
-    scan.vibe_score = recalculate_with_deep_scan(
-        scan.findings, scan.deep_scan_findings or []
-    )
-    update_fields = ["vibe_score"]
+    update_fields = _apply_tiered_scores(scan)
     if is_deep:
         update_fields.append("deep_scan_findings")
     else:
@@ -256,10 +279,7 @@ def restore_finding(request, pk, finding_id):
     finding.pop("dismissed", None)
     finding.pop("dismiss_reason", None)
 
-    scan.vibe_score = recalculate_with_deep_scan(
-        scan.findings, scan.deep_scan_findings or []
-    )
-    update_fields = ["vibe_score"]
+    update_fields = _apply_tiered_scores(scan)
     if is_deep:
         update_fields.append("deep_scan_findings")
     else:

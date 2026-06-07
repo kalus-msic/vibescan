@@ -66,6 +66,7 @@ from .score import (
     calculate_tier_scores,
     calculate_overall_score,
     recalculate_with_deep_scan,
+    recalculate_with_deep_scan_tiered,
     resolve_accessibility_tier_from_findings,
 )
 from .validator import validate_resolved_ip, validate_scan_url, SSRFError
@@ -281,5 +282,13 @@ def run_lighthouse_scan(self, scan_id: str):
     if scan.deep_scan_status == "done":
         if scan.pre_deep_scan_score is None:
             scan.pre_deep_scan_score = scan.vibe_score  # snapshot for "78 → 72 (−6)" tooltip
-        scan.vibe_score = recalculate_with_deep_scan(scan.findings, scan.deep_scan_findings)
+        result = recalculate_with_deep_scan_tiered(
+            scan.findings, scan.deep_scan_findings,
+            classification=scan.accessibility_classification,
+        )
+        scan.score_security = result["security"]
+        scan.score_legal = result["legal"]
+        scan.score_seo = result["seo"]
+        scan.vibe_score = result["overall"]
+        scan.score_breakdown_computed = True
     scan.save()

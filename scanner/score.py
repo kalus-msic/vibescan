@@ -241,3 +241,44 @@ def resolve_accessibility_tier_from_findings(
         return "legal"
     # bez accessibility statement findingu — konzervativně legal
     return "legal"
+
+
+def _findings_dicts_to_fake_findings(findings_dicts: list[dict]) -> list:
+    """Převede JSONField findings dicts na pseudo-objekty s .category a .severity."""
+    from dataclasses import dataclass
+
+    @dataclass
+    class _Fake:
+        category: str
+        severity: Severity
+
+    out = []
+    severity_by_value = {s.value: s for s in Severity}
+    for f in findings_dicts:
+        cat = f.get("category", "")
+        sev = severity_by_value.get(f.get("severity", ""), Severity.OK)
+        out.append(_Fake(category=cat, severity=sev))
+    return out
+
+
+def recalculate_with_deep_scan_tiered(
+    findings: list[dict],
+    deep_findings: list[dict],
+    classification: str = "auto",
+) -> dict[str, int]:
+    """Per-tier + overall skóre z fast + deep findings (s supersede + dismiss)."""
+    superseded = _superseded_ids(deep_findings)
+    active_fast_dicts = [
+        f for f in findings
+        if not f.get("dismissed") and f.get("id") not in superseded
+    ]
+    active_deep_dicts = [f for f in deep_findings if not f.get("dismissed")]
+    all_active_dicts = active_fast_dicts + active_deep_dicts
+
+    acc_tier = resolve_accessibility_tier_from_findings(
+        all_active_dicts, classification=classification
+    )
+    fake_findings = _findings_dicts_to_fake_findings(all_active_dicts)
+    tier_scores = calculate_tier_scores(fake_findings, accessibility_tier=acc_tier)
+    overall = calculate_overall_score(tier_scores)
+    return {**tier_scores, "overall": overall}

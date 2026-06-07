@@ -266,3 +266,66 @@ class TestCalculateVibeScoreBackwardCompat:
         # Overall: 0.5×100 + 0.3×95 + 0.2×100 = 50 + 28.5 + 20 = 98.5 → 98 nebo 99
         # round(98.5) v Pythonu = 98 (banker's rounding)
         assert calculate_vibe_score(findings) == 98
+
+
+from scanner.score import recalculate_with_deep_scan_tiered
+
+
+class TestRecalculateWithDeepScanTiered:
+    def test_returns_dict_with_all_tiers_and_overall(self):
+        result = recalculate_with_deep_scan_tiered([], [], classification="auto")
+        assert set(result.keys()) == {"security", "legal", "seo", "overall"}
+        assert result == {"security": 100, "legal": 100, "seo": 100, "overall": 100}
+
+    def test_security_finding_in_fast_findings(self):
+        findings = [
+            {"id": "missing-csp", "severity": "critical", "category": "headers"},
+        ]
+        result = recalculate_with_deep_scan_tiered(findings, [], classification="auto")
+        # security: -12 → 88. Overall: 0.5×88 + 0.3×100 + 0.2×100 = 44 + 30 + 20 = 94
+        assert result["security"] == 88
+        assert result["legal"] == 100
+        assert result["seo"] == 100
+        assert result["overall"] == 94
+
+    def test_lighthouse_perf_goes_to_seo(self):
+        deep = [{"id": "lh-lcp", "severity": "warning", "category": "performance"}]
+        result = recalculate_with_deep_scan_tiered([], deep, classification="auto")
+        # performance → seo tier. WARNING=5, perf cap=6 → seo=95.
+        # Overall: 0.5×100 + 0.3×100 + 0.2×95 = 50 + 30 + 19 = 99
+        assert result["seo"] == 95
+        assert result["overall"] == 99
+
+    def test_dismissed_finding_excluded(self):
+        findings = [
+            {"id": "x", "severity": "critical", "category": "headers", "dismissed": True},
+        ]
+        result = recalculate_with_deep_scan_tiered(findings, [], classification="auto")
+        assert result["overall"] == 100
+
+    def test_user_override_seo_routes_accessibility_to_seo(self):
+        findings = [
+            {"id": "missing-alt", "severity": "warning", "category": "accessibility"},
+        ]
+        result = recalculate_with_deep_scan_tiered(findings, [], classification="seo")
+        # accessibility → seo, WARNING=5, accessibility cap=5 → seo=95
+        # Overall: 0.5×100 + 0.3×100 + 0.2×95 = 99
+        assert result["seo"] == 95
+        assert result["legal"] == 100
+        assert result["overall"] == 99
+
+    def test_supersede_dedup_still_works(self):
+        """lh-document-title supersedes missing-title — original is excluded."""
+        findings = [
+            {"id": "missing-title", "severity": "warning", "category": "seo"},
+            {"id": "other-seo", "severity": "info", "category": "seo"},
+        ]
+        deep = [
+            {"id": "lh-document-title", "severity": "critical", "category": "seo"},
+        ]
+        result = recalculate_with_deep_scan_tiered(findings, deep, classification="auto")
+        # seo: missing-title vyloučen (superseded). Zbyl other-seo (-1) + lh-doc-title (-12, cap 3)
+        # → seo penalty min(1+12, 3) = 3 → seo=97
+        # Overall: 0.5×100 + 0.3×100 + 0.2×97 = 50+30+19.4 = 99.4 → 99
+        assert result["seo"] == 97
+        assert result["overall"] == 99
