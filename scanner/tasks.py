@@ -61,7 +61,13 @@ from .modules.legal import LegalScanner
 from .modules.dns_check import DNSScanner
 from .modules.seo import SEOScanner
 from .lighthouse_mapper import LighthouseMapper
-from .score import calculate_vibe_score, recalculate_with_deep_scan
+from .score import (
+    calculate_vibe_score,
+    calculate_tier_scores,
+    calculate_overall_score,
+    recalculate_with_deep_scan,
+    resolve_accessibility_tier_from_findings,
+)
 from .validator import validate_resolved_ip, validate_scan_url, SSRFError
 
 # Max response size we're willing to process (5 MB)
@@ -208,11 +214,24 @@ def run_scan(self, scan_id: str):
         progress[i]["status"] = "done"
 
     scan.findings = [f.to_dict() for f in all_findings]
-    scan.vibe_score = calculate_vibe_score(all_findings)
+    acc_tier = resolve_accessibility_tier_from_findings(
+        scan.findings, classification=scan.accessibility_classification
+    )
+    tier_scores = calculate_tier_scores(all_findings, accessibility_tier=acc_tier)
+    scan.score_security = tier_scores["security"]
+    scan.score_legal = tier_scores["legal"]
+    scan.score_seo = tier_scores["seo"]
+    scan.vibe_score = calculate_overall_score(tier_scores)
+    scan.score_breakdown_computed = True
     scan.status = ScanStatus.DONE
     scan.progress = progress
     scan.completed_at = datetime.now(timezone.utc)
-    scan.save(update_fields=["findings", "vibe_score", "status", "progress", "completed_at"])
+    scan.save(update_fields=[
+        "findings", "vibe_score",
+        "score_security", "score_legal", "score_seo",
+        "score_breakdown_computed",
+        "status", "progress", "completed_at",
+    ])
 
 
 @shared_task(bind=True, max_retries=0)
