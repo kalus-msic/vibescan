@@ -45,6 +45,19 @@ class ScanResult(models.Model):
     deep_scan_error = models.TextField(blank=True, default="")
     deep_scan_retry_count = models.PositiveSmallIntegerField(default=0)
     pre_deep_scan_score = models.IntegerField(null=True, blank=True)
+    score_security = models.PositiveSmallIntegerField(default=100)
+    score_legal = models.PositiveSmallIntegerField(default=100)
+    score_seo = models.PositiveSmallIntegerField(default=100)
+    accessibility_classification = models.CharField(
+        max_length=10,
+        choices=[
+            ("auto", "Automaticky"),
+            ("legal", "Spadá pod zákon"),
+            ("seo", "Nespadá pod zákon"),
+        ],
+        default="auto",
+    )
+    score_breakdown_computed = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["-created_at"]
