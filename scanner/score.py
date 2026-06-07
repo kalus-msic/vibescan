@@ -200,3 +200,34 @@ def recalculate_with_deep_scan(
     )
     import itertools
     return _score_from_iter(itertools.chain(active_fast, active_deep))
+
+
+def resolve_accessibility_tier_from_findings(
+    findings: list[dict] | list[Finding],
+    classification: str = "auto",
+) -> str:
+    """Vrátí 'legal' nebo 'seo' pro accessibility findings.
+
+    classification:
+        "legal" — uživatelský override, vždy legal
+        "seo"   — uživatelský override, vždy seo
+        "auto"  — auto-detekce podle accessibility findings:
+                  missing-accessibility-statement INFO → seo (mimo EAA)
+                  jinak → legal (konzervativně, web spadá pod zákon)
+    """
+    if classification == "legal":
+        return "legal"
+    if classification == "seo":
+        return "seo"
+    # auto: prozkoumej findings
+    for f in findings:
+        fid = f.get("id", "") if isinstance(f, dict) else f.id
+        if fid != "missing-accessibility-statement":
+            continue
+        severity = f.get("severity", "") if isinstance(f, dict) else f.severity.value
+        if severity == "info":
+            return "seo"
+        # warning / critical → covered sector
+        return "legal"
+    # bez accessibility statement findingu — konzervativně legal
+    return "legal"

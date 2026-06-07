@@ -175,3 +175,64 @@ class TestCalculateOverallScore:
         scores = {"security": 72, "legal": 85, "seo": 60}
         result = calculate_overall_score(scores)
         assert isinstance(result, int)
+
+
+from scanner.score import resolve_accessibility_tier_from_findings
+
+
+class TestResolveAccessibilityTier:
+    def test_user_override_legal_wins(self):
+        findings = []  # bez findings — user řekl legal
+        assert resolve_accessibility_tier_from_findings(
+            findings, classification="legal"
+        ) == "legal"
+
+    def test_user_override_seo_wins(self):
+        findings = [
+            {"id": "missing-accessibility-statement", "severity": "warning",
+             "category": "accessibility"},
+        ]
+        # I když auto-detekce by řekla legal (severity=warning), user override = seo
+        assert resolve_accessibility_tier_from_findings(
+            findings, classification="seo"
+        ) == "seo"
+
+    def test_auto_legal_when_statement_warning(self):
+        """missing-accessibility-statement WARNING = covered sector → legal."""
+        findings = [
+            {"id": "missing-accessibility-statement", "severity": "warning",
+             "category": "accessibility"},
+        ]
+        assert resolve_accessibility_tier_from_findings(
+            findings, classification="auto"
+        ) == "legal"
+
+    def test_auto_seo_when_statement_info(self):
+        """missing-accessibility-statement INFO = non-covered → seo."""
+        findings = [
+            {"id": "missing-accessibility-statement", "severity": "info",
+             "category": "accessibility"},
+        ]
+        assert resolve_accessibility_tier_from_findings(
+            findings, classification="auto"
+        ) == "seo"
+
+    def test_auto_legal_when_statement_ok(self):
+        """accessibility-statement-ok znamená, že web má statement.
+        Pokud má statement, předpokládáme covered → legal (konzervativní default)."""
+        findings = [
+            {"id": "accessibility-statement-ok", "severity": "ok",
+             "category": "accessibility"},
+        ]
+        assert resolve_accessibility_tier_from_findings(
+            findings, classification="auto"
+        ) == "legal"
+
+    def test_auto_default_legal_when_no_accessibility_finding(self):
+        """Bez jakéhokoli accessibility findingu → konzervativně legal."""
+        findings = [
+            {"id": "missing-csp", "severity": "critical", "category": "headers"},
+        ]
+        assert resolve_accessibility_tier_from_findings(
+            findings, classification="auto"
+        ) == "legal"
