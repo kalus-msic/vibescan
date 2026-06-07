@@ -32,6 +32,36 @@ MODULE_PENALTY_CAP = {
 }
 
 
+CATEGORY_TO_TIER: dict[str, str] = {
+    # Bezpečnost (Tier 1, váha 50%)
+    "headers":        "security",
+    "cookies":        "security",
+    "dns":            "security",
+    "forms":          "security",
+    "tech":           "security",
+    "cors":           "security",
+    "sri":            "security",
+    "secrets":        "security",
+    "ssl_check":      "security",
+    "tracking":       "security",
+    "html":           "security",
+    "best-practices": "security",
+    # Právní (Tier 2, váha 30%)
+    "legal": "legal",
+    # SEO + výkon (Tier 3, váha 20%)
+    "seo":         "seo",
+    "meta":        "seo",
+    "performance": "seo",
+    # accessibility: routed dynamically via _resolve_tier()
+}
+
+TIER_WEIGHTS: dict[str, float] = {
+    "security": 0.5,
+    "legal":    0.3,
+    "seo":      0.2,
+}
+
+
 class ScoreCategory(str, Enum):
     EXCELLENT = "Výborný"
     GOOD = "Dobrý"
