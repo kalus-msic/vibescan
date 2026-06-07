@@ -62,6 +62,47 @@ TIER_WEIGHTS: dict[str, float] = {
 }
 
 
+def _resolve_tier(category: str, accessibility_tier: str) -> str:
+    """Vrátí tier ('security'|'legal'|'seo') pro danou kategorii.
+
+    accessibility category je routed dynamicky podle accessibility_tier
+    (uživatelská klasifikace nebo auto-detekce).
+    """
+    if category == "accessibility":
+        return accessibility_tier
+    return CATEGORY_TO_TIER.get(category, "seo")
+
+
+def calculate_tier_scores(
+    findings: list[Finding],
+    accessibility_tier: str = "legal",
+) -> dict[str, int]:
+    """Per-tier skóre 0-100 pro 'security', 'legal', 'seo'.
+
+    Aplikuje MODULE_PENALTY_CAP per kategorie v rámci tieru.
+    """
+    by_tier_category: dict[str, dict[str, int]] = {
+        "security": {}, "legal": {}, "seo": {},
+    }
+    for f in findings:
+        tier = _resolve_tier(f.category, accessibility_tier)
+        penalty = SEVERITY_PENALTY[f.severity]
+        by_tier_category[tier][f.category] = (
+            by_tier_category[tier].get(f.category, 0) + penalty
+        )
+
+    out: dict[str, int] = {}
+    for tier, cats in by_tier_category.items():
+        total = 0
+        for category, penalty in cats.items():
+            cap = MODULE_PENALTY_CAP.get(category)
+            if cap is not None:
+                penalty = min(penalty, cap)
+            total += penalty
+        out[tier] = max(0, 100 - total)
+    return out
+
+
 class ScoreCategory(str, Enum):
     EXCELLENT = "Výborný"
     GOOD = "Dobrý"
