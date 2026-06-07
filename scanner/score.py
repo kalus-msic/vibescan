@@ -103,6 +103,11 @@ def calculate_tier_scores(
     return out
 
 
+def calculate_overall_score(tier_scores: dict[str, int]) -> int:
+    """Vážený průměr per-tier skóre podle TIER_WEIGHTS, zaokrouhleno."""
+    return round(sum(tier_scores[t] * w for t, w in TIER_WEIGHTS.items()))
+
+
 class ScoreCategory(str, Enum):
     EXCELLENT = "Výborný"
     GOOD = "Dobrý"

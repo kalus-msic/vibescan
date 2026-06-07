@@ -137,3 +137,41 @@ class TestCalculateTierScores:
         assert scores["security"] == 88  # 100-12
         assert scores["legal"] == 91     # 100 - 4 (legal cap) - 5 (accessibility cap)
         assert scores["seo"] == 99       # 100-1
+
+
+from scanner.score import calculate_overall_score
+
+
+class TestCalculateOverallScore:
+    def test_all_100_equals_100(self):
+        scores = {"security": 100, "legal": 100, "seo": 100}
+        assert calculate_overall_score(scores) == 100
+
+    def test_all_0_equals_0(self):
+        scores = {"security": 0, "legal": 0, "seo": 0}
+        assert calculate_overall_score(scores) == 0
+
+    def test_weighted_average_security_only(self):
+        """Bezpečnost má váhu 50%, ostatní 100 → 0.5×0 + 0.3×100 + 0.2×100 = 50."""
+        scores = {"security": 0, "legal": 100, "seo": 100}
+        assert calculate_overall_score(scores) == 50
+
+    def test_weighted_average_legal_only(self):
+        """Právní má váhu 30%, ostatní 100 → 0.5×100 + 0.3×0 + 0.2×100 = 70."""
+        scores = {"security": 100, "legal": 0, "seo": 100}
+        assert calculate_overall_score(scores) == 70
+
+    def test_weighted_average_seo_only(self):
+        """SEO má váhu 20%, ostatní 100 → 0.5×100 + 0.3×100 + 0.2×0 = 80."""
+        scores = {"security": 100, "legal": 100, "seo": 0}
+        assert calculate_overall_score(scores) == 80
+
+    def test_typical_mixed(self):
+        """0.5×72 + 0.3×85 + 0.2×60 = 36 + 25.5 + 12 = 73.5 → 74."""
+        scores = {"security": 72, "legal": 85, "seo": 60}
+        assert calculate_overall_score(scores) == 74
+
+    def test_returns_int(self):
+        scores = {"security": 72, "legal": 85, "seo": 60}
+        result = calculate_overall_score(scores)
+        assert isinstance(result, int)
