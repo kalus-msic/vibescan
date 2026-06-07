@@ -288,6 +288,25 @@ def restore_finding(request, pk, finding_id):
     return render(request, "scanner/partials/results.html", {"scan": scan})
 
 
+VALID_ACCESSIBILITY_CLASSIFICATIONS = {"auto", "legal", "seo"}
+
+
+@require_http_methods(["POST"])
+def set_accessibility_classification(request, pk):
+    scan = get_object_or_404(
+        ScanResult, pk=pk, status=ScanStatus.DONE, ephemeral=False
+    )
+    classification = request.POST.get("classification", "")
+    if classification not in VALID_ACCESSIBILITY_CLASSIFICATIONS:
+        return HttpResponseBadRequest("Invalid classification")
+
+    scan.accessibility_classification = classification
+    update_fields = _apply_tiered_scores(scan)
+    update_fields.append("accessibility_classification")
+    scan.save(update_fields=update_fields)
+    return render(request, "scanner/partials/results.html", {"scan": scan})
+
+
 def deep_scan_status(request, pk):
     scan = get_object_or_404(ScanResult, pk=pk)
     # Terminal states need a FULL refresh — vibe score, severity counts, finding
