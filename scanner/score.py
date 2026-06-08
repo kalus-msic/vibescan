@@ -9,27 +9,11 @@ SEVERITY_PENALTY = {
     Severity.OK: 0,
 }
 
-# Maximální penalty per kategorie. Brání tomu, aby kumulace drobných nálezů
-# v jediném modulu dominovala skóre (např. 1 cookie bez 3 flagů = -24).
-MODULE_PENALTY_CAP = {
-    "cookies": 10,         # 2× WARNING
-    "accessibility": 5,    # 5× INFO (kumulace drobností)
-    "sri": 6,              # 1× WARNING + 1× INFO
-    "seo": 3,              # SEO nemá ovlivnit bezpečnostní skóre víc
-    "legal": 4,
-    "headers": 15,         # CSP + HSTS + frame = až -36, cap pro férovost
-    "dns": 10,
-    "html": 5,
-    "meta": 5,
-    "forms": 10,
-    "tech": 15,
-    "cors": 12,            # wildcard + credentials = CRITICAL, ostatní méně
-    # Lighthouse kategorie — bezpečnostní skóre by performance/UX/SEO nemělo
-    # převálcovat. Nálezy se stále zobrazují, jen jejich příspěvek do vibe
-    # score je limitovaný.
-    "performance": 6,      # LCP/CLS/TBT — primárně UX, max 1× CRITICAL ekvivalent
-    "best-practices": 10,  # CSP, vulnerable libs, mixed content — částečně bezpečnostní
-}
+# Floor per tier — žádný tier nespadne pod tuto hodnotu. Chrání proti tomu,
+# aby Lighthouse-heavy weby zobrazily 0/100 v jednom tieru (psychologicky
+# kontraproduktivní). Per-category caps byly zrušeny — tier weights samy
+# brání tomu, aby jeden modul dominoval celkové skóre.
+TIER_FLOOR = 30
 
 
 CATEGORY_TO_TIER: dict[str, str] = {
@@ -77,30 +61,16 @@ def calculate_tier_scores(
     findings: list[Finding],
     accessibility_tier: str = "legal",
 ) -> dict[str, int]:
-    """Per-tier skóre 0-100 pro 'security', 'legal', 'seo'.
+    """Per-tier skóre TIER_FLOOR–100 pro 'security', 'legal', 'seo'.
 
-    Aplikuje MODULE_PENALTY_CAP per kategorie v rámci tieru.
+    Sečte raw severity penalty per tier a aplikuje floor — žádný tier
+    nespadne pod TIER_FLOOR (30).
     """
-    by_tier_category: dict[str, dict[str, int]] = {
-        "security": {}, "legal": {}, "seo": {},
-    }
+    totals: dict[str, int] = {"security": 0, "legal": 0, "seo": 0}
     for f in findings:
         tier = _resolve_tier(f.category, accessibility_tier)
-        penalty = SEVERITY_PENALTY[f.severity]
-        by_tier_category[tier][f.category] = (
-            by_tier_category[tier].get(f.category, 0) + penalty
-        )
-
-    out: dict[str, int] = {}
-    for tier, cats in by_tier_category.items():
-        total = 0
-        for category, penalty in cats.items():
-            cap = MODULE_PENALTY_CAP.get(category)
-            if cap is not None:
-                penalty = min(penalty, cap)
-            total += penalty
-        out[tier] = max(0, 100 - total)
-    return out
+        totals[tier] += SEVERITY_PENALTY[f.severity]
+    return {tier: max(TIER_FLOOR, 100 - total) for tier, total in totals.items()}
 
 
 def calculate_overall_score(tier_scores: dict[str, int]) -> int:
@@ -135,15 +105,12 @@ class ScoreCategory(str, Enum):
 
 
 def _score_from_iter(items) -> int:
-    by_category: dict[str, int] = {}
-    for category, penalty in items:
-        by_category[category] = by_category.get(category, 0) + penalty
-    total = 0
-    for category, penalty in by_category.items():
-        cap = MODULE_PENALTY_CAP.get(category)
-        if cap is not None:
-            penalty = min(penalty, cap)
-        total += penalty
+    """Legacy single-score helper. Sečte všechny penalty bez per-category capů.
+
+    Používá ho recalculate_from_findings_dicts a recalculate_with_deep_scan
+    (backward-compat API). Nový tiered engine používá calculate_tier_scores.
+    """
+    total = sum(penalty for _, penalty in items)
     return max(0, 100 - total)
 
 

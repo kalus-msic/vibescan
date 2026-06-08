@@ -73,7 +73,7 @@ class TestCalculateTierScores:
     def test_security_finding_only_affects_security(self):
         findings = [_f("headers", Severity.CRITICAL)]
         scores = calculate_tier_scores(findings, accessibility_tier="legal")
-        # CRITICAL=12, headers cap=15, pod capem
+        # CRITICAL=12 raw
         assert scores["security"] == 88
         assert scores["legal"] == 100
         assert scores["seo"] == 100
@@ -81,23 +81,23 @@ class TestCalculateTierScores:
     def test_legal_finding_only_affects_legal(self):
         findings = [_f("legal", Severity.WARNING)]
         scores = calculate_tier_scores(findings, accessibility_tier="legal")
-        # WARNING=5, legal cap=4, capped na 4
+        # WARNING=5 raw, žádný cap
         assert scores["security"] == 100
-        assert scores["legal"] == 96
+        assert scores["legal"] == 95
         assert scores["seo"] == 100
 
     def test_seo_finding_only_affects_seo(self):
         findings = [_f("seo", Severity.CRITICAL)]
         scores = calculate_tier_scores(findings, accessibility_tier="legal")
-        # CRITICAL=12, seo cap=3, capped na 3
+        # CRITICAL=12 raw, žádný cap
         assert scores["security"] == 100
         assert scores["legal"] == 100
-        assert scores["seo"] == 97
+        assert scores["seo"] == 88
 
     def test_accessibility_with_legal_tier_affects_legal(self):
         findings = [_f("accessibility", Severity.WARNING)]
         scores = calculate_tier_scores(findings, accessibility_tier="legal")
-        # WARNING=5, accessibility cap=5, capped na 5
+        # WARNING=5 raw
         assert scores["security"] == 100
         assert scores["legal"] == 95
         assert scores["seo"] == 100
@@ -109,33 +109,34 @@ class TestCalculateTierScores:
         assert scores["legal"] == 100
         assert scores["seo"] == 95
 
-    def test_per_category_cap_applied_within_tier(self):
-        """Cap se aplikuje per kategorie i v tier kontextu."""
+    def test_no_per_category_cap(self):
+        """Per-category caps byly zrušeny — surová suma severit se započítá."""
         findings = [
             _f("cookies", Severity.WARNING),
             _f("cookies", Severity.WARNING),
             _f("cookies", Severity.WARNING),
         ]
         scores = calculate_tier_scores(findings, accessibility_tier="legal")
-        # 3×5=15 raw, cookies cap=10 → security -10 → 90
-        assert scores["security"] == 90
+        # 3×5=15 raw → security 85
+        assert scores["security"] == 85
 
-    def test_tier_score_floors_at_zero(self):
+    def test_tier_score_floors_at_30(self):
+        """TIER_FLOOR=30 — i katastrofický tier nespadne pod 30."""
         findings = [_f("secrets", Severity.CRITICAL)] * 20
         scores = calculate_tier_scores(findings, accessibility_tier="legal")
-        # secrets nemá cap → 20×12=240, floor 0
-        assert scores["security"] == 0
+        # 20×12=240 raw → floor 30
+        assert scores["security"] == 30
 
     def test_mixed_findings_split_correctly(self):
         findings = [
             _f("headers", Severity.CRITICAL),     # security -12
-            _f("legal", Severity.WARNING),        # legal -5 → cap 4
+            _f("legal", Severity.WARNING),        # legal -5
             _f("seo", Severity.INFO),             # seo -1
-            _f("accessibility", Severity.WARNING),  # legal -5 (cap 5)
+            _f("accessibility", Severity.WARNING),  # legal -5
         ]
         scores = calculate_tier_scores(findings, accessibility_tier="legal")
         assert scores["security"] == 88  # 100-12
-        assert scores["legal"] == 91     # 100 - 4 (legal cap) - 5 (accessibility cap)
+        assert scores["legal"] == 90     # 100 - 5 (legal) - 5 (accessibility)
         assert scores["seo"] == 99       # 100-1
 
 
@@ -291,7 +292,7 @@ class TestRecalculateWithDeepScanTiered:
     def test_lighthouse_perf_goes_to_seo(self):
         deep = [{"id": "lh-lcp", "severity": "warning", "category": "performance"}]
         result = recalculate_with_deep_scan_tiered([], deep, classification="auto")
-        # performance → seo tier. WARNING=5, perf cap=6 → seo=95.
+        # performance → seo tier. WARNING=5, žádný cap → seo=95.
         # Overall: 0.5×100 + 0.3×100 + 0.2×95 = 50 + 30 + 19 = 99
         assert result["seo"] == 95
         assert result["overall"] == 99
@@ -308,7 +309,7 @@ class TestRecalculateWithDeepScanTiered:
             {"id": "missing-alt", "severity": "warning", "category": "accessibility"},
         ]
         result = recalculate_with_deep_scan_tiered(findings, [], classification="seo")
-        # accessibility → seo, WARNING=5, accessibility cap=5 → seo=95
+        # accessibility → seo, WARNING=5, žádný cap → seo=95
         # Overall: 0.5×100 + 0.3×100 + 0.2×95 = 99
         assert result["seo"] == 95
         assert result["legal"] == 100
@@ -324,8 +325,8 @@ class TestRecalculateWithDeepScanTiered:
             {"id": "lh-document-title", "severity": "critical", "category": "seo"},
         ]
         result = recalculate_with_deep_scan_tiered(findings, deep, classification="auto")
-        # seo: missing-title vyloučen (superseded). Zbyl other-seo (-1) + lh-doc-title (-12, cap 3)
-        # → seo penalty min(1+12, 3) = 3 → seo=97
-        # Overall: 0.5×100 + 0.3×100 + 0.2×97 = 50+30+19.4 = 99.4 → 99
-        assert result["seo"] == 97
-        assert result["overall"] == 99
+        # seo: missing-title vyloučen (superseded). Zbyl other-seo (-1) + lh-doc-title (-12)
+        # → seo penalty = 13 → seo=87
+        # Overall: 0.5×100 + 0.3×100 + 0.2×87 = 50+30+17.4 = 97.4 → 97
+        assert result["seo"] == 87
+        assert result["overall"] == 97

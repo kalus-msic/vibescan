@@ -45,6 +45,56 @@ def _is_bot_challenge(html: str) -> bool:
         return True
     return any(marker in html for marker in _CHALLENGE_BODY_MARKERS)
 
+
+# Heuristika pro detekci error-page / soft-block (HTTP 200, ale obsah je
+# chybová stránka — facebook.com vrací "Sorry, something went wrong",
+# některé weby vrací 200 s "404 Not found" obsahem apod.).
+_ERROR_TITLE_PATTERNS = re.compile(
+    r"<title[^>]*>\s*("
+    r"error|chyba|"
+    r"4\d\d(?:\s|[—\-:]|$)|5\d\d(?:\s|[—\-:]|$)|"
+    r"not found|nenalezeno|"
+    r"forbidden|zakázán|"
+    r"access denied|přístup odepřen|"
+    r"unavailable|nedostupné|"
+    r"blocked|zablokováno|"
+    r"sorry"
+    r")",
+    re.IGNORECASE,
+)
+_ERROR_BODY_MARKERS = (
+    "sorry, something went wrong",
+    "page not found",
+    "stránka nenalezena",
+    "this page isn't available",
+    "you don't have permission",
+    "an error has occurred",
+)
+
+
+def _is_likely_error_page(html: str, body_size: int) -> bool:
+    """Heuristika: detekuje error/soft-block stránku vrácenou s HTTP 200.
+
+    Pravidla (potřebné aspoň 2 signály):
+      - title obsahuje error/4xx/5xx/not found/sorry/...
+      - body obsahuje "sorry, something went wrong" / "page not found" / ...
+      - body je velmi malý (< 5 KB) — error stránky bývají minimální
+      - HTML nemá <nav> ani <main> (chybí typická struktura webu)
+    """
+    if not html:
+        return False
+    signals = 0
+    if _ERROR_TITLE_PATTERNS.search(html):
+        signals += 1
+    lower = html.lower()
+    if any(marker in lower for marker in _ERROR_BODY_MARKERS):
+        signals += 1
+    if body_size < 5 * 1024:
+        signals += 1
+    if "<nav" not in lower and "<main" not in lower:
+        signals += 1
+    return signals >= 2
+
 from .models import ScanResult, ScanStatus
 from .modules.headers import HeaderScanner
 from .modules.ssl_check import SSLScanner
@@ -194,6 +244,19 @@ def run_scan(self, scan_id: str):
         )
         return
 
+    # Heuristika error-page (HTTP 200 + chybová stránka). Skóre počítáme
+    # dál, ale uložíme varování — UI ho zobrazí jako banner nad výsledky.
+    if is_html and _is_likely_error_page(
+        response.text or "",
+        len(response.content or b""),
+    ):
+        scan.scan_warning = (
+            "Cílová stránka vypadá jako chybová stránka nebo blokování skeneru "
+            "(HTTP 200, ale obsah je Sorry / Error / 4xx / minimální HTML). "
+            "Skóre bylo přesto spočteno, ale nemusí odpovídat reálnému stavu webu — "
+            "zkuste sken zopakovat nebo zkontrolujte URL."
+        )
+
     all_findings = []
     progress = _initial_progress()
 
@@ -232,6 +295,7 @@ def run_scan(self, scan_id: str):
         "score_security", "score_legal", "score_seo",
         "score_breakdown_computed",
         "status", "progress", "completed_at",
+        "scan_warning",
     ])
 
 

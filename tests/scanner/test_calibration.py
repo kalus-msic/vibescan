@@ -560,41 +560,40 @@ class TestDynamicHostsExpansion:
 
 
 # --------------------------------------------------------------------------
-# Fix #11 — Per-module penalty cap
+# Fix #11 — Tier floor (původně per-module penalty cap)
 #
 # Empirie: ČSOB má 1 cookie TS7e63a684029 bez Secure / HttpOnly / SameSite.
-# Aktuálně: 3 separátní WARNINGs = -24 bodů za JEDNU cookie. Plus dalších
-# 4× cookies bez SameSite (-8) — celkem cookies modul: -32.
-#
-# Module cap zabrání tomu, aby jediný špatně nastavený detail dominoval
-# celkovému skóre.
+# Per-category caps byly zrušeny (2026-06-08) — místo nich TIER_FLOOR=30
+# brání tomu, aby tier spadl pod 30/100. Tier weights samy brání tomu, aby
+# jeden modul dominoval celkové skóre. Cookies dedup (per cookie name)
+# řeší 3× WARNING za 1 cookie samostatně v scanner/modules/cookies.py.
 # --------------------------------------------------------------------------
 
-class TestModulePenaltyCap:
-    """Per-category cap se aplikuje i v tier kontextu."""
+class TestTierFloorAndSumming:
+    """Tier floor + suma raw severit (bez per-category caps)."""
 
-    def test_cookies_module_capped(self):
-        """3× WARNING/cookies → cap 10, security=90, overall=95."""
+    def test_three_warning_cookies_summed_raw(self):
+        """3× WARNING/cookies → security=85 (15 raw, žádný cap), overall=92."""
         findings = [
             Finding(id="c1", title="t1", description="", severity=Severity.WARNING, category="cookies"),
             Finding(id="c2", title="t2", description="", severity=Severity.WARNING, category="cookies"),
             Finding(id="c3", title="t3", description="", severity=Severity.WARNING, category="cookies"),
         ]
-        # cookies → security. 3×5=15, cap 10 → security=90. Overall: 0.5×90 + 0.3×100 + 0.2×100 = 95
+        # cookies → security. 3×5=15 raw → security=85. Overall: 0.5×85 + 0.3×100 + 0.2×100 = 92.5 → 92 (banker's)
         score = calculate_vibe_score(findings)
-        assert score == 95
+        assert score == 92
 
-    def test_accessibility_info_capped(self):
-        """8× INFO/accessibility → cap 5, legal tier (default auto bez statement = legal) → legal=95."""
+    def test_accessibility_info_summed_raw(self):
+        """8× INFO/accessibility → legal=92 (8 raw, žádný cap)."""
         findings = [
             Finding(id=f"a{i}", title=f"t{i}", description="", severity=Severity.INFO, category="accessibility")
             for i in range(8)
         ]
-        # accessibility → legal. 8×1=8, cap 5 → legal=95. Overall: 0.5×100 + 0.3×95 + 0.2×100 = 98.5 → 98
+        # accessibility → legal. 8×1=8 raw → legal=92. Overall: 0.5×100 + 0.3×92 + 0.2×100 = 97.6 → 98
         score = calculate_vibe_score(findings)
         assert score == 98
 
-    def test_cap_does_not_increase_score(self):
+    def test_single_warning_does_not_inflate(self):
         """1× WARNING/cookies → security=95, overall=98."""
         findings = [
             Finding(id="x1", title="t", description="", severity=Severity.WARNING, category="cookies"),
@@ -613,6 +612,16 @@ class TestModulePenaltyCap:
         # security: 3×5=15 → 85. Overall: 0.5×85 + 0.3×100 + 0.2×100 = 92.5 → 92 (banker's)
         score = calculate_vibe_score(findings)
         assert score == 92
+
+    def test_tier_floor_prevents_zero(self):
+        """20× CRITICAL/secrets → security floor 30 (nikdy pod)."""
+        findings = [
+            Finding(id=f"s{i}", title="t", description="", severity=Severity.CRITICAL, category="secrets")
+            for i in range(20)
+        ]
+        # security tier raw -240, floor 30 → security=30. Overall: 0.5×30 + 0.3×100 + 0.2×100 = 65
+        score = calculate_vibe_score(findings)
+        assert score == 65
 
 
 # --------------------------------------------------------------------------

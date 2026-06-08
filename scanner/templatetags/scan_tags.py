@@ -162,13 +162,19 @@ def deep_scan_summary(scan):
     }
 
 
-from scanner.score import _resolve_tier, resolve_accessibility_tier_from_findings
+from scanner.score import _resolve_tier, resolve_accessibility_tier_from_findings, TIER_FLOOR
 
 
 TIER_LABELS = {
     "security": "Bezpečnost",
     "legal":    "Právní",
     "seo":      "SEO a výkon",
+}
+
+TIER_SCORE_FIELD = {
+    "security": "score_security",
+    "legal":    "score_legal",
+    "seo":      "score_seo",
 }
 
 TIER_COLORS = {
@@ -227,3 +233,25 @@ def dict_get(d, key):
     if not d:
         return []
     return d.get(key, []) if hasattr(d, "get") else []
+
+
+@register.simple_tag
+def tier_penalty_info(scan, tier_key, tier_findings):
+    """Vrátí dict s {'raw': N, 'effective': N, 'floored': bool} pro tier hlavičku.
+
+    raw = surový součet severit (informativní, koresponduje s -X čísly u findings)
+    effective = reálná penalizace započtená do score (100 - score)
+    floored = True pokud byl aplikován TIER_FLOOR a effective < raw
+
+    Pomocí toho UI zobrazí "surová: -49 · započteno: -70 (floor)" když cap.
+    """
+    raw = sum(SEVERITY_PENALTY_MAP.get(f.get("severity", ""), 0) for f in tier_findings)
+    score_field = TIER_SCORE_FIELD.get(tier_key)
+    score = getattr(scan, score_field, 100) if score_field else 100
+    effective = 100 - (score or 0)
+    return {
+        "raw": raw,
+        "effective": effective,
+        "floored": effective < raw,
+        "floor": TIER_FLOOR,
+    }

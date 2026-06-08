@@ -3,11 +3,18 @@
 {# Vyžaduje proměnné: scan, tier_key, tier_findings (list), critical, warnings, info, ok #}
 {% with sub_color=tier_key|tier_color %}
 {% if tier_findings %}
+{% tier_penalty_info scan tier_key tier_findings as tinfo %}
 <section class="mb-6">
-  <div class="flex items-center gap-2 mb-3">
+  <div class="flex items-center gap-2 mb-3 flex-wrap">
     <div class="w-3 h-3 rounded-full bg-{{ sub_color }}-500"></div>
     <h2 class="text-base font-bold text-slate-900">{{ tier_key|tier_label }}</h2>
     <span class="text-xs text-slate-400">{{ tier_findings|non_ok_count }} nálezů</span>
+    {% if tinfo.floored %}
+    <span class="text-[10px] font-mono text-slate-500 bg-slate-100 rounded px-1.5 py-0.5"
+          title="Surová penalizace −{{ tinfo.raw }} bodů, ale tier nikdy nespadne pod {{ tinfo.floor }}/100 — započteno −{{ tinfo.effective }}.">
+      surová −{{ tinfo.raw }} · floor {{ tinfo.floor }}/100
+    </span>
+    {% endif %}
   </div>
 
   <div class="space-y-3">

