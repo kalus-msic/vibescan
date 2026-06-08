@@ -31,7 +31,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-RUN addgroup --system app && adduser --system --ingroup app --home /home/app --create-home app
+RUN getent group app || addgroup --system app && \
+    getent passwd app || adduser --system --ingroup app --home /home/app --create-home app
 
 COPY . .
 
