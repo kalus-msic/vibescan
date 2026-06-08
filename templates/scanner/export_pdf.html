@@ -27,6 +27,18 @@
   .bg-amber { background: #fffbeb; color: #d97706; }
   .bg-red { background: #fef2f2; color: #dc2626; }
 
+  .tier-breakdown { display: flex; justify-content: center; gap: 12px; margin: 16px 0 24px 0; }
+  .tier-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 16px; text-align: center; min-width: 110px; }
+  .tier-card .tier-label { font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+  .tier-card .tier-weight { font-size: 8px; color: #94a3b8; font-family: monospace; margin-left: 4px; }
+  .tier-card .tier-score { font-size: 22px; font-weight: 800; line-height: 1.1; margin-top: 4px; }
+  .tier-card .tier-category { font-size: 9px; color: #64748b; margin-top: 2px; font-weight: 600; }
+  .tier-heading { font-size: 13px; font-weight: 700; color: #0f172a; margin-top: 20px; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; gap: 6px; }
+  .tier-heading .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .tier-heading.security .dot { background: #ef4444; }
+  .tier-heading.legal .dot { background: #f59e0b; }
+  .tier-heading.seo .dot { background: #3b82f6; }
+
   .summary { display: flex; justify-content: center; gap: 16px; margin: 20px 0; }
   .summary-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 20px; text-align: center; min-width: 100px; }
   .summary-card .count { font-size: 24px; font-weight: 800; }
@@ -88,6 +100,32 @@
   <span class="score-label bg-{{ category.color }}">{{ category.label }}</span>
 </div>
 
+{% if breakdown_ok %}
+<div class="tier-breakdown">
+  {% with sec_cat=score_security|score_category %}
+  <div class="tier-card">
+    <div class="tier-label">Bezpečnost<span class="tier-weight">50%</span></div>
+    <div class="tier-score color-{{ sec_cat.color }}">{{ score_security }}<span class="score-max">/100</span></div>
+    <div class="tier-category">{{ sec_cat.label }}</div>
+  </div>
+  {% endwith %}
+  {% with legal_cat=score_legal|score_category %}
+  <div class="tier-card">
+    <div class="tier-label">Právní<span class="tier-weight">30%</span></div>
+    <div class="tier-score color-{{ legal_cat.color }}">{{ score_legal }}<span class="score-max">/100</span></div>
+    <div class="tier-category">{{ legal_cat.label }}</div>
+  </div>
+  {% endwith %}
+  {% with seo_cat=score_seo|score_category %}
+  <div class="tier-card">
+    <div class="tier-label">SEO a výkon<span class="tier-weight">20%</span></div>
+    <div class="tier-score color-{{ seo_cat.color }}">{{ score_seo }}<span class="score-max">/100</span></div>
+    <div class="tier-category">{{ seo_cat.label }}</div>
+  </div>
+  {% endwith %}
+</div>
+{% endif %}
+
 <div class="summary">
   <div class="summary-card">
     <div class="count color-red">{{ counts.critical }}</div>
@@ -103,71 +141,157 @@
   </div>
 </div>
 
-{% with ok=active|by_severity:"ok" critical=active|by_severity:"critical" warnings=active|by_severity:"warning" infos=active|by_severity:"info" %}
+{% if breakdown_ok %}
+  {# Per-tier sekce: Bezpečnost → Právní → SEO #}
+  {% for tier_key, tier_label_cs in tier_pairs %}
+    {% with tier_findings=findings_by_tier|dict_get:tier_key %}
+    {% if tier_findings %}
+      {% with ok=tier_findings|by_severity:"ok" critical=tier_findings|by_severity:"critical" warnings=tier_findings|by_severity:"warning" infos=tier_findings|by_severity:"info" %}
+        <div class="tier-heading {{ tier_key }}">
+          <span class="dot"></span>
+          <span>{{ tier_label_cs }}</span>
+        </div>
 
-{% if ok %}
-<div class="section">
-  <div class="section-header" style="background: #f0fdf4;">
-    <span class="dot" style="background: #22c55e;"></span>
-    <span style="color: #16a34a;">V pořádku</span>
-  </div>
-  {% for f in ok %}
-  <div class="ok-finding"><span class="ok-check">✓</span> {{ f.title }}</div>
-  {% endfor %}
-</div>
-{% endif %}
+        {% if critical %}
+        <div class="section">
+          <div class="section-header" style="background: #fef2f2;">
+            <span class="dot" style="background: #ef4444;"></span>
+            <span style="color: #dc2626;">Kritické problémy</span>
+            <span class="penalty-total" style="color: #fca5a5;">−{{ critical|total_penalty }}</span>
+          </div>
+          {% for f in critical %}
+          <div class="finding">
+            <div><span class="finding-title">{{ f.title }}</span><span class="finding-penalty color-red">−{{ f|penalty }}</span></div>
+            <div class="finding-desc">{{ f.description }}</div>
+            {% if f.detail %}<div class="finding-detail">{{ f.detail }}</div>{% endif %}
+            {% if f.doc_url %}<div class="finding-link">{{ f.doc_url }}</div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
 
-{% if critical %}
-<div class="section">
-  <div class="section-header" style="background: #fef2f2;">
-    <span class="dot" style="background: #ef4444;"></span>
-    <span style="color: #dc2626;">Kritické problémy</span>
-    <span class="penalty-total" style="color: #fca5a5;">−{{ critical|total_penalty }}</span>
-  </div>
-  {% for f in critical %}
-  <div class="finding">
-    <div><span class="finding-title">{{ f.title }}</span><span class="finding-penalty color-red">−{{ f|penalty }}</span></div>
-    <div class="finding-desc">{{ f.description }}</div>
-    {% if f.detail %}<div class="finding-detail">{{ f.detail }}</div>{% endif %}
-    {% if f.doc_url %}<div class="finding-link">{{ f.doc_url }}</div>{% endif %}
-  </div>
-  {% endfor %}
-</div>
-{% endif %}
+        {% if warnings %}
+        <div class="section">
+          <div class="section-header" style="background: #fffbeb;">
+            <span class="dot" style="background: #f59e0b;"></span>
+            <span style="color: #d97706;">Varování</span>
+            <span class="penalty-total" style="color: #fcd34d;">−{{ warnings|total_penalty }}</span>
+          </div>
+          {% for f in warnings %}
+          <div class="finding">
+            <div><span class="finding-title">{{ f.title }}</span><span class="finding-penalty color-amber">−{{ f|penalty }}</span></div>
+            <div class="finding-desc">{{ f.description }}</div>
+            {% if f.detail %}<div class="finding-detail">{{ f.detail }}</div>{% endif %}
+            {% if f.doc_url %}<div class="finding-link">{{ f.doc_url }}</div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
 
-{% if warnings %}
-<div class="section">
-  <div class="section-header" style="background: #fffbeb;">
-    <span class="dot" style="background: #f59e0b;"></span>
-    <span style="color: #d97706;">Varování</span>
-    <span class="penalty-total" style="color: #fcd34d;">−{{ warnings|total_penalty }}</span>
-  </div>
-  {% for f in warnings %}
-  <div class="finding">
-    <div><span class="finding-title">{{ f.title }}</span><span class="finding-penalty color-amber">−{{ f|penalty }}</span></div>
-    <div class="finding-desc">{{ f.description }}</div>
-    {% if f.detail %}<div class="finding-detail">{{ f.detail }}</div>{% endif %}
-    {% if f.doc_url %}<div class="finding-link">{{ f.doc_url }}</div>{% endif %}
-  </div>
-  {% endfor %}
-</div>
-{% endif %}
+        {% if infos %}
+        <div class="section">
+          <div class="section-header" style="background: #eff6ff;">
+            <span class="dot" style="background: #3b82f6;"></span>
+            <span style="color: #2563eb;">Upozornění</span>
+            <span class="penalty-total" style="color: #93c5fd;">−{{ infos|total_penalty }}</span>
+          </div>
+          {% for f in infos %}
+          <div class="finding">
+            <div><span class="finding-title">{{ f.title }}</span><span class="finding-penalty color-blue">−{{ f|penalty }}</span></div>
+            <div class="finding-desc">{{ f.description }}</div>
+            {% if f.detail %}<div class="finding-detail">{{ f.detail }}</div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
 
-{% if infos %}
-<div class="section">
-  <div class="section-header" style="background: #eff6ff;">
-    <span class="dot" style="background: #3b82f6;"></span>
-    <span style="color: #2563eb;">Upozornění</span>
-    <span class="penalty-total" style="color: #93c5fd;">−{{ infos|total_penalty }}</span>
-  </div>
-  {% for f in infos %}
-  <div class="finding">
-    <div><span class="finding-title">{{ f.title }}</span><span class="finding-penalty color-blue">−{{ f|penalty }}</span></div>
-    <div class="finding-desc">{{ f.description }}</div>
-    {% if f.detail %}<div class="finding-detail">{{ f.detail }}</div>{% endif %}
-  </div>
+        {% if ok %}
+        <div class="section">
+          <div class="section-header" style="background: #f0fdf4;">
+            <span class="dot" style="background: #22c55e;"></span>
+            <span style="color: #16a34a;">V pořádku</span>
+          </div>
+          {% for f in ok %}
+          <div class="ok-finding"><span class="ok-check">✓</span> {{ f.title }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+      {% endwith %}
+    {% endif %}
+    {% endwith %}
   {% endfor %}
-</div>
+
+{% else %}
+  {# Fallback pro staré scany — původní layout #}
+  {% with ok=active|by_severity:"ok" critical=active|by_severity:"critical" warnings=active|by_severity:"warning" infos=active|by_severity:"info" %}
+
+  {% if ok %}
+  <div class="section">
+    <div class="section-header" style="background: #f0fdf4;">
+      <span class="dot" style="background: #22c55e;"></span>
+      <span style="color: #16a34a;">V pořádku</span>
+    </div>
+    {% for f in ok %}
+    <div class="ok-finding"><span class="ok-check">✓</span> {{ f.title }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if critical %}
+  <div class="section">
+    <div class="section-header" style="background: #fef2f2;">
+      <span class="dot" style="background: #ef4444;"></span>
+      <span style="color: #dc2626;">Kritické problémy</span>
+      <span class="penalty-total" style="color: #fca5a5;">−{{ critical|total_penalty }}</span>
+    </div>
+    {% for f in critical %}
+    <div class="finding">
+      <div><span class="finding-title">{{ f.title }}</span><span class="finding-penalty color-red">−{{ f|penalty }}</span></div>
+      <div class="finding-desc">{{ f.description }}</div>
+      {% if f.detail %}<div class="finding-detail">{{ f.detail }}</div>{% endif %}
+      {% if f.doc_url %}<div class="finding-link">{{ f.doc_url }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if warnings %}
+  <div class="section">
+    <div class="section-header" style="background: #fffbeb;">
+      <span class="dot" style="background: #f59e0b;"></span>
+      <span style="color: #d97706;">Varování</span>
+      <span class="penalty-total" style="color: #fcd34d;">−{{ warnings|total_penalty }}</span>
+    </div>
+    {% for f in warnings %}
+    <div class="finding">
+      <div><span class="finding-title">{{ f.title }}</span><span class="finding-penalty color-amber">−{{ f|penalty }}</span></div>
+      <div class="finding-desc">{{ f.description }}</div>
+      {% if f.detail %}<div class="finding-detail">{{ f.detail }}</div>{% endif %}
+      {% if f.doc_url %}<div class="finding-link">{{ f.doc_url }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if infos %}
+  <div class="section">
+    <div class="section-header" style="background: #eff6ff;">
+      <span class="dot" style="background: #3b82f6;"></span>
+      <span style="color: #2563eb;">Upozornění</span>
+      <span class="penalty-total" style="color: #93c5fd;">−{{ infos|total_penalty }}</span>
+    </div>
+    {% for f in infos %}
+    <div class="finding">
+      <div><span class="finding-title">{{ f.title }}</span><span class="finding-penalty color-blue">−{{ f|penalty }}</span></div>
+      <div class="finding-desc">{{ f.description }}</div>
+      {% if f.detail %}<div class="finding-detail">{{ f.detail }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% endwith %}
 {% endif %}
 
 {% if dismissed %}
@@ -184,8 +308,6 @@
   {% endfor %}
 </div>
 {% endif %}
-
-{% endwith %}
 
 {% if deep_status == "done" %}
 <div class="lh-section">
