@@ -251,14 +251,15 @@ def run_lighthouse_scan(self, scan_id: str):
             [
                 "lighthouse", scan.url,
                 "--output=json", "--quiet",
-                "--chrome-flags=--headless --no-sandbox --disable-gpu",
+                "--chrome-flags=--headless --no-sandbox --disable-gpu --disable-dev-shm-usage --disable-software-rasterizer",
                 "--max-wait-for-load=30000",
                 "--only-categories=performance,accessibility,best-practices,seo",
             ],
-            capture_output=True, text=True, timeout=60,
+            capture_output=True, text=True, timeout=90,
         )
         if proc.returncode != 0:
-            raise RuntimeError(f"Lighthouse exit {proc.returncode}: {proc.stderr[:500]}")
+            error_msg = proc.stderr[:1000] if proc.stderr else "Empty stderr"
+            raise RuntimeError(f"Lighthouse exit {proc.returncode}: {error_msg}")
         data = json.loads(proc.stdout)
         if data.get("runtimeError"):
             raise RuntimeError(f"Lighthouse runtime: {data['runtimeError'].get('message', 'unknown')}")
