@@ -67,9 +67,9 @@
           <span class="font-bold text-red-600">{{ counts.critical }}</span>
           <span class="text-slate-600">kritických</span>
         </div>
-        <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity absolute left-1/2 -translate-x-1/2 top-full mt-2 z-20 w-64 bg-slate-900 text-white text-[11px] rounded-lg px-3 py-2 shadow-lg leading-relaxed pointer-events-none">
-          <div class="font-bold mb-1">Kritické problémy</div>
-          <div class="text-slate-300">Vážné bezpečnostní díry vyžadující okamžitou akci (chybí CSP/HSTS, otevřené sekrety, mixed content). Každý nález snižuje skóre o&nbsp;12&nbsp;bodů (max 15 v&nbsp;jedné kategorii).</div>
+        <div style="width: 240px;" class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity absolute left-1/2 -translate-x-1/2 top-full mt-2 z-20 bg-slate-900 text-white text-[11px] rounded-lg px-3 py-2 shadow-lg pointer-events-none">
+          <div class="font-bold mb-0.5">Kritické problémy</div>
+          <div class="text-slate-300 leading-snug">Vážné bezpečnostní chyby. Vyžaduje okamžitou akci. <span class="text-white font-semibold">−12 bodů</span> za nález.</div>
           <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45"></div>
         </div>
       </div>
@@ -80,9 +80,9 @@
           <span class="font-bold text-amber-600">{{ counts.warning }}</span>
           <span class="text-slate-600">varování</span>
         </div>
-        <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity absolute left-1/2 -translate-x-1/2 top-full mt-2 z-20 w-64 bg-slate-900 text-white text-[11px] rounded-lg px-3 py-2 shadow-lg leading-relaxed pointer-events-none">
-          <div class="font-bold mb-1">Varování</div>
-          <div class="text-slate-300">Doporučeno opravit — středně závažné problémy (chybí X-Content-Type-Options, slabá CSP, cookies bez Secure). Každý nález snižuje skóre o&nbsp;5&nbsp;bodů.</div>
+        <div style="width: 240px;" class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity absolute left-1/2 -translate-x-1/2 top-full mt-2 z-20 bg-slate-900 text-white text-[11px] rounded-lg px-3 py-2 shadow-lg pointer-events-none">
+          <div class="font-bold mb-0.5">Varování</div>
+          <div class="text-slate-300 leading-snug">Středně závažné. Doporučeno opravit. <span class="text-white font-semibold">−5 bodů</span> za nález.</div>
           <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45"></div>
         </div>
       </div>
@@ -93,9 +93,9 @@
           <span class="font-bold text-blue-600">{{ counts.info }}</span>
           <span class="text-slate-600">upozornění</span>
         </div>
-        <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity absolute left-1/2 -translate-x-1/2 top-full mt-2 z-20 w-64 bg-slate-900 text-white text-[11px] rounded-lg px-3 py-2 shadow-lg leading-relaxed pointer-events-none">
-          <div class="font-bold mb-1">Upozornění</div>
-          <div class="text-slate-300">Drobné nedostatky ke zvážení (chybí Permissions-Policy, DKIM selektor, prohlášení o&nbsp;přístupnosti pro malé weby). Každý nález snižuje skóre o&nbsp;1&nbsp;bod.</div>
+        <div style="width: 240px;" class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity absolute left-1/2 -translate-x-1/2 top-full mt-2 z-20 bg-slate-900 text-white text-[11px] rounded-lg px-3 py-2 shadow-lg pointer-events-none">
+          <div class="font-bold mb-0.5">Upozornění</div>
+          <div class="text-slate-300 leading-snug">Drobné nedostatky ke zvážení. <span class="text-white font-semibold">−1 bod</span> za nález.</div>
           <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45"></div>
         </div>
       </div>
@@ -106,9 +106,9 @@
           <span class="font-bold text-green-600">{{ counts.ok }}</span>
           <span class="text-slate-600">v pořádku</span>
         </div>
-        <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity absolute left-1/2 -translate-x-1/2 top-full mt-2 z-20 w-64 bg-slate-900 text-white text-[11px] rounded-lg px-3 py-2 shadow-lg leading-relaxed pointer-events-none">
-          <div class="font-bold mb-1">V&nbsp;pořádku</div>
-          <div class="text-slate-300">Správně nakonfigurované prvky bez vlivu na skóre. Zobrazené pro informaci, co skener kontroluje.</div>
+        <div style="width: 240px;" class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity absolute left-1/2 -translate-x-1/2 top-full mt-2 z-20 bg-slate-900 text-white text-[11px] rounded-lg px-3 py-2 shadow-lg pointer-events-none">
+          <div class="font-bold mb-0.5">V&nbsp;pořádku</div>
+          <div class="text-slate-300 leading-snug">Správně nakonfigurováno. Bez vlivu na skóre.</div>
           <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45"></div>
         </div>
       </div>
