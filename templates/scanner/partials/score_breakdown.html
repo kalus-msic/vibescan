@@ -1,75 +1,73 @@
 {% load scan_tags %}
-{# 3 tier karty — určeno pro umístění vedle Vibe Score karty v hero sekci.
-   Nevyrábí wrapper grid; nadřazená šablona zajistí flex layout. #}
+{% comment %}
+3 kompaktní tier karty (Bezpečnost / Právní / SEO a výkon).
+Určeno pro umístění vedle Vibe Score karty v hero sekci.
+Nadřazená šablona zajistí flex/grid layout.
+{% endcomment %}
 
-{# ───── Bezpečnost ───── #}
 {% with sec_cat=scan.score_security|score_category %}
-<div class="flex-1 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-  <div class="flex items-center gap-2 mb-2">
-    <div class="w-2 h-2 rounded-full bg-red-500"></div>
-    <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Bezpečnost</span>
-    <span class="text-[10px] text-slate-400 ml-auto font-mono">50%</span>
+<div class="bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm flex items-center gap-3">
+  <div class="w-2.5 h-2.5 rounded-full bg-red-500 flex-shrink-0"></div>
+  <div class="flex-1 min-w-0">
+    <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wide">Bezpečnost</div>
+    <div class="text-[10px] text-{{ sec_cat.color }}-600 font-semibold">{{ sec_cat.label }}</div>
   </div>
-  <div class="leading-none">
-    <span class="text-4xl font-extrabold text-{{ sec_cat.color }}-500">{{ scan.score_security }}</span>
-    <span class="text-base font-semibold text-slate-300">/100</span>
+  <div class="leading-none text-right">
+    <span class="text-2xl font-extrabold text-{{ sec_cat.color }}-500">{{ scan.score_security }}</span><span class="text-xs font-semibold text-slate-300">/100</span>
+    <div class="text-[9px] text-slate-400 font-mono mt-0.5">váha 50 %</div>
   </div>
-  <div class="mt-2 bg-{{ sec_cat.color }}-100 text-{{ sec_cat.color }}-700 text-[10px] font-semibold px-2 py-0.5 rounded-full inline-block self-start">{{ sec_cat.label }}</div>
 </div>
 {% endwith %}
 
-{# ───── Právní + accessibility dropdown ───── #}
 {% with legal_cat=scan.score_legal|score_category %}
-<div class="flex-1 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-  <div class="flex items-center gap-2 mb-2">
-    <div class="w-2 h-2 rounded-full bg-amber-500"></div>
-    <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Právní</span>
-    <span class="text-[10px] text-slate-400 ml-auto font-mono">30%</span>
-  </div>
-  <div class="leading-none">
-    <span class="text-4xl font-extrabold text-{{ legal_cat.color }}-500">{{ scan.score_legal }}</span>
-    <span class="text-base font-semibold text-slate-300">/100</span>
-  </div>
-  <div class="mt-2 flex items-center justify-between gap-2">
-    <div class="bg-{{ legal_cat.color }}-100 text-{{ legal_cat.color }}-700 text-[10px] font-semibold px-2 py-0.5 rounded-full inline-block">{{ legal_cat.label }}</div>
-    {% if not scan.ephemeral %}
-    <div class="relative" x-data="{ open: false }">
-      <button @click="open = !open"
-              class="text-[10px] text-slate-400 hover:text-slate-700 transition-colors cursor-pointer underline underline-offset-2"
-              title="Účast pod zákonem o přístupnosti">Přístupnost: {{ scan.accessibility_classification|default:'auto' }}</button>
-      <div x-show="open" x-cloak @click.outside="open = false"
-           class="absolute right-0 top-6 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-56">
-        <form method="post"
-              action="{% url 'scanner:set_accessibility_classification' scan.id %}"
-              hx-post="{% url 'scanner:set_accessibility_classification' scan.id %}"
-              hx-target="#scan-content" hx-swap="outerHTML">
-          {% csrf_token %}
-          <button type="submit" name="classification" value="auto"
-                  class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Automaticky (podle obsahu)</button>
-          <button type="submit" name="classification" value="legal"
-                  class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Spadá pod zákon</button>
-          <button type="submit" name="classification" value="seo"
-                  class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Nespadá pod zákon</button>
-        </form>
+<div class="bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm flex items-center gap-3">
+  <div class="w-2.5 h-2.5 rounded-full bg-amber-500 flex-shrink-0"></div>
+  <div class="flex-1 min-w-0">
+    <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wide">Právní</div>
+    <div class="text-[10px] text-{{ legal_cat.color }}-600 font-semibold flex items-center gap-1.5">
+      <span>{{ legal_cat.label }}</span>
+      {% if not scan.ephemeral %}
+      <span class="text-slate-300">·</span>
+      <div class="relative inline-block" x-data="{ open: false }">
+        <button @click="open = !open"
+                class="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer underline underline-offset-2 font-normal"
+                title="Účast pod zákonem o přístupnosti">přístupnost: {{ scan.accessibility_classification|default:'auto' }}</button>
+        <div x-show="open" x-cloak @click.outside="open = false"
+             class="absolute left-0 top-5 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-56">
+          <form method="post"
+                action="{% url 'scanner:set_accessibility_classification' scan.id %}"
+                hx-post="{% url 'scanner:set_accessibility_classification' scan.id %}"
+                hx-target="#scan-content" hx-swap="outerHTML">
+            {% csrf_token %}
+            <button type="submit" name="classification" value="auto"
+                    class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Automaticky (podle obsahu)</button>
+            <button type="submit" name="classification" value="legal"
+                    class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Spadá pod zákon</button>
+            <button type="submit" name="classification" value="seo"
+                    class="block w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer">Nespadá pod zákon</button>
+          </form>
+        </div>
       </div>
+      {% endif %}
     </div>
-    {% endif %}
+  </div>
+  <div class="leading-none text-right">
+    <span class="text-2xl font-extrabold text-{{ legal_cat.color }}-500">{{ scan.score_legal }}</span><span class="text-xs font-semibold text-slate-300">/100</span>
+    <div class="text-[9px] text-slate-400 font-mono mt-0.5">váha 30 %</div>
   </div>
 </div>
 {% endwith %}
 
-{# ───── SEO a výkon ───── #}
 {% with seo_cat=scan.score_seo|score_category %}
-<div class="flex-1 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-  <div class="flex items-center gap-2 mb-2">
-    <div class="w-2 h-2 rounded-full bg-blue-500"></div>
-    <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">SEO a výkon</span>
-    <span class="text-[10px] text-slate-400 ml-auto font-mono">20%</span>
+<div class="bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm flex items-center gap-3">
+  <div class="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0"></div>
+  <div class="flex-1 min-w-0">
+    <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wide">SEO a výkon</div>
+    <div class="text-[10px] text-{{ seo_cat.color }}-600 font-semibold">{{ seo_cat.label }}</div>
   </div>
-  <div class="leading-none">
-    <span class="text-4xl font-extrabold text-{{ seo_cat.color }}-500">{{ scan.score_seo }}</span>
-    <span class="text-base font-semibold text-slate-300">/100</span>
+  <div class="leading-none text-right">
+    <span class="text-2xl font-extrabold text-{{ seo_cat.color }}-500">{{ scan.score_seo }}</span><span class="text-xs font-semibold text-slate-300">/100</span>
+    <div class="text-[9px] text-slate-400 font-mono mt-0.5">váha 20 %</div>
   </div>
-  <div class="mt-2 bg-{{ seo_cat.color }}-100 text-{{ seo_cat.color }}-700 text-[10px] font-semibold px-2 py-0.5 rounded-full inline-block self-start">{{ seo_cat.label }}</div>
 </div>
 {% endwith %}

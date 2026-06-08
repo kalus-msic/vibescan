@@ -44,13 +44,19 @@
   {% has_breakdown scan as breakdown_ok %}
   {% with counts=active|finding_counts %}
   {% if breakdown_ok %}
-    <div class="flex flex-col sm:flex-row items-stretch gap-3 mb-4">
-      <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col items-center justify-center sm:min-w-[160px]">
-        <div class="leading-none mb-1"><span class="text-5xl font-extrabold text-{{ category.color }}-500">{{ scan.vibe_score }}</span><span class="text-lg font-semibold text-slate-300">/100</span></div>
-        <div class="text-xs text-slate-500 font-medium mt-1">Vibe Score</div>
-        <div class="mt-2 bg-{{ category.color }}-100 text-{{ category.color }}-700 text-xs font-semibold px-2.5 py-1 rounded-full">{{ category.label }}</div>
+    <div class="flex flex-col sm:flex-row items-stretch gap-4 mb-4">
+      {# Hlavní Vibe Score — vizuálně dominantní #}
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center sm:w-[280px] sm:flex-shrink-0">
+        <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-widest mb-2">Vibe Score</div>
+        <div class="leading-none mb-2"><span class="text-7xl font-extrabold text-{{ category.color }}-500">{{ scan.vibe_score }}</span><span class="text-2xl font-semibold text-slate-300">/100</span></div>
+        <div class="bg-{{ category.color }}-100 text-{{ category.color }}-700 text-sm font-semibold px-3 py-1 rounded-full">{{ category.label }}</div>
+        <div class="text-[10px] text-slate-400 mt-3 text-center">Vážený průměr 3 priorit</div>
       </div>
-      {% include "scanner/partials/score_breakdown.html" %}
+
+      {# 3 kompaktní tier karty ve sloupci napravo #}
+      <div class="flex-1 flex flex-col gap-2 min-w-0">
+        {% include "scanner/partials/score_breakdown.html" %}
+      </div>
     </div>
 
     {# Severity chip strip pod hero #}
