@@ -18,6 +18,11 @@ class AuditMap:
     warn_below: float = 0.9
     crit_below: float = 0.5
     supersedes_id: str | None = None
+    # Strop pro vypočtenou severity. Lighthouse skóre je binární (0/1) pro
+    # mnoho audit failů, takže by jinak heading-order / aria-valid-attr-value
+    # / html-lang-valid dostaly CRITICAL. Reálně je to "moderate" — best
+    # practice, ne blocker. Hodnoty: "warning" | "info" | None (= bez stropu).
+    max_severity: str | None = None
 
 
 def _guide(slug: str) -> str:
@@ -82,6 +87,7 @@ LIGHTHOUSE_AUDIT_MAP: dict[str, AuditMap] = {
         description="Lighthouse: hodnota atributu lang není validní BCP47 (např. 'cz' místo 'cs').",
         category="accessibility",
         fix_url=_guide("pravni-dokumenty"),
+        max_severity="warning",
     ),
     "image-alt": AuditMap(
         finding_id="lh-image-alt",
@@ -121,6 +127,7 @@ LIGHTHOUSE_AUDIT_MAP: dict[str, AuditMap] = {
         category="accessibility",
         fix_url=_guide("pravni-dokumenty"),
         supersedes_id="heading-hierarchy",
+        max_severity="warning",
     ),
     "color-contrast": AuditMap(
         finding_id="lh-color-contrast",
@@ -143,6 +150,7 @@ LIGHTHOUSE_AUDIT_MAP: dict[str, AuditMap] = {
         description="Lighthouse: ARIA atributy mají neplatné hodnoty (např. aria-checked=\"yes\" místo \"true\").",
         category="accessibility",
         fix_url=_guide("pravni-dokumenty"),
+        max_severity="warning",
     ),
 
     # ---- Performance (no overlap with existing modules) ----

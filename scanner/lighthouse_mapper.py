@@ -3,6 +3,15 @@ from scanner.lighthouse_audits import LIGHTHOUSE_AUDIT_MAP, AuditMap
 from scanner.modules.base import Severity
 
 
+# Ordering pro clamp na mapping.max_severity. Vyšší index = horší severity.
+_SEVERITY_ORDER = {
+    Severity.OK: 0,
+    Severity.INFO: 1,
+    Severity.WARNING: 2,
+    Severity.CRITICAL: 3,
+}
+
+
 class LighthouseMapper:
 
     def _severity(self, audit: dict, mapping: AuditMap) -> Severity | None:
@@ -17,10 +26,23 @@ class LighthouseMapper:
         if score >= 1.0:
             return Severity.OK
         if score >= mapping.warn_below:
-            return Severity.INFO
-        if score >= mapping.crit_below:
-            return Severity.WARNING
-        return Severity.CRITICAL
+            computed = Severity.INFO
+        elif score >= mapping.crit_below:
+            computed = Severity.WARNING
+        else:
+            computed = Severity.CRITICAL
+
+        # Aplikuj per-audit strop (např. heading-order = max WARNING).
+        # Lighthouse score je často binární (0/1), takže by jinak audity
+        # s reálným "moderate" impactem dostaly CRITICAL.
+        if mapping.max_severity:
+            try:
+                ceiling = Severity(mapping.max_severity)
+            except ValueError:
+                return computed
+            if _SEVERITY_ORDER[computed] > _SEVERITY_ORDER[ceiling]:
+                return ceiling
+        return computed
 
     def _build_finding(self, audit: dict, mapping: AuditMap, severity: Severity) -> dict:
         detail = audit.get("displayValue") or ""

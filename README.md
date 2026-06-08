@@ -84,16 +84,65 @@ Pozn.: nazev kontejneru (`vibescan-web-1`) si overit pres `docker ps`.
 
 ## Vibe Score
 
-Score = 100 minus penalizace za nalezene problemy:
+Vazeny prumer tri kategorii skore (0–100):
 
-| Zavaznost | Penalizace |
-|-----------|------------|
-| CRITICAL | -20 bodu |
-| WARNING | -8 bodu |
-| INFO | -2 body |
-| OK | 0 |
+| Kategorie | Vaha | Co obsahuje |
+|-----------|-----:|-------------|
+| **Bezpecnost** | 50 % | headers, cookies, dns, forms, tech, cors, sri, secrets, ssl_check, tracking, html, best-practices (Lighthouse) |
+| **Pravni** | 30 % | legal (cookie consent, GDPR), accessibility *pro covered sectors EAA — banky, e-shopy, audiovizualni media, doprava, telekom; jinak SEO* |
+| **SEO a vykon** | 20 % | seo, meta, performance (Lighthouse), accessibility pro non-covered sectors |
 
-Uzivatel muze zamitnou nalezeni jako nerelevantni (false positive, resim jinak, ...) — score se prepocita.
+Celkove skore = `0.5 × Bezpecnost + 0.3 × Pravni + 0.2 × SEO`, zaokrouhleno.
+
+### Vypocet skore tieru
+
+1. **Severity → penalizace:**
+
+   | Zavaznost | Penalizace |
+   |-----------|-----------:|
+   | CRITICAL | -12 bodu |
+   | WARNING | -5 bodu |
+   | INFO | -1 bod |
+   | OK | 0 |
+
+2. **Per-category cap** (jen accessibility a performance — Lighthouse casto generuje vice findings z jednoho root cause):
+
+   | Kategorie | Cap |
+   |-----------|----:|
+   | accessibility | 25 |
+   | performance | 25 |
+
+   Ostatni kategorie cap nemaji — surovy soucet severit jde rovnou do tier total.
+
+3. **Floor per tier:** zadny tier nespadne pod **30/100**. Chrani proti psychologicky kontraproduktivnimu 0/100 u Lighthouse-heavy webu.
+
+   `tier_score = max(30, 100 − sum_capped_penalties)`
+
+### Pristupnost: dynamicke routovani
+
+Web spadajici pod **zakon c. 424/2023 Sb.** (implementace European Accessibility Act, platnost od 28.6.2025) musi mit prohlaseni o pristupnosti — sektory banky, e-shopy, doprava, telekom, audiovizualni media + organy verejne moci (zak. 99/2019 Sb.).
+
+- Detekce: pokud `missing-accessibility-statement` ma severity WARNING (= covered sector), accessibility findings padnou do **Pravniho** tieru.
+- Jinak (severity INFO) padnou do **SEO + vykon** tieru.
+- Uzivatel muze rucne preklasifikovat scan: „spada pod zakon" / „nespada pod zakon" / „automaticky".
+
+### Dismiss findings
+
+Uzivatel muze oznacit nalez jako nerelevantni (`not_applicable`, `solved_differently`, `false_positive`, `other`). Dismissed findings se vyjmou z vypoctu a tier skore se prepocita.
+
+### Lighthouse deep scan
+
+Po fast scan se spousti `lighthouse` CLI proti URL. Vysledky se mapuji na Vibescan findings pres `LIGHTHOUSE_AUDIT_MAP` (allowlist ~30 auditu). Audity, ktere `supersedes_id` jiny finding, prepisuji puvodni nalez (napr. `lh-document-title` nahradi `missing-title` z `seo.py`).
+
+Per-audit `max_severity` stropy nektere audity (heading-order, html-lang-valid, aria-valid-attr-value) — Lighthouse je oznacuje binarne 0/1, ale realne jsou „moderate" impact, ne blocker.
+
+### Detekce error-page
+
+Pokud cilovy server vrati HTTP 200, ale obsah vypada jako chybova stranka (title obsahuje error/4xx/sorry, body markery, < 5 KB, chybi `<nav>`/`<main>`), ulozi se `scan_warning` a UI zobrazi amber banner. Skore se pocita dal — uzivatel sam posoudi.
+
+### Bot challenge
+
+Pokud server vrati Cloudflare/Akamai/Imperva/PerimeterX challenge, scan skonci jako FAILED s vysvetlujici hlaskou. Falesne skore z challenge stranky tak neprosakne.
 
 ## Pruvodce zabezpecenim
 

@@ -15,6 +15,19 @@ SEVERITY_PENALTY = {
 # brání tomu, aby jeden modul dominoval celkové skóre.
 TIER_FLOOR = 30
 
+# Per-category caps — selektivně jen pro kategorie, kde Lighthouse generuje
+# mnoho findings z jednoho root cause:
+#   accessibility — 4 critical WCAG nálezy je často 1 design problém (např.
+#       celý theme má špatný kontrast i ARIA),
+#   performance  — LCP/TBT/SI/CLS jsou často 4 metriky jednoho pomalého
+#       fetche / jednoho velkého JS bundlu.
+# Cap 25 = ekvivalent 2× CRITICAL — uznání, že kumulace existuje, ale
+# nezasáhne tier jako 4 nezávislé problémy.
+CATEGORY_CAP = {
+    "accessibility": 25,
+    "performance":   25,
+}
+
 
 CATEGORY_TO_TIER: dict[str, str] = {
     # Bezpečnost (Tier 1, váha 50%)
@@ -63,14 +76,28 @@ def calculate_tier_scores(
 ) -> dict[str, int]:
     """Per-tier skóre TIER_FLOOR–100 pro 'security', 'legal', 'seo'.
 
-    Sečte raw severity penalty per tier a aplikuje floor — žádný tier
-    nespadne pod TIER_FLOOR (30).
+    Sečte severity penalty per (tier, category), aplikuje CATEGORY_CAP
+    (jen accessibility/performance), sečte do tier total a aplikuje floor.
     """
-    totals: dict[str, int] = {"security": 0, "legal": 0, "seo": 0}
+    by_tier_category: dict[str, dict[str, int]] = {
+        "security": {}, "legal": {}, "seo": {},
+    }
     for f in findings:
         tier = _resolve_tier(f.category, accessibility_tier)
-        totals[tier] += SEVERITY_PENALTY[f.severity]
-    return {tier: max(TIER_FLOOR, 100 - total) for tier, total in totals.items()}
+        by_tier_category[tier][f.category] = (
+            by_tier_category[tier].get(f.category, 0) + SEVERITY_PENALTY[f.severity]
+        )
+
+    out: dict[str, int] = {}
+    for tier, cats in by_tier_category.items():
+        total = 0
+        for category, penalty in cats.items():
+            cap = CATEGORY_CAP.get(category)
+            if cap is not None:
+                penalty = min(penalty, cap)
+            total += penalty
+        out[tier] = max(TIER_FLOOR, 100 - total)
+    return out
 
 
 def calculate_overall_score(tier_scores: dict[str, int]) -> int:
@@ -105,12 +132,20 @@ class ScoreCategory(str, Enum):
 
 
 def _score_from_iter(items) -> int:
-    """Legacy single-score helper. Sečte všechny penalty bez per-category capů.
+    """Legacy single-score helper. Aplikuje CATEGORY_CAP per kategorie.
 
     Používá ho recalculate_from_findings_dicts a recalculate_with_deep_scan
     (backward-compat API). Nový tiered engine používá calculate_tier_scores.
     """
-    total = sum(penalty for _, penalty in items)
+    by_category: dict[str, int] = {}
+    for category, penalty in items:
+        by_category[category] = by_category.get(category, 0) + penalty
+    total = 0
+    for category, penalty in by_category.items():
+        cap = CATEGORY_CAP.get(category)
+        if cap is not None:
+            penalty = min(penalty, cap)
+        total += penalty
     return max(0, 100 - total)
 
 

@@ -25,15 +25,15 @@ def test_deep_findings_add_penalties():
     assert recalculate_with_deep_scan(findings, deep) == 100 - 5 - 12
 
 
-def test_many_performance_findings_sum_raw():
-    """4 CRITICAL = 48 (žádný cap). Single-score floor = 0."""
+def test_many_performance_findings_capped_at_25():
+    """4 CRITICAL = 48 raw, performance cap=25 → score 75."""
     deep = [
         _finding("lh-lcp", "critical", category="performance"),
         _finding("lh-cls", "critical", category="performance"),
         _finding("lh-tbt", "critical", category="performance"),
         _finding("lh-si",  "critical", category="performance"),
     ]
-    assert recalculate_with_deep_scan([], deep) == 100 - 48
+    assert recalculate_with_deep_scan([], deep) == 100 - 25
 
 
 def test_best_practices_findings_sum_raw():
@@ -45,13 +45,14 @@ def test_best_practices_findings_sum_raw():
     assert recalculate_with_deep_scan([], deep) == 100 - 24
 
 
-def test_total_lighthouse_sums_raw():
-    """4× CRITICAL napříč kategoriemi = 48."""
+def test_total_lighthouse_with_caps():
+    """4× CRITICAL napříč kategoriemi. performance+accessibility cap=12 each (1×CRITICAL),
+    best-practices+seo bez capu = 12+12. Total 12+12+12+12 = 48 → 52."""
     deep = [
-        _finding("lh-lcp",     "critical", category="performance"),
-        _finding("lh-bp",      "critical", category="best-practices"),
-        _finding("lh-a11y",    "critical", category="accessibility"),
-        _finding("lh-seo",     "critical", category="seo"),
+        _finding("lh-lcp",     "critical", category="performance"),     # 12 (cap nepřesažen)
+        _finding("lh-bp",      "critical", category="best-practices"),  # 12 (no cap)
+        _finding("lh-a11y",    "critical", category="accessibility"),   # 12 (cap nepřesažen)
+        _finding("lh-seo",     "critical", category="seo"),             # 12 (no cap)
     ]
     assert recalculate_with_deep_scan([], deep) == 100 - 48
 

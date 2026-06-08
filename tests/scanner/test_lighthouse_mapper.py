@@ -50,6 +50,36 @@ def test_severity_informative_is_info(mapper, default_mapping):
     assert mapper._severity(audit, default_mapping) == Severity.INFO
 
 
+def test_severity_max_severity_warning_caps_critical(mapper):
+    """Per-audit strop (např. heading-order = moderate WCAG) sníží CRITICAL na WARNING."""
+    capped = AuditMap(
+        finding_id="lh-x", title="t", description="d",
+        category="accessibility", fix_url="/g/",
+        max_severity="warning",
+    )
+    audit = {"score": 0.0, "scoreDisplayMode": "binary"}  # by default → CRITICAL
+    assert mapper._severity(audit, capped) == Severity.WARNING
+
+
+def test_severity_max_severity_does_not_inflate(mapper):
+    """Strop nesmí severity zvyšovat — INFO zůstane INFO i s max_severity=warning."""
+    capped = AuditMap(
+        finding_id="lh-x", title="t", description="d",
+        category="accessibility", fix_url="/g/",
+        max_severity="warning",
+    )
+    audit = {"score": 0.95, "scoreDisplayMode": "numeric"}  # → INFO
+    assert mapper._severity(audit, capped) == Severity.INFO
+
+
+def test_heading_order_capped_at_warning(mapper):
+    """Regrese: heading-order musí být max WARNING (best practice, ne blocker)."""
+    from scanner.lighthouse_audits import LIGHTHOUSE_AUDIT_MAP
+    mapping = LIGHTHOUSE_AUDIT_MAP["heading-order"]
+    audit = {"score": 0.0, "scoreDisplayMode": "binary"}
+    assert mapper._severity(audit, mapping) == Severity.WARNING
+
+
 def test_severity_null_score_is_skipped(mapper, default_mapping):
     audit = {"score": None, "scoreDisplayMode": "numeric"}
     assert mapper._severity(audit, default_mapping) is None
