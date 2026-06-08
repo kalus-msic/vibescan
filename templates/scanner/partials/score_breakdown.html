@@ -20,6 +20,7 @@ Nadřazená šablona zajistí flex/grid layout.
 {% endwith %}
 
 {% with legal_cat=scan.score_legal|score_category %}
+{% accessibility_tier_for_scan scan as acc_tier_resolved %}
 <div class="bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm flex items-center gap-3">
   <div class="w-2.5 h-2.5 rounded-full bg-amber-500 flex-shrink-0"></div>
   <div class="flex-1 min-w-0">
@@ -31,7 +32,7 @@ Nadřazená šablona zajistí flex/grid layout.
       <div class="relative inline-block" x-data="{ open: false }">
         <button @click="open = !open"
                 class="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer underline underline-offset-2 font-normal"
-                title="Účast pod zákonem o přístupnosti">přístupnost: {{ scan.accessibility_classification|default:'auto' }}</button>
+                title="Účast pod zákonem o přístupnosti">přístupnost: {% if scan.accessibility_classification == 'legal' %}právní{% elif scan.accessibility_classification == 'seo' %}SEO{% else %}{% if acc_tier_resolved == 'legal' %}právní{% else %}SEO{% endif %} (auto){% endif %}</button>
         <div x-show="open" x-cloak @click.outside="open = false"
              class="absolute left-0 top-5 z-10 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-56">
           <form method="post"
