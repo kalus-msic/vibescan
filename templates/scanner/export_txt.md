@@ -39,9 +39,9 @@ Vibescan.cz a máš ho převést na akční doporučení pro majitele/tvůrce we
 
 | Severity | Počet | Penalizace za kus |
 |----------|-------|--------------------|
-{% with counts=combined_counts %}| Kritické | {{ counts.critical }}     | -20                |
-| Varování | {{ counts.warning }}     | -8                 |
-| Info     | {{ counts.info }}     | -2                 |
+{% with counts=combined_counts %}| Kritické | {{ counts.critical }}     | -12                |
+| Varování | {{ counts.warning }}     | -5                 |
+| Info     | {{ counts.info }}     | -1                 |
 | OK       | {{ counts.ok }}     | 0                  |
 {% endwith %}
 ## Nálezy podle kategorie
