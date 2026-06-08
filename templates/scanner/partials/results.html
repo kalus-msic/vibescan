@@ -60,26 +60,26 @@
     </div>
 
     {# Severity chip strip pod hero #}
-    <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mb-6 text-xs">
-      <div class="inline-flex items-center gap-1.5">
+    <div class="flex flex-wrap items-center justify-center gap-2 mb-6 text-xs">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-red-200 rounded-full shadow-sm">
         <div class="w-2 h-2 rounded-full bg-red-500"></div>
         <span class="font-bold text-red-600">{{ counts.critical }}</span>
-        <span class="text-slate-500">kritických</span>
+        <span class="text-slate-600">kritických</span>
       </div>
-      <div class="inline-flex items-center gap-1.5">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-amber-200 rounded-full shadow-sm">
         <div class="w-2 h-2 rounded-full bg-amber-500"></div>
         <span class="font-bold text-amber-600">{{ counts.warning }}</span>
-        <span class="text-slate-500">varování</span>
+        <span class="text-slate-600">varování</span>
       </div>
-      <div class="inline-flex items-center gap-1.5">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-blue-200 rounded-full shadow-sm">
         <div class="w-2 h-2 rounded-full bg-blue-500"></div>
         <span class="font-bold text-blue-600">{{ counts.info }}</span>
-        <span class="text-slate-500">upozornění</span>
+        <span class="text-slate-600">upozornění</span>
       </div>
-      <div class="inline-flex items-center gap-1.5">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-green-200 rounded-full shadow-sm">
         <div class="w-2 h-2 rounded-full bg-green-500"></div>
         <span class="font-bold text-green-600">{{ counts.ok }}</span>
-        <span class="text-slate-500">v pořádku</span>
+        <span class="text-slate-600">v pořádku</span>
       </div>
     </div>
   {% else %}
