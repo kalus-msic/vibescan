@@ -33,7 +33,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 RUN if ! getent group app >/dev/null; then addgroup --system app; fi && \
     if ! getent passwd app >/dev/null; then \
-        adduser --system --ingroup app --home /home/app --create-home app; \
+        adduser --system --ingroup app --home /home/app app; \
     fi && \
     mkdir -p /home/app && chown -R app:app /home/app
 
