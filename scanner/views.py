@@ -233,6 +233,21 @@ def scan_export_pdf(request, pk):
 
     deep_active = [f for f in (scan.deep_scan_findings or []) if not f.get("dismissed")]
 
+    from .score import _resolve_tier, resolve_accessibility_tier_from_findings
+
+    breakdown_ok = bool(getattr(scan, "score_breakdown_computed", False))
+    findings_by_tier = {"security": [], "legal": [], "seo": []}
+    deep_findings_by_tier = {"security": [], "legal": [], "seo": []}
+    if breakdown_ok:
+        acc_tier = resolve_accessibility_tier_from_findings(
+            (scan.findings or []) + (scan.deep_scan_findings or []),
+            classification=getattr(scan, "accessibility_classification", "auto"),
+        )
+        for f in active:
+            findings_by_tier[_resolve_tier(f.get("category", ""), acc_tier)].append(f)
+        for f in deep_active:
+            deep_findings_by_tier[_resolve_tier(f.get("category", ""), acc_tier)].append(f)
+
     def _group(findings):
         cats = {}
         for f in findings:
@@ -247,6 +262,17 @@ def scan_export_pdf(request, pk):
         "deep_status": scan.deep_scan_status,
         "deep_error": scan.deep_scan_error,
         "active_findings_filtered": active,
+        "breakdown_ok": breakdown_ok,
+        "findings_by_tier": findings_by_tier,
+        "deep_findings_by_tier": deep_findings_by_tier,
+        "score_security": getattr(scan, "score_security", None),
+        "score_legal": getattr(scan, "score_legal", None),
+        "score_seo": getattr(scan, "score_seo", None),
+        "tier_pairs": [
+            ("security", "Bezpečnost"),
+            ("legal", "Právní"),
+            ("seo", "SEO a výkon"),
+        ],
     }
     html_string = render(request, "scanner/export_pdf.html", ctx).content.decode("utf-8")
     pdf_bytes = weasyprint.HTML(string=html_string).write_pdf()
