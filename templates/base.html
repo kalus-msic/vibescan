@@ -73,6 +73,28 @@
   </div>
 </nav>
 
+<div x-data="{
+  show: false,
+  init() { this.show = localStorage.getItem('score_notice_2026_06_08_dismissed') !== '1'; },
+  dismiss() { localStorage.setItem('score_notice_2026_06_08_dismissed', '1'); this.show = false; }
+}" x-show="show" x-cloak class="bg-blue-50 border-b border-blue-200 px-6 py-2.5">
+  <div class="max-w-5xl mx-auto flex items-start gap-3 text-sm">
+    <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/>
+    </svg>
+    <div class="flex-1 text-blue-900">
+      <strong>Od 8. 6. 2026 počítáme Vibe Score nově</strong> — vážený průměr tří kategorií (bezpečnost 50 %, právní 30 %, SEO 20 %) plus mírnější penalty.
+      Skóre tak může být <strong>vyšší než dřív</strong>, <strong>seznam nálezů ale zůstává stejný</strong>.
+    </div>
+    <button @click="dismiss()" aria-label="Zavřít upozornění"
+      class="flex-shrink-0 text-blue-600 hover:text-blue-900 cursor-pointer transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
 <main id="main">{% block content %}{% endblock %}</main>
 
 <footer aria-label="Patička" class="border-t border-slate-200 bg-white px-6 py-8 mt-16">
