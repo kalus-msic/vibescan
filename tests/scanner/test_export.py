@@ -193,6 +193,36 @@ class TxtExportTest(TestCase):
         # the OK finding itself still goes into the summary section
         self.assertIn("- HTTPS aktivní", content)
 
+    def test_txt_export_contains_tier_breakdown(self):
+        scan = _create_done_scan(
+            score_breakdown_computed=True,
+            score_security=72, score_legal=85, score_seo=75,
+        )
+        from scanner.views import build_export_txt
+        out = build_export_txt(scan)
+        self.assertIn("Skóre podle priorit", out)
+        self.assertIn("Bezpečnost: 72/100", out)
+        self.assertIn("Právní: 85/100", out)
+        self.assertIn("SEO a výkon: 75/100", out)
+
+    def test_txt_export_old_scan_no_tier_breakdown(self):
+        scan = _create_done_scan(score_breakdown_computed=False)
+        from scanner.views import build_export_txt
+        out = build_export_txt(scan)
+        self.assertNotIn("Skóre podle priorit", out)
+        # Fallback layout musí být přítomen
+        self.assertIn("## Nálezy podle kategorie", out)
+
+    def test_txt_export_severity_penalty_table_uses_new_values(self):
+        scan = _create_done_scan()
+        from scanner.views import build_export_txt
+        out = build_export_txt(scan)
+        # Po Task 2 musí být v tabulce -12/-5/-1 ne -20/-8/-2
+        self.assertIn("-12", out)
+        self.assertIn("-5", out)
+        self.assertIn("-1", out)
+        self.assertNotIn("| -20 ", out)
+
 
 class OkFindingsFilterTest(TestCase):
 
