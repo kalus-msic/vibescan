@@ -219,3 +219,11 @@ def accessibility_tier_for_scan(scan):
         fast + deep,
         classification=getattr(scan, "accessibility_classification", "auto"),
     )
+
+
+@register.filter
+def dict_get(d, key):
+    """Vrátí d[key] nebo prázdný list pokud chybí. Šablona neumí d[key] syntax."""
+    if not d:
+        return []
+    return d.get(key, []) if hasattr(d, "get") else []

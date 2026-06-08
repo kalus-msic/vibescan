@@ -100,3 +100,19 @@ class TestHasBreakdown:
     def test_false_when_computed_flag_unset(self):
         scan = _FakeScan(score_breakdown_computed=False)
         assert has_breakdown(scan) is False
+
+
+from scanner.templatetags.scan_tags import dict_get
+
+
+class TestDictGet:
+    def test_returns_value_for_known_key(self):
+        d = {"security": [1, 2], "legal": [3]}
+        assert dict_get(d, "security") == [1, 2]
+
+    def test_returns_empty_list_for_missing_key(self):
+        d = {"security": [1]}
+        assert dict_get(d, "missing") == []
+
+    def test_handles_none(self):
+        assert dict_get(None, "key") == []

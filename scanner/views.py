@@ -204,6 +204,11 @@ def build_export_txt(scan):
         "score_security": getattr(scan, "score_security", None),
         "score_legal": getattr(scan, "score_legal", None),
         "score_seo": getattr(scan, "score_seo", None),
+        "tier_pairs": [
+            ("security", "Bezpečnost"),
+            ("legal", "Právní"),
+            ("seo", "SEO a výkon"),
+        ],
     })
 
 

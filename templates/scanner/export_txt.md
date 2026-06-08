@@ -35,6 +35,12 @@ Vibescan.cz a máš ho převést na akční doporučení pro majitele/tvůrce we
 **Vibe Score:** {{ scan.vibe_score }}/100 ({{ category.label }})
 **Celková penalizace:** -{{ scan.vibe_score|score_penalty }} bodů
 
+{% if breakdown_ok %}
+**Skóre podle priorit:**
+- Bezpečnost: {{ score_security }}/100 (váha 50 %)
+- Právní: {{ score_legal }}/100 (váha 30 %)
+- SEO a výkon: {{ score_seo }}/100 (váha 20 %)
+{% endif %}
 ## Shrnutí
 
 | Severity | Počet | Penalizace za kus |
@@ -44,6 +50,21 @@ Vibescan.cz a máš ho převést na akční doporučení pro majitele/tvůrce we
 | Info     | {{ counts.info }}     | -1                 |
 | OK       | {{ counts.ok }}     | 0                  |
 {% endwith %}
+{% if breakdown_ok %}
+## Nálezy podle priority
+
+{% for tier_key, tier_label_cs in tier_pairs %}{% with tier_findings=findings_by_tier|dict_get:tier_key %}{% if tier_findings|non_ok_count > 0 %}
+### {{ tier_label_cs }}
+{% regroup tier_findings|dictsort:"category" by category as tier_by_category %}{% for cat_group in tier_by_category %}
+#### Kategorie: {{ cat_group.grouper }}
+{% for f in cat_group.list %}{% if f.severity != 'ok' %}
+- **[{{ f.severity|upper }}] {{ f.title }}** (-{{ f|penalty }} bodů)
+  {{ f.description }}{% if f.detail %}
+  **Detail:** {{ f.detail }}{% endif %}{% if f.doc_url %}
+  **Dokumentace:** {{ f.doc_url }}{% endif %}
+{% endif %}{% endfor %}{% endfor %}{% endif %}{% endwith %}{% endfor %}
+
+{% else %}
 ## Nálezy podle kategorie
 {% for cat_name, cat_findings in findings_by_category %}{% if cat_findings|non_ok_count > 0 %}
 ### Kategorie: {{ cat_name }}
@@ -56,6 +77,7 @@ Vibescan.cz a máš ho převést na akční doporučení pro majitele/tvůrce we
 **Dokumentace:** {{ f.doc_url }}
 {% endif %}
 {% endif %}{% endfor %}{% endif %}{% endfor %}
+{% endif %}
 {% with ok_list=scan.findings|active_findings|ok_findings %}{% if ok_list %}
 ## Co je v pořádku
 
@@ -68,11 +90,18 @@ Vibescan.cz a máš ho převést na akční doporučení pro majitele/tvůrce we
 {% for key, value in deep_categories.items %}- {{ key }}: {{ value }}/100
 {% endfor %}
 
+{% if breakdown_ok %}
+{% for tier_key, tier_label_cs in tier_pairs %}{% with tier_findings=deep_findings_by_tier|dict_get:tier_key %}{% if tier_findings %}
+### Tier: {{ tier_label_cs }}
+{% for f in tier_findings %}- **{{ f.title }}** [{{ f.severity|upper }}]: {{ f.description }}
+{% endfor %}{% endif %}{% endwith %}{% endfor %}
+{% else %}
 {% for category, group in deep_findings_by_category %}
 ### {{ category|title }}
 {% for f in group %}- **{{ f.title }}** [{{ f.severity|upper }}]: {{ f.description }}
 {% endfor %}
 {% endfor %}
+{% endif %}
 {% elif deep_status == "running" or deep_status == "pending" %}
 
 > Hluboký sken: probíhá. Tento export neobsahuje výsledky hloubkové analýzy.
