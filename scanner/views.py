@@ -123,7 +123,11 @@ def scan_status(request, pk):
 def build_export_txt(scan):
     """Render the AI export markdown for a finished scan and return it as a string."""
     from django.template.loader import render_to_string
-    from .score import _superseded_ids
+    from .score import (
+        _superseded_ids,
+        _resolve_tier,
+        resolve_accessibility_tier_from_findings,
+    )
 
     category = ScoreCategory.from_score(scan.vibe_score)
 
@@ -155,6 +159,33 @@ def build_export_txt(scan):
             cats.setdefault(f.get("category", "other"), []).append(f)
         return sorted(cats.items())
 
+    # Per-tier grouping (jen pokud má scan breakdown computed)
+    breakdown_ok = bool(getattr(scan, "score_breakdown_computed", False))
+    findings_by_tier = {"security": [], "legal": [], "seo": []}
+    deep_findings_by_tier = {"security": [], "legal": [], "seo": []}
+    tier_counts = {
+        "security": {"critical": 0, "warning": 0, "info": 0, "ok": 0},
+        "legal":    {"critical": 0, "warning": 0, "info": 0, "ok": 0},
+        "seo":      {"critical": 0, "warning": 0, "info": 0, "ok": 0},
+    }
+    if breakdown_ok:
+        acc_tier = resolve_accessibility_tier_from_findings(
+            (scan.findings or []) + (scan.deep_scan_findings or []),
+            classification=getattr(scan, "accessibility_classification", "auto"),
+        )
+        for f in active:
+            tier = _resolve_tier(f.get("category", ""), acc_tier)
+            findings_by_tier[tier].append(f)
+            sev = f.get("severity", "")
+            if sev in tier_counts[tier]:
+                tier_counts[tier][sev] += 1
+        for f in deep_active:
+            tier = _resolve_tier(f.get("category", ""), acc_tier)
+            deep_findings_by_tier[tier].append(f)
+            sev = f.get("severity", "")
+            if sev in tier_counts[tier]:
+                tier_counts[tier][sev] += 1
+
     return render_to_string("scanner/export_txt.md", {
         "scan": scan,
         "category": {"label": category.value},
@@ -166,6 +197,13 @@ def build_export_txt(scan):
         "dismissed": dismissed,
         "deep_dismissed": deep_dismissed,
         "combined_counts": combined_counts,
+        "breakdown_ok": breakdown_ok,
+        "findings_by_tier": findings_by_tier,
+        "deep_findings_by_tier": deep_findings_by_tier,
+        "tier_counts": tier_counts,
+        "score_security": getattr(scan, "score_security", None),
+        "score_legal": getattr(scan, "score_legal", None),
+        "score_seo": getattr(scan, "score_seo", None),
     })
 
 
