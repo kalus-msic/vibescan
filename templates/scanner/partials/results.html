@@ -40,42 +40,75 @@
   </div>
   {% endif %}
 
-  <!-- Score + summary cards -->
-  <div class="flex flex-col sm:flex-row items-stretch gap-4 mb-6">
-    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center sm:min-w-[140px]">
-      <div class="leading-none mb-1"><span class="text-6xl font-extrabold text-{{ category.color }}-500">{{ scan.vibe_score }}</span><span class="text-xl font-semibold text-slate-300">/100</span></div>
-      <div class="text-xs text-slate-500 font-medium">Vibe Score</div>
-      <div class="mt-3 bg-{{ category.color }}-100 text-{{ category.color }}-700 text-xs font-semibold px-2.5 py-1 rounded-full">{{ category.label }}</div>
+  <!-- Score hero — Vibe Score + 3 tier karty v jednom řádku (pro nové scany) -->
+  {% has_breakdown scan as breakdown_ok %}
+  {% with counts=active|finding_counts %}
+  {% if breakdown_ok %}
+    <div class="flex flex-col sm:flex-row items-stretch gap-3 mb-4">
+      <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col items-center justify-center sm:min-w-[160px]">
+        <div class="leading-none mb-1"><span class="text-5xl font-extrabold text-{{ category.color }}-500">{{ scan.vibe_score }}</span><span class="text-lg font-semibold text-slate-300">/100</span></div>
+        <div class="text-xs text-slate-500 font-medium mt-1">Vibe Score</div>
+        <div class="mt-2 bg-{{ category.color }}-100 text-{{ category.color }}-700 text-xs font-semibold px-2.5 py-1 rounded-full">{{ category.label }}</div>
+      </div>
+      {% include "scanner/partials/score_breakdown.html" %}
     </div>
 
-    {% with counts=active|finding_counts %}
-    <div class="flex-1 grid grid-cols-2 gap-4">
-      <div class="bg-white border border-red-200 rounded-2xl p-5 shadow-sm">
-        <div class="text-3xl font-extrabold text-red-500 mb-1">{{ counts.critical }}</div>
-        <div class="text-sm font-semibold text-slate-700">Kritické</div>
-        <div class="text-xs text-slate-400 mt-1">Vyžaduje okamžitou akci</div>
+    {# Severity chip strip pod hero #}
+    <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mb-6 text-xs">
+      <div class="inline-flex items-center gap-1.5">
+        <div class="w-2 h-2 rounded-full bg-red-500"></div>
+        <span class="font-bold text-red-600">{{ counts.critical }}</span>
+        <span class="text-slate-500">kritických</span>
       </div>
-      <div class="bg-white border border-amber-200 rounded-2xl p-5 shadow-sm">
-        <div class="text-3xl font-extrabold text-amber-500 mb-1">{{ counts.warning }}</div>
-        <div class="text-sm font-semibold text-slate-700">Varování</div>
-        <div class="text-xs text-slate-400 mt-1">Doporučeno opravit</div>
+      <div class="inline-flex items-center gap-1.5">
+        <div class="w-2 h-2 rounded-full bg-amber-500"></div>
+        <span class="font-bold text-amber-600">{{ counts.warning }}</span>
+        <span class="text-slate-500">varování</span>
       </div>
-      <div class="bg-white border border-blue-200 rounded-2xl p-5 shadow-sm">
-        <div class="text-3xl font-extrabold text-blue-400 mb-1">{{ counts.info }}</div>
-        <div class="text-sm font-semibold text-slate-700">Upozornění</div>
-        <div class="text-xs text-slate-400 mt-1">Ke zvážení</div>
+      <div class="inline-flex items-center gap-1.5">
+        <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+        <span class="font-bold text-blue-600">{{ counts.info }}</span>
+        <span class="text-slate-500">upozornění</span>
       </div>
-      <div class="bg-white border border-green-200 rounded-2xl p-5 shadow-sm">
-        <div class="text-3xl font-extrabold text-green-500 mb-1">{{ counts.ok }}</div>
-        <div class="text-sm font-semibold text-slate-700">V pořádku</div>
-        <div class="text-xs text-slate-400 mt-1">Správně nakonfigurováno</div>
+      <div class="inline-flex items-center gap-1.5">
+        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+        <span class="font-bold text-green-600">{{ counts.ok }}</span>
+        <span class="text-slate-500">v pořádku</span>
       </div>
     </div>
-    {% endwith %}
-  </div>
-
-  {# Per-tier breakdown — viditelné jen pro nové scany #}
-  {% include "scanner/partials/score_breakdown.html" %}
+  {% else %}
+    {# Fallback pro staré scany — původní layout (Vibe Score + 2×2 grid severity) #}
+    <div class="flex flex-col sm:flex-row items-stretch gap-4 mb-6">
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center sm:min-w-[140px]">
+        <div class="leading-none mb-1"><span class="text-6xl font-extrabold text-{{ category.color }}-500">{{ scan.vibe_score }}</span><span class="text-xl font-semibold text-slate-300">/100</span></div>
+        <div class="text-xs text-slate-500 font-medium">Vibe Score</div>
+        <div class="mt-3 bg-{{ category.color }}-100 text-{{ category.color }}-700 text-xs font-semibold px-2.5 py-1 rounded-full">{{ category.label }}</div>
+      </div>
+      <div class="flex-1 grid grid-cols-2 gap-4">
+        <div class="bg-white border border-red-200 rounded-2xl p-5 shadow-sm">
+          <div class="text-3xl font-extrabold text-red-500 mb-1">{{ counts.critical }}</div>
+          <div class="text-sm font-semibold text-slate-700">Kritické</div>
+          <div class="text-xs text-slate-400 mt-1">Vyžaduje okamžitou akci</div>
+        </div>
+        <div class="bg-white border border-amber-200 rounded-2xl p-5 shadow-sm">
+          <div class="text-3xl font-extrabold text-amber-500 mb-1">{{ counts.warning }}</div>
+          <div class="text-sm font-semibold text-slate-700">Varování</div>
+          <div class="text-xs text-slate-400 mt-1">Doporučeno opravit</div>
+        </div>
+        <div class="bg-white border border-blue-200 rounded-2xl p-5 shadow-sm">
+          <div class="text-3xl font-extrabold text-blue-400 mb-1">{{ counts.info }}</div>
+          <div class="text-sm font-semibold text-slate-700">Upozornění</div>
+          <div class="text-xs text-slate-400 mt-1">Ke zvážení</div>
+        </div>
+        <div class="bg-white border border-green-200 rounded-2xl p-5 shadow-sm">
+          <div class="text-3xl font-extrabold text-green-500 mb-1">{{ counts.ok }}</div>
+          <div class="text-sm font-semibold text-slate-700">V pořádku</div>
+          <div class="text-xs text-slate-400 mt-1">Správně nakonfigurováno</div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+  {% endwith %}
 
   <!-- Disclaimer -->
   <div class="flex gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-4 text-xs text-slate-500 leading-relaxed">
