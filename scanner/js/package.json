@@ -1,0 +1,11 @@
+{
+  "name": "vibescan-consent-check",
+  "private": true,
+  "description": "Cookie consent enforcement collector for the Vibescan deep scan",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "dependencies": {
+    "puppeteer-core": "25.12.0"
+  }
+}

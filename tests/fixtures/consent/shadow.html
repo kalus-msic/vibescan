@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="cs"><head><meta charset="utf-8"><title>shadow</title></head>
+<body>
+<div id="cmp-host"></div>
+<script>
+  const root = document.getElementById('cmp-host').attachShadow({ mode: 'open' });
+  root.innerHTML =
+    '<div id="box"><button id="a">Accept all</button><button id="r">Reject all</button></div>';
+  root.getElementById('a').onclick = () => {
+    document.cookie = '_ga=GA1.1.1.1; path=/';
+    root.getElementById('box').remove();
+  };
+  root.getElementById('r').onclick = () => root.getElementById('box').remove();
+</script>
+</body></html>

@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="cs"><head><meta charset="utf-8"><title>hidden iframe</title></head>
+<body>
+<p>Obsah</p>
+<iframe id="cmp" style="width: 600px; height: 200px; border: 0; opacity: 0"></iframe>
+<script>
+  document.getElementById('cmp').src =
+    location.protocol + '//localhost:' + location.port + '/cmp_frame.html';
+</script>
+</body></html>

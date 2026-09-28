@@ -45,3 +45,6 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Node deps of the consent collector
+scanner/js/node_modules/

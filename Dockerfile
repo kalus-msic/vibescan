@@ -1,3 +1,5 @@
+FROM node:22-slim AS node
+
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -5,10 +7,17 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
+# Node 22 from the official image - Debian apt ships Node 20, puppeteer-core 25 needs >= 22.12
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
+    && node -e "const [a, b] = process.versions.node.split('.').map(Number); if (a < 22 || (a === 22 && b < 12)) { console.error('Node >= 22.12 required, got ' + process.version); process.exit(1); }"
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc libpq-dev curl \
     libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 libffi-dev \
-    chromium nodejs npm \
+    chromium \
     fonts-liberation ca-certificates \
     libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 \
     libxcomposite1 libxdamage1 libxext6 libxfixes3 libxrandr2 libgbm1 libasound2 \
@@ -30,6 +39,13 @@ RUN ARCH=$(dpkg --print-architecture) && \
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Consent collector deps - outside /app so the dev ".:/app" mount cannot shadow them
+COPY scanner/js/package.json scanner/js/package-lock.json /opt/consent-node/
+RUN npm ci --omit=dev --prefix /opt/consent-node \
+    && chromium --version \
+    && NODE_PATH=/opt/consent-node/node_modules node -e "require('puppeteer-core').launch({executablePath: '/usr/bin/chromium', headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']}).then(async (b) => { console.log('puppeteer ok', await b.version()); await b.close(); }).catch((e) => { console.error(e); process.exit(1); })"
+ENV NODE_PATH=/opt/consent-node/node_modules
 
 RUN if ! getent group app >/dev/null; then addgroup --system app; fi && \
     if ! getent passwd app >/dev/null; then \
