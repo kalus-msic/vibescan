@@ -178,7 +178,11 @@ def recalculate_from_findings_dicts(findings: list[dict]) -> int:
 
 
 def _superseded_ids(deep_findings: list[dict]) -> set[str]:
-    """Return set of original Finding IDs that are superseded by a Lighthouse finding."""
+    """Return set of original Finding IDs that are superseded by a deep finding.
+
+    Lighthouse findings resolve supersede via LIGHTHOUSE_AUDIT_MAP; other deep
+    findings (consent check) carry a "supersedes_ids" list directly on the dict.
+    """
     from scanner.lighthouse_audits import LIGHTHOUSE_AUDIT_MAP
 
     # Index AuditMap by finding_id (the lh-* prefix), since deep findings carry lh-* ids
@@ -191,6 +195,9 @@ def _superseded_ids(deep_findings: list[dict]) -> set[str]:
         mapping = by_finding_id.get(f.get("id", ""))
         if mapping and mapping.supersedes_id:
             superseded.add(mapping.supersedes_id)
+        direct = f.get("supersedes_ids")
+        if isinstance(direct, list):
+            superseded.update(x for x in direct if isinstance(x, str))
     return superseded
 
 

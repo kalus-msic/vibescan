@@ -330,3 +330,53 @@ class TestRecalculateWithDeepScanTiered:
         # Overall: 0.5×100 + 0.3×100 + 0.2×87 = 50+30+17.4 = 97.4 → 97
         assert result["seo"] == 87
         assert result["overall"] == 97
+
+
+class TestDirectSupersede:
+    """Deep findings outside LIGHTHOUSE_AUDIT_MAP can carry supersedes_ids directly."""
+
+    CONSENT_F2 = {
+        "id": "consent-reject-ineffective",
+        "severity": "critical",
+        "category": "tracking",
+        "supersedes_ids": ["tracking-no-consent", "missing-cookie-consent"],
+    }
+    FAST = [
+        {"id": "tracking-no-consent", "severity": "warning", "category": "tracking"},
+        {"id": "missing-cookie-consent", "severity": "info", "category": "legal"},
+    ]
+
+    def test_superseded_ids_reads_direct_list(self):
+        from scanner.score import _superseded_ids
+        assert _superseded_ids([dict(self.CONSENT_F2)]) == {
+            "tracking-no-consent", "missing-cookie-consent",
+        }
+
+    def test_non_list_supersedes_ids_ignored(self):
+        from scanner.score import _superseded_ids
+        deep = [{**self.CONSENT_F2, "supersedes_ids": "tracking-no-consent"}]
+        assert _superseded_ids(deep) == set()
+
+    def test_lighthouse_mapping_still_works(self):
+        from scanner.score import _superseded_ids
+        deep = [{"id": "lh-document-title", "severity": "critical", "category": "seo"}]
+        assert _superseded_ids(deep) == {"missing-title"}
+
+    def test_tiered_score_replaces_static_findings(self):
+        from scanner.score import recalculate_with_deep_scan_tiered
+        result = recalculate_with_deep_scan_tiered(
+            list(self.FAST), [dict(self.CONSENT_F2)], classification="auto",
+        )
+        # security: static WARNING (-5) superseded, only CRITICAL (-12) → 88
+        # legal: missing-cookie-consent INFO (-1) superseded → 100
+        # overall: 0.5×88 + 0.3×100 + 0.2×100 = 94
+        assert result["security"] == 88
+        assert result["legal"] == 100
+        assert result["overall"] == 94
+
+    def test_dismissed_deep_finding_restores_static_findings(self):
+        from scanner.score import recalculate_with_deep_scan_tiered
+        deep = [{**self.CONSENT_F2, "dismissed": True}]
+        result = recalculate_with_deep_scan_tiered(list(self.FAST), deep, classification="auto")
+        assert result["security"] == 95
+        assert result["legal"] == 99
