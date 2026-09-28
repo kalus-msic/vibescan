@@ -84,6 +84,22 @@ def test_good_banner(base_url):
     assert _ids(evaluate(raw)) == ["consent-enforcement-ok"]
 
 
+def test_zamitnout_is_reject(base_url):
+    raw = _collect(f"{base_url}/zamitnout.html")
+    assert raw["reject_button_found"] and raw["accept_button_found"]
+    assert raw["reject_banner_closed"] is True
+    assert _ids(evaluate(raw)) == ["consent-enforcement-ok"]
+
+
+def test_disagree_is_reject_not_agree(base_url):
+    raw = _collect(f"{base_url}/disagree.html")
+    assert raw["reject_button_found"] and raw["accept_button_found"]
+    assert raw["reject_banner_closed"] is True
+    assert "_ga" not in _names(raw["after_reject"])
+    assert "_ga" in _names(raw["after_accept"])  # proves Accept clicked "Agree", not "Disagree"
+    assert _ids(evaluate(raw)) == ["consent-enforcement-ok"]
+
+
 def test_tracking_before_consent(base_url):
     raw = _collect(f"{base_url}/before_consent.html")
     assert _ids(evaluate(raw)) == ["consent-tracking-before-consent"]

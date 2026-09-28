@@ -54,8 +54,8 @@ const ACCEPT_SELECTORS = [
 const BUTTON_CFG = {
   rejectSelectors: REJECT_SELECTORS,
   acceptSelectors: ACCEPT_SELECTORS,
-  rejectText: '(odmitnout|odmitam|nesouhlasim|pouze nezbytne|jen nezbytne|pouze nutne|pouze technicke|bez prijeti|bez souhlasu|pokracovat bez|reject|decline|deny|refuse|necessary only|only necessary|without accepting|continue without)',
-  acceptText: '(prijmout|prijimam|souhlasim|povolit vse|rozumim|accept|allow all|agree|got it)',
+  rejectText: '\\b(odmitnout|odmitam|zamitnout|zamitam|nesouhlasim|neprijimam|neprijmout|nepovolit|pouze nezbytne|jen nezbytne|pouze nutne|pouze technicke|essential only|necessary cookies only|use necessary|bez prijeti|bez souhlasu|pokracovat bez|no thanks|reject|decline|deny|refuse|disagree|do not agree|do not accept|don.?t accept|necessary only|only necessary|without accepting|continue without)\\b',
+  acceptText: '\\b(prijmout|prijimam|souhlasim|povolit vse|rozumim|accept|allow all|agree|got it)\\b',
   contextAttr: '(cookie|consent|gdpr|cmp|privacy|souhlas|soukromi)',
   contextText: '(cookie|gdpr|osobni udaj|soukromi|privacy)',
   maxText: 40,
@@ -83,7 +83,7 @@ function errorText(e) {
 // Returns the first first-layer consent button of the given kind, or null.
 function findConsentButton(kind, cfg) {
   const norm = (t) => (t || '')
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/\s+/g, ' ').trim().toLowerCase();
   const parentOf = (node) => {
     if (node.parentElement) return node.parentElement;
