@@ -387,6 +387,9 @@ def run_lighthouse_scan(self, scan_id: str):
     if scan.deep_scan_status == "done":
         if scan.pre_deep_scan_score is None:
             scan.pre_deep_scan_score = scan.vibe_score  # snapshot for "78 → 72 (−6)" tooltip
+        # Consent check runs up to 90 s after the fast-scan fields were last read;
+        # a user dismiss made in that window must be reflected in the rescore.
+        scan.refresh_from_db(fields=["findings", "accessibility_classification"])
         result = recalculate_with_deep_scan_tiered(
             scan.findings, scan.deep_scan_findings,
             classification=scan.accessibility_classification,

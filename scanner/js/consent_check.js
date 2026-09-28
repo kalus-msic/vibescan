@@ -54,7 +54,7 @@ const ACCEPT_SELECTORS = [
 const BUTTON_CFG = {
   rejectSelectors: REJECT_SELECTORS,
   acceptSelectors: ACCEPT_SELECTORS,
-  rejectText: '\\b(odmitnout|odmitam|zamitnout|zamitam|nesouhlasim|neprijimam|neprijmout|nepovolit|pouze nezbytne|jen nezbytne|pouze nutne|pouze technicke|essential only|necessary cookies only|use necessary|bez prijeti|bez souhlasu|pokracovat bez|no thanks|reject|decline|deny|refuse|disagree|do not agree|do not accept|don.?t accept|necessary only|only necessary|without accepting|continue without)\\b',
+  rejectText: '\\b(odmitnout|odmitam|zamitnout|zamitam|nesouhlasim|neprijimam|neprijmout|nepovolit|pouze nezbytne|jen nezbytne|pouze nutne|pouze technicke|essential only|necessary cookies only|use necessary|bez prijeti|bez souhlasu|pokracovat bez|reject|decline|deny|refuse|disagree|do not agree|do not accept|don.?t accept|necessary only|only necessary|without accepting|continue without|(prijmout|povolit|accept|allow) (jen |pouze |only )?(nezbytne|nutne|necessary|essential))\\b',
   acceptText: '\\b(prijmout|prijimam|souhlasim|povolit vse|rozumim|accept|allow all|agree|got it)\\b',
   contextAttr: '(cookie|consent|gdpr|cmp|privacy|souhlas|soukromi)',
   contextText: '(cookie|gdpr|osobni udaj|soukromi|privacy)',
@@ -317,6 +317,7 @@ async function main() {
   const browser = await puppeteer.launch({
     executablePath: CHROME_PATH,
     headless: true,
+    defaultViewport: { width: 1366, height: 768 },
     args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--lang=cs-CZ'],
   });
   activeBrowser = browser;

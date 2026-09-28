@@ -99,6 +99,14 @@ class TestGrantedGcs:
         ("http://[::1", None),
         (None, None),
         (3, None),
+        # gcs joined with ';' alongside other query params (real-world Google pings)
+        ("https://www.googleadservices.com/pagead/viewthroughconversion/1/"
+         "?random=1&gcs=G111;gcd=13r3;dma=1", "G111"),
+        # gcs inside a Floodlight ';'-separated path matrix, not the query string
+        ("https://ad.doubleclick.net/activity;src=1;gcs=G111;ord=1?", "G111"),
+        # ';'-joined form still respects the "at least one granted '1'" rule
+        ("https://www.googleadservices.com/pagead/viewthroughconversion/1/"
+         "?random=1&gcs=G100;gcd=13r3;dma=1", None),
     ])
     def test_gcs(self, url, expected):
         assert granted_gcs(url) == expected
@@ -140,7 +148,7 @@ class TestEvaluate:
         assert _ids(findings) == ["consent-enforcement-ok"]
         f = findings[0]
         assert f["severity"] == "ok"
-        assert f["supersedes_ids"] == ["missing-cookie-consent"]
+        assert f["supersedes_ids"] == BOTH
         assert "Google Analytics" in f["detail"]
 
     def test_only_reject_button_clean_is_ok(self):

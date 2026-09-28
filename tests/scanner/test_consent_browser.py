@@ -117,6 +117,17 @@ def test_no_reject_option(base_url):
     assert _ids(evaluate(raw)) == ["consent-no-reject-option"]
 
 
+def test_accept_necessary_alt_phrasing_is_reject(base_url):
+    """"Přijmout pouze nezbytné" is an accept-with-necessary-only phrasing - it
+    must be treated as reject, distinct from the "Přijmout vše" accept button."""
+    raw = _collect(f"{base_url}/accept_necessary.html")
+    assert raw["reject_button_found"] and raw["accept_button_found"]
+    assert raw["reject_banner_closed"] is True
+    assert "_ga" not in _names(raw["after_reject"])
+    assert "_ga" in _names(raw["after_accept"])
+    assert _ids(evaluate(raw)) == ["consent-enforcement-ok"]
+
+
 def test_shadow_dom_buttons(base_url):
     raw = _collect(f"{base_url}/shadow.html")
     assert raw["reject_button_found"] and raw["accept_button_found"]

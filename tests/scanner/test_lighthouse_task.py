@@ -200,6 +200,28 @@ def test_consent_check_runs_without_static_consent_findings(scan):
 
 
 @pytest.mark.django_db
+def test_dismiss_during_consent_check_is_reflected_in_rescore(scan_with_banner):
+    """A dismiss made while the (up to 90 s) consent check runs must be picked
+    up by the rescore - not overwritten by findings read before the check started."""
+    from scanner.tasks import run_lighthouse_scan
+
+    def _consent_check_dismisses_tracking(url):
+        dismissed = [dict(f) for f in FAST_WITH_BANNER]
+        for f in dismissed:
+            if f["id"] == "tracking-no-consent":
+                f["dismissed"] = True
+        ScanResult.objects.filter(pk=scan_with_banner.pk).update(findings=dismissed)
+        return []
+
+    with patch("subprocess.run", return_value=_lh_ok()), \
+         patch("scanner.tasks.run_consent_check", side_effect=_consent_check_dismisses_tracking):
+        run_lighthouse_scan(str(scan_with_banner.id))
+
+    scan_with_banner.refresh_from_db()
+    assert scan_with_banner.score_security == 100
+
+
+@pytest.mark.django_db
 def test_fast_scan_finishing_during_lighthouse_is_used(pending_scan):
     from scanner.tasks import run_lighthouse_scan
 

@@ -11,7 +11,7 @@ import re
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import urlparse
 
 from scanner.modules.base import Severity, guide_url
 
@@ -77,7 +77,12 @@ def classify_cookie(name, domain) -> str | None:
 
 
 def granted_gcs(url) -> str | None:
-    """Return the gcs value when a Google request reports granted storage."""
+    """Return the gcs value when a Google request reports granted storage.
+
+    gcs can show up in the query string joined with '&' or ';', or inside a
+    Floodlight ';'-separated path matrix - so search the whole URL rather than
+    only parsing the query string.
+    """
     if not isinstance(url, str):
         return None
     try:
@@ -87,10 +92,13 @@ def granted_gcs(url) -> str | None:
         return None
     if not _host_matches(host, GOOGLE_CONSENT_HOST_SUFFIXES):
         return None
-    for value in parse_qs(parsed.query).get("gcs", []):
-        match = _GCS_RE.match(value)
-        if match and "1" in match.groups():
-            return value
+    match = re.search(r"[?&;]gcs=(G1[01][01])(?=[&;#?/]|$)", url)
+    if not match:
+        return None
+    value = match.group(1)
+    gcs_match = _GCS_RE.match(value)
+    if gcs_match and "1" in gcs_match.groups():
+        return value
     return None
 
 
@@ -213,7 +221,7 @@ def _enforcement_ok(after_accept: PhaseEvidence | None) -> dict:
         "Ověřili jsme v prohlížeči: tracking cookies se neukládají před "
         "souhlasem ani po odmítnutí. Consent mechanismus plní svou funkci.",
         Severity.OK,
-        [MISSING_CONSENT_ID],
+        [TRACKING_NO_CONSENT_ID, MISSING_CONSENT_ID],
         detail=detail,
     )
 
@@ -282,7 +290,12 @@ def run_consent_check(url: str) -> list[dict]:
         return []
     if isinstance(raw, dict):
         if raw.get("fatal"):
-            logger.info("Consent check aborted for %s: %s", url, str(raw["fatal"])[:300])
+            fatal_text = str(raw["fatal"])[:300]
+            fatal_lower = fatal_text.lower()
+            if "failed to launch" in fatal_lower or "executable" in fatal_lower:
+                logger.warning("Consent check aborted for %s: %s", url, fatal_text)
+            else:
+                logger.info("Consent check aborted for %s: %s", url, fatal_text)
         errors = raw.get("errors")
         if isinstance(errors, list):
             for error in errors[:10]:
