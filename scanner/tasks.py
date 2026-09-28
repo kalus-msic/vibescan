@@ -2,6 +2,7 @@ import json
 import logging
 import re
 import subprocess
+import time
 
 import httpx
 from datetime import datetime, timezone
@@ -111,6 +112,7 @@ from .modules.legal import LegalScanner
 from .modules.dns_check import DNSScanner
 from .modules.seo import SEOScanner
 from .lighthouse_mapper import LighthouseMapper
+from .consent_check import run_consent_check
 from .score import (
     calculate_vibe_score,
     calculate_tier_scores,
@@ -299,7 +301,36 @@ def run_scan(self, scan_id: str):
     ])
 
 
-@shared_task(bind=True, max_retries=0)
+# Fast scan runs as an independent task and may finish while Lighthouse runs:
+# wait for it, re-read its fields before gating/rescoring, never write them back.
+_FAST_SCAN_FIELDS = ["findings", "status", "vibe_score", "accessibility_classification"]
+_FAST_SCAN_TERMINAL = {ScanStatus.DONE, ScanStatus.FAILED}
+_FAST_SCAN_WAIT_SECONDS = 30
+_FAST_SCAN_POLL_SECONDS = 2
+_DEEP_SCAN_FIELDS = [
+    "deep_scan_status", "deep_scan_error", "deep_scan_findings",
+    "deep_scan_categories", "deep_scan_finished_at",
+]
+_DEEP_SCORE_FIELDS = [
+    "pre_deep_scan_score", "score_security", "score_legal", "score_seo",
+    "vibe_score", "score_breakdown_computed",
+]
+
+
+def _wait_for_fast_scan(scan) -> bool:
+    """Refresh fast-scan fields until the fast scan is terminal. False on timeout."""
+    deadline = time.monotonic() + _FAST_SCAN_WAIT_SECONDS
+    while True:
+        scan.refresh_from_db(fields=_FAST_SCAN_FIELDS)
+        if scan.status in _FAST_SCAN_TERMINAL:
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(_FAST_SCAN_POLL_SECONDS)
+
+
+# Lighthouse 90 s + fast-scan wait 30 s + consent 90 s > global CELERY_TASK_TIME_LIMIT=120
+@shared_task(bind=True, max_retries=0, time_limit=270, soft_time_limit=240)
 def run_lighthouse_scan(self, scan_id: str):
     try:
         scan = ScanResult.objects.get(id=scan_id)
@@ -328,12 +359,20 @@ def run_lighthouse_scan(self, scan_id: str):
         if data.get("runtimeError"):
             raise RuntimeError(f"Lighthouse runtime: {data['runtimeError'].get('message', 'unknown')}")
         findings, categories = LighthouseMapper().map(data)
+        if not _wait_for_fast_scan(scan):
+            raise RuntimeError("Rychlý scan nedoběhl včas")
+        if scan.status == ScanStatus.DONE:
+            try:
+                findings.extend(run_consent_check(scan.url))
+            except Exception:
+                # Consent check must never fail the deep scan
+                logger.exception("Consent check failed for %s", scan_id)
         scan.deep_scan_findings = findings
         scan.deep_scan_categories = categories
         scan.deep_scan_status = "done"
     except subprocess.TimeoutExpired:
         scan.deep_scan_status = "timeout"
-        scan.deep_scan_error = "Lighthouse překročil 60 s"
+        scan.deep_scan_error = "Lighthouse překročil 90 s"
     except json.JSONDecodeError:
         scan.deep_scan_status = "failed"
         scan.deep_scan_error = "Neplatný výstup Lighthouse (JSON parse error)"
@@ -344,6 +383,7 @@ def run_lighthouse_scan(self, scan_id: str):
         logger.exception("Lighthouse scan failed for %s", scan_id)
 
     scan.deep_scan_finished_at = _timezone.now()
+    update_fields = list(_DEEP_SCAN_FIELDS)
     if scan.deep_scan_status == "done":
         if scan.pre_deep_scan_score is None:
             scan.pre_deep_scan_score = scan.vibe_score  # snapshot for "78 → 72 (−6)" tooltip
@@ -356,4 +396,5 @@ def run_lighthouse_scan(self, scan_id: str):
         scan.score_seo = result["seo"]
         scan.vibe_score = result["overall"]
         scan.score_breakdown_computed = True
-    scan.save()
+        update_fields += _DEEP_SCORE_FIELDS
+    scan.save(update_fields=update_fields)
