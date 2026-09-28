@@ -156,10 +156,10 @@ def _finding(fid: str, title: str, description: str, severity: Severity,
 def _before_consent(evidence: PhaseEvidence) -> dict:
     return _finding(
         "consent-tracking-before-consent",
-        f"Tracking cookies pred udelenim souhlasu ({evidence.count}×)",
-        "Web ma cookie listu, ale tracking cookies se ukladaji jeste pred tim, "
-        "nez uzivatel udeli souhlas. Podle GDPR se analyticke a marketingove "
-        "cookies smi ulozit az po aktivnim souhlasu. Consent lista tak neplni "
+        f"Tracking cookies před udělením souhlasu ({evidence.count}×)",
+        "Web má cookie lištu, ale tracking cookies se ukládají ještě před tím, "
+        "než uživatel udělí souhlas. Podle GDPR se analytické a marketingové "
+        "cookies smí uložit až po aktivním souhlasu. Consent lišta tak neplní "
         "svou funkci.",
         Severity.WARNING,
         [TRACKING_NO_CONSENT_ID, MISSING_CONSENT_ID],
@@ -170,7 +170,7 @@ def _before_consent(evidence: PhaseEvidence) -> dict:
 def _reject_ineffective(evidence: PhaseEvidence) -> dict:
     return _finding(
         "consent-reject-ineffective",
-        f"Tlacitko odmitnutí nefunguje ({evidence.count}×)",
+        f"Tlačítko odmítnutí nefunguje ({evidence.count}×)",
         "Po kliknutí na odmítnutí cookies se tracking cookies přesto ukládají. "
         "Odmítnutí musí účinně zastavit všechny cookies kromě technicky "
         "nezbytných. Toto je přímé porušení GDPR — souhlas musí být svobodný "
@@ -184,8 +184,8 @@ def _reject_ineffective(evidence: PhaseEvidence) -> dict:
 def _no_reject_option() -> dict:
     return _finding(
         "consent-no-reject-option",
-        "Cookie lista bez moznosti odmitnutí",
-        "Cookie lista nabízí přijetí, ale na první vrstvě chybí stejně dostupná "
+        "Cookie lišta bez možnosti odmítnutí",
+        "Cookie lišta nabízí přijetí, ale na první vrstvě chybí stejně dostupná "
         "možnost odmítnutí. Podle výkladu ÚOOÚ a evropských dozorových úřadů "
         "musí být odmítnutí stejně snadné jako přijetí (jedno kliknutí, stejná "
         "vrstva).",
@@ -197,10 +197,10 @@ def _no_reject_option() -> dict:
 def _enforcement_ok(after_accept: PhaseEvidence | None) -> dict:
     detail = ""
     if after_accept and after_accept.has_tracking:
-        detail = "Po prijeti: " + ", ".join(after_accept.entries())
+        detail = "Po přijetí: " + ", ".join(after_accept.entries())
     return _finding(
         "consent-enforcement-ok",
-        "Cookie consent funguje spravne",
+        "Cookie consent funguje správně",
         "Ověřili jsme v prohlížeči: tracking cookies se neukládají před "
         "souhlasem ani po odmítnutí. Consent mechanismus plní svou funkci.",
         Severity.OK,
