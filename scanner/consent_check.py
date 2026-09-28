@@ -5,11 +5,20 @@ data (cookies, Google request URLs, banner button presence). This module
 classifies that raw data and turns it into deep-scan finding dicts.
 The raw data is untrusted: every field is type-checked.
 """
+import json
+import logging
 import re
+import subprocess
 from dataclasses import dataclass, field
+from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from scanner.modules.base import Severity, guide_url
+
+logger = logging.getLogger(__name__)
+
+CONSENT_SCRIPT = Path(__file__).resolve().parent / "js" / "consent_check.js"
+CONSENT_TIMEOUT_SECONDS = 90
 
 
 # Google hosts whose requests may carry the gcs consent-state parameter.
@@ -242,3 +251,40 @@ def evaluate(raw) -> list[dict]:
     if not findings and run_complete:
         findings.append(_enforcement_ok(after_accept))
     return findings
+
+
+def run_consent_check(url: str) -> list[dict]:
+    """Run the Node collector against url and evaluate its output.
+
+    Never raises for collector problems - the deep scan must not fail because
+    of the consent check. Returns [] on timeout, crash or invalid output.
+    """
+    config = json.dumps({"tracking_host_suffixes": list(GOOGLE_CONSENT_HOST_SUFFIXES)})
+    try:
+        proc = subprocess.run(
+            ["node", str(CONSENT_SCRIPT), url, config],
+            capture_output=True, text=True, timeout=CONSENT_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired:
+        logger.warning("Consent check timed out for %s", url)
+        return []
+    except OSError:
+        logger.exception("Consent check could not start for %s", url)
+        return []
+    if proc.returncode != 0:
+        logger.warning("Consent check exit %s for %s: %s",
+                       proc.returncode, url, (proc.stderr or "")[:500])
+        return []
+    try:
+        raw = json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        logger.warning("Consent check returned invalid JSON for %s", url)
+        return []
+    if isinstance(raw, dict):
+        if raw.get("fatal"):
+            logger.info("Consent check aborted for %s: %s", url, str(raw["fatal"])[:300])
+        errors = raw.get("errors")
+        if isinstance(errors, list):
+            for error in errors[:10]:
+                logger.info("Consent check warning for %s: %s", url, str(error)[:300])
+    return evaluate(raw)

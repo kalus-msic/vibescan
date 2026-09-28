@@ -263,3 +263,55 @@ class TestEvaluate:
                                   "fix_url", "doc_url", "detail", "supersedes_ids"}
                 assert f["category"] == "tracking"
                 assert len(f["detail"]) <= 160
+
+
+import json
+import subprocess
+from unittest.mock import MagicMock, patch
+
+from scanner.consent_check import (
+    CONSENT_SCRIPT,
+    GOOGLE_CONSENT_HOST_SUFFIXES,
+    run_consent_check,
+)
+
+
+def _proc(stdout="", returncode=0, stderr=""):
+    return MagicMock(returncode=returncode, stdout=stdout, stderr=stderr)
+
+
+class TestRunConsentCheck:
+    def test_invokes_node_collector_and_evaluates(self):
+        raw = _raw(_phase(), after_reject=_phase())
+        with patch("scanner.consent_check.subprocess.run", return_value=_proc(json.dumps(raw) + "\n")) as run:
+            findings = run_consent_check("https://example.com")
+        cmd = run.call_args.args[0]
+        assert cmd[:3] == ["node", str(CONSENT_SCRIPT), "https://example.com"]
+        assert json.loads(cmd[3]) == {"tracking_host_suffixes": list(GOOGLE_CONSENT_HOST_SUFFIXES)}
+        assert run.call_args.kwargs["timeout"] == 90
+        assert _ids(findings) == ["consent-enforcement-ok"]
+
+    @pytest.mark.parametrize("error", [
+        subprocess.TimeoutExpired(cmd="node", timeout=90),
+        FileNotFoundError("node"),
+    ])
+    def test_launch_problems_return_empty(self, error):
+        with patch("scanner.consent_check.subprocess.run", side_effect=error):
+            assert run_consent_check("https://example.com") == []
+
+    def test_nonzero_exit_returns_empty(self):
+        with patch("scanner.consent_check.subprocess.run", return_value=_proc(returncode=1, stderr="boom")):
+            assert run_consent_check("https://example.com") == []
+
+    def test_invalid_json_returns_empty(self):
+        with patch("scanner.consent_check.subprocess.run", return_value=_proc("not json")):
+            assert run_consent_check("https://example.com") == []
+
+    def test_fatal_returns_empty(self):
+        with patch("scanner.consent_check.subprocess.run", return_value=_proc('{"fatal": "deadline"}')):
+            assert run_consent_check("https://example.com") == []
+
+    def test_non_list_errors_do_not_raise(self):
+        raw = {**_raw(_phase(), after_reject=_phase()), "errors": "boom"}
+        with patch("scanner.consent_check.subprocess.run", return_value=_proc(json.dumps(raw))):
+            assert _ids(run_consent_check("https://example.com")) == ["consent-enforcement-ok"]
