@@ -15,9 +15,12 @@ const CHROME_PATH = process.env.CHROME_PATH || '/usr/bin/chromium';
 const NAV_TIMEOUT_MS = 15000;
 const IDLE_MS = 2000;
 const IDLE_CAP_MS = 10000;
-const BANNER_POLL_MS = 5000;
+const BANNER_POLL_MS = 8000;
 const BANNER_POLL_STEP_MS = 500;
 const DEADLINE_MS = 80000;
+const NAV_RETRY_TIMEOUT_MS = 25000;
+const ACCEPT_PHASE_MIN_REMAINING_MS = 35000;
+const startedAt = Date.now();
 const MAX_REQUESTS = 200;
 const MAX_URL_LENGTH = 2000;
 const ACCEPT_LANGUAGE = 'cs-CZ,cs;q=0.9,en;q=0.8';
@@ -293,6 +296,17 @@ async function openPage(context, suffixes, userAgent) {
   };
 }
 
+// One retry with a longer timeout: slow sites time out next to Lighthouse
+// (real-site test: ms-ic.cz). Only timeouts are retried.
+async function gotoWithRetry(page, url) {
+  try {
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
+  } catch (e) {
+    if (!e || e.name !== 'TimeoutError') throw e;
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_RETRY_TIMEOUT_MS });
+  }
+}
+
 async function main() {
   const url = process.argv[2];
   if (!url) return { fatal: 'missing url' };
@@ -328,7 +342,7 @@ async function main() {
     // Phase 1 (baseline) + phase 2 (reject) share one fresh context
     const ctx1 = await browser.createBrowserContext();
     const s1 = await openPage(ctx1, suffixes, userAgent);
-    await s1.page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
+    await gotoWithRetry(s1.page, url);
     await settle(s1.page);
     const found = await waitForBanner(s1.page);
     out.reject_button_found = found.reject;
@@ -353,7 +367,10 @@ async function main() {
     await ctx1.close();
 
     // Phase 3 (accept) in a new context - no cookies from phases 1-2
-    if (found.accept) {
+    const remainingMs = DEADLINE_MS - (Date.now() - startedAt);
+    if (found.accept && remainingMs < ACCEPT_PHASE_MIN_REMAINING_MS) {
+      out.errors.push('accept: skipped, time budget');
+    } else if (found.accept) {
       try {
         const ctx2 = await browser.createBrowserContext();
         const s2 = await openPage(ctx2, suffixes, userAgent);

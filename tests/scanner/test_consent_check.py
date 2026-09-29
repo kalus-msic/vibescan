@@ -141,6 +141,13 @@ class TestPhaseEvidence:
     def test_invalid_phase_is_none(self, phase):
         assert phase_evidence(phase) is None
 
+    def test_cmp_signal_from_cookie_and_request(self):
+        assert phase_evidence(_phase("didomi_token")).cmp is True
+        assert phase_evidence(_phase("cmplz_banner-status")).cmp is True
+        assert phase_evidence(_phase(requests=["https://cdn.cookielaw.org/otSDKStub.js"])).cmp is True
+        assert phase_evidence(_phase("_ga", "sessionid")).cmp is False
+        assert phase_evidence(_phase(requests=["https://evilcookielaw.org/x.js"])).cmp is False
+
 
 class TestEvaluate:
     def test_clean_reject_path_is_ok(self):
@@ -204,8 +211,51 @@ class TestEvaluate:
         findings = evaluate(_raw(_phase("_ga"), reject=False))
         assert _ids(findings) == ["consent-tracking-before-consent", "consent-no-reject-option"]
 
-    def test_no_buttons_means_no_banner(self):
-        assert evaluate(_raw(_phase("_ga"), reject=False, accept=False)) == []
+    def test_no_banner_with_tracking_is_critical_pair(self):
+        findings = evaluate(_raw(_phase("_ga", "_fbp"), reject=False, accept=False))
+        assert _ids(findings) == ["consent-tracking-without-banner", "consent-banner-required"]
+        f5, f6 = findings
+        assert (f5["severity"], f5["category"]) == ("critical", "tracking")
+        assert f5["supersedes_ids"] == ["tracking-no-consent"]
+        assert "(2×)" in f5["title"]
+        assert f5["detail"] == "Facebook Pixel (_fbp), Google Analytics (_ga)"
+        assert (f6["severity"], f6["category"]) == ("critical", "legal")
+        assert f6["supersedes_ids"] == ["missing-cookie-consent"]
+
+    def test_no_banner_with_granted_gcs_is_critical_pair(self):
+        findings = evaluate(_raw(_phase(requests=[GA_GRANTED]), reject=False, accept=False))
+        assert _ids(findings) == ["consent-tracking-without-banner", "consent-banner-required"]
+
+    def test_no_banner_without_tracking_is_not_required(self):
+        findings = evaluate(_raw(_phase("sessionid"), reject=False, accept=False))
+        assert _ids(findings) == ["consent-not-required"]
+        f = findings[0]
+        assert (f["severity"], f["category"]) == ("ok", "legal")
+        assert f["supersedes_ids"] == ["missing-cookie-consent"]
+
+    def test_no_banner_without_tracking_but_static_tracking_yields_nothing(self):
+        raw = _raw(_phase(), reject=False, accept=False)
+        assert evaluate(raw, fast_ids=frozenset({"tracking-no-consent"})) == []
+
+    def test_no_buttons_with_static_cmp_is_before_consent(self):
+        raw = _raw(_phase("_ga"), reject=False, accept=False)
+        findings = evaluate(raw, fast_ids=frozenset({"cookie-consent-ok"}))
+        assert _ids(findings) == ["consent-tracking-before-consent"]
+
+    @pytest.mark.parametrize("cmp_cookie", ["didomi_token", "cmpsessid", "euconsent-v2", "cmplz_statistics"])
+    def test_no_buttons_with_cmp_cookie_is_before_consent(self, cmp_cookie):
+        findings = evaluate(_raw(_phase("_ga", cmp_cookie), reject=False, accept=False))
+        assert _ids(findings) == ["consent-tracking-before-consent"]
+
+    def test_no_buttons_with_cmp_request_is_before_consent(self):
+        baseline = _phase("_ga", requests=["https://sdk.privacy-center.org/loader.js"])
+        findings = evaluate(_raw(baseline, reject=False, accept=False))
+        assert _ids(findings) == ["consent-tracking-before-consent"]
+
+    def test_no_buttons_with_cmp_signal_and_no_tracking_yields_nothing(self):
+        assert evaluate(_raw(_phase("didomi_token"), reject=False, accept=False)) == []
+        assert evaluate(_raw(_phase(), reject=False, accept=False),
+                        fast_ids=frozenset({"cookie-consent-ok"})) == []
 
     def test_fatal_yields_nothing(self):
         assert evaluate({"fatal": "deadline"}) == []
@@ -240,6 +290,10 @@ class TestEvaluate:
          "baseline": {"cookies": "nope", "requests": []}, "after_reject": _phase()},
         {"reject_button_found": "false", "accept_button_found": "false",
          "baseline": _phase("_ga"), "after_reject": None, "after_accept": None},
+        {"reject_button_found": 0, "accept_button_found": 0,
+         "baseline": _phase("_ga"), "after_reject": None, "after_accept": None},
+        {"reject_button_found": None, "accept_button_found": False,
+         "baseline": _phase(), "after_reject": None, "after_accept": None},
     ])
     def test_malformed_input_yields_nothing(self, raw):
         assert evaluate(raw) == []
@@ -279,6 +333,7 @@ from unittest.mock import MagicMock, patch
 
 from scanner.consent_check import (
     CONSENT_SCRIPT,
+    COLLECTOR_HOST_SUFFIXES,
     GOOGLE_CONSENT_HOST_SUFFIXES,
     run_consent_check,
 )
@@ -295,7 +350,7 @@ class TestRunConsentCheck:
             findings = run_consent_check("https://example.com")
         cmd = run.call_args.args[0]
         assert cmd[:3] == ["node", str(CONSENT_SCRIPT), "https://example.com"]
-        assert json.loads(cmd[3]) == {"tracking_host_suffixes": list(GOOGLE_CONSENT_HOST_SUFFIXES)}
+        assert json.loads(cmd[3]) == {"tracking_host_suffixes": list(COLLECTOR_HOST_SUFFIXES)}
         assert run.call_args.kwargs["timeout"] == 90
         assert _ids(findings) == ["consent-enforcement-ok"]
 
@@ -323,3 +378,10 @@ class TestRunConsentCheck:
         raw = {**_raw(_phase(), after_reject=_phase()), "errors": "boom"}
         with patch("scanner.consent_check.subprocess.run", return_value=_proc(json.dumps(raw))):
             assert _ids(run_consent_check("https://example.com")) == ["consent-enforcement-ok"]
+
+    def test_passes_fast_ids_to_evaluate(self):
+        raw = _raw(_phase(), reject=False, accept=False)
+        with patch("scanner.consent_check.subprocess.run", return_value=_proc(json.dumps(raw))):
+            assert _ids(run_consent_check("https://example.com")) == ["consent-not-required"]
+            assert run_consent_check("https://example.com",
+                                     fast_ids=frozenset({"tracking-no-consent"})) == []

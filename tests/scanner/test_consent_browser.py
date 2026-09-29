@@ -13,6 +13,7 @@ import os
 import shutil
 import subprocess
 import threading
+import time
 from pathlib import Path
 
 import pytest
@@ -20,6 +21,7 @@ import pytest
 from scanner.consent_check import CONSENT_SCRIPT, evaluate, run_consent_check
 
 FIXTURES = Path(__file__).resolve().parent.parent / "fixtures" / "consent"
+SLOW_RESPONSE_SECONDS = 16  # > NAV_TIMEOUT_MS (15 s), < retry timeout (25 s)
 
 
 def _browser_available() -> bool:
@@ -44,12 +46,24 @@ class _QuietHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *args):
         pass
 
+    def do_GET(self):
+        # /slow/<file> answers after SLOW_RESPONSE_SECONDS (navigation retry test)
+        if self.path.startswith("/slow/"):
+            time.sleep(SLOW_RESPONSE_SECONDS)
+            self.path = self.path[len("/slow"):]
+        super().do_GET()
+
+
+class _QuietServer(http.server.ThreadingHTTPServer):
+    def handle_error(self, request, client_address):
+        pass  # the aborted first slow navigation is expected
+
 
 @pytest.fixture(scope="module")
 def base_url():
     handler = functools.partial(_QuietHandler, directory=str(FIXTURES))
     # Bind all loopback names so the iframe fixture can use "localhost"
-    httpd = http.server.ThreadingHTTPServer(("", 0), handler)
+    httpd = _QuietServer(("", 0), handler)
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
     yield f"http://127.0.0.1:{httpd.server_address[1]}"
@@ -148,7 +162,7 @@ def test_requests_after_reject_are_recorded(base_url):
 def test_unrelated_dialog_is_not_a_banner(base_url):
     raw = _collect(f"{base_url}/unrelated_dialog.html")
     assert not raw["reject_button_found"] and not raw["accept_button_found"]
-    assert evaluate(raw) == []
+    assert _ids(evaluate(raw)) == ["consent-not-required"]
 
 
 def test_continue_without_accepting_is_reject(base_url):
@@ -175,7 +189,7 @@ def test_cmp_in_cross_site_iframe(base_url):
 def test_cmp_in_hidden_iframe_is_not_a_banner(base_url):
     raw = _collect(f"{base_url}/hidden_iframe.html")
     assert not raw["reject_button_found"] and not raw["accept_button_found"]
-    assert evaluate(raw) == []
+    assert _ids(evaluate(raw)) == ["consent-not-required"]
 
 
 def test_unreachable_site_is_fatal_not_crash():
@@ -187,3 +201,30 @@ def test_unreachable_site_is_fatal_not_crash():
 def test_run_consent_check_end_to_end(base_url):
     findings = run_consent_check(f"{base_url}/decorative_reject.html")
     assert _ids(findings) == ["consent-reject-ineffective"]
+
+
+NO_BANNER_PAIR = ["consent-tracking-without-banner", "consent-banner-required"]
+
+
+def test_no_banner_with_tracking_is_critical_pair(base_url):
+    raw = _collect(f"{base_url}/no_banner_tracking.html")
+    assert not raw["reject_button_found"] and not raw["accept_button_found"]
+    assert {"_ga", "_fbp"} <= _names(raw["baseline"])
+    assert _ids(evaluate(raw)) == NO_BANNER_PAIR
+
+
+def test_no_banner_without_tracking_is_not_required(base_url):
+    raw = _collect(f"{base_url}/no_banner_clean.html")
+    assert _ids(evaluate(raw)) == ["consent-not-required"]
+
+
+def test_cmp_cookie_without_buttons_is_not_treated_as_no_banner(base_url):
+    raw = _collect(f"{base_url}/cmp_cookie_no_buttons.html")
+    assert not raw["reject_button_found"] and not raw["accept_button_found"]
+    assert _ids(evaluate(raw)) == ["consent-tracking-before-consent"]
+
+
+def test_navigation_timeout_is_retried(base_url):
+    raw = _collect(f"{base_url}/slow/no_banner_tracking.html")
+    assert not raw.get("fatal"), raw.get("fatal")
+    assert _ids(evaluate(raw)) == NO_BANNER_PAIR

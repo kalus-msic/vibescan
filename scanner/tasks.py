@@ -362,8 +362,11 @@ def run_lighthouse_scan(self, scan_id: str):
         if not _wait_for_fast_scan(scan):
             raise RuntimeError("Rychlý scan nedoběhl včas")
         if scan.status == ScanStatus.DONE:
+            fast_ids = frozenset(
+                f.get("id") for f in scan.findings or [] if isinstance(f, dict)
+            )
             try:
-                findings.extend(run_consent_check(scan.url))
+                findings.extend(run_consent_check(scan.url, fast_ids=fast_ids))
             except Exception:
                 # Consent check must never fail the deep scan
                 logger.exception("Consent check failed for %s", scan_id)

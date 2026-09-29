@@ -179,7 +179,7 @@ def test_consent_check_appends_findings_and_rescores(scan_with_banner):
     with patch("subprocess.run", return_value=_lh_ok()), \
          patch("scanner.tasks.run_consent_check", return_value=[dict(CONSENT_F2)]) as consent:
         run_lighthouse_scan(str(scan_with_banner.id))
-    consent.assert_called_once_with("https://example.com")
+    consent.assert_called_once_with("https://example.com", fast_ids=frozenset({"cookie-consent-ok", "tracking-no-consent"}))
     scan = scan_with_banner
     scan.refresh_from_db()
     ids = {f["id"] for f in scan.deep_scan_findings}
@@ -196,7 +196,7 @@ def test_consent_check_runs_without_static_consent_findings(scan):
     with patch("subprocess.run", return_value=_lh_ok()), \
          patch("scanner.tasks.run_consent_check", return_value=[]) as consent:
         run_lighthouse_scan(str(scan.id))
-    consent.assert_called_once_with("https://example.com")
+    consent.assert_called_once_with("https://example.com", fast_ids=frozenset())
 
 
 @pytest.mark.django_db
@@ -205,7 +205,7 @@ def test_dismiss_during_consent_check_is_reflected_in_rescore(scan_with_banner):
     up by the rescore - not overwritten by findings read before the check started."""
     from scanner.tasks import run_lighthouse_scan
 
-    def _consent_check_dismisses_tracking(url):
+    def _consent_check_dismisses_tracking(url, fast_ids=frozenset()):
         dismissed = [dict(f) for f in FAST_WITH_BANNER]
         for f in dismissed:
             if f["id"] == "tracking-no-consent":

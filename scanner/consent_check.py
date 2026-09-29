@@ -53,6 +53,24 @@ _GCS_RE = re.compile(r"^G1([01])([01])$")
 
 TRACKING_NO_CONSENT_ID = "tracking-no-consent"
 MISSING_CONSENT_ID = "missing-cookie-consent"
+STATIC_CONSENT_ID = "cookie-consent-ok"
+
+# CMP traces present before any user choice: a banner exists even when its
+# buttons are not found (real-site test: Didomi on idnes.cz, Seznam CMP)
+CMP_COOKIE_NAMES = frozenset({
+    "didomi_token", "euconsent-v2", "OptanonConsent", "OptanonAlertBoxClosed",
+    "CookieConsent", "cookieyes-consent", "cmpsessid", "cmphitorder",
+    "_sp_su", "consentUUID", "mafra_ccheck",
+})
+CMP_COOKIE_PREFIXES = ("cmplz_",)
+CMP_HOST_SUFFIXES = (
+    "cookielaw.org", "onetrust.com", "cookiebot.com", "privacy-center.org",
+    "didomi.io", "cookie-script.com", "cookieyes.com", "usercentrics.eu",
+    "privacy-mgmt.com", "consensu.org", "trustarc.com", "iubenda.com",
+)
+# Hosts whose requests the collector records: Google gcs pings + CMP loaders
+COLLECTOR_HOST_SUFFIXES = GOOGLE_CONSENT_HOST_SUFFIXES + CMP_HOST_SUFFIXES
+
 _FIX_URL = guide_url("pravni-dokumenty")
 _DOC_URL = "https://gdpr.eu/cookies/"
 _DETAIL_MAX = 160
@@ -102,10 +120,27 @@ def granted_gcs(url) -> str | None:
     return None
 
 
+def _is_cmp_cookie(name) -> bool:
+    return isinstance(name, str) and (
+        name in CMP_COOKIE_NAMES or name.startswith(CMP_COOKIE_PREFIXES)
+    )
+
+
+def _is_cmp_request(url) -> bool:
+    if not isinstance(url, str):
+        return False
+    try:
+        host = urlparse(url).hostname or ""
+    except ValueError:
+        return False
+    return _host_matches(host, CMP_HOST_SUFFIXES)
+
+
 @dataclass
 class PhaseEvidence:
     cookies: dict[str, list[str]] = field(default_factory=dict)  # service -> names
     gcs: list[str] = field(default_factory=list)
+    cmp: bool = False  # CMP cookie or CMP host request seen
 
     @property
     def has_tracking(self) -> bool:
@@ -143,12 +178,16 @@ def phase_evidence(phase) -> PhaseEvidence | None:
         if not isinstance(cookie, dict):
             continue
         name = cookie.get("name")
+        if _is_cmp_cookie(name):
+            evidence.cmp = True
         service = classify_cookie(name, cookie.get("domain", ""))
         if service:
             names = evidence.cookies.setdefault(service, [])
             if name not in names:
                 names.append(name)
     for url in requests:
+        if _is_cmp_request(url):
+            evidence.cmp = True
         value = granted_gcs(url)
         if value and value not in evidence.gcs:
             evidence.gcs.append(value)
@@ -156,13 +195,13 @@ def phase_evidence(phase) -> PhaseEvidence | None:
 
 
 def _finding(fid: str, title: str, description: str, severity: Severity,
-             supersedes: list[str], detail: str = "") -> dict:
+             supersedes: list[str], detail: str = "", category: str = "tracking") -> dict:
     return {
         "id": fid,
         "title": title,
         "description": description,
         "severity": severity.value,
-        "category": "tracking",
+        "category": category,
         "fix_url": _FIX_URL,
         "doc_url": _DOC_URL,
         "detail": detail[:_DETAIL_MAX],
@@ -226,21 +265,84 @@ def _enforcement_ok(after_accept: PhaseEvidence | None) -> dict:
     )
 
 
+def _tracking_without_banner(evidence: PhaseEvidence) -> dict:
+    return _finding(
+        "consent-tracking-without-banner",
+        f"Měření návštěvníků bez cookie lišty ({evidence.count}×)",
+        "Web ukládá sledovací cookies hned při načtení a nenabízí žádnou "
+        "možnost souhlasu ani odmítnutí. Podle § 89 odst. 3 zákona "
+        "o elektronických komunikacích (a GDPR) se analytické a marketingové "
+        "cookies smí použít až po aktivním souhlasu. Bez cookie lišty "
+        "návštěvník nemá jak souhlas udělit ani odmítnout — jde o závažnější "
+        "stav než nefunkční lišta.",
+        Severity.CRITICAL,
+        [TRACKING_NO_CONSENT_ID],
+        detail=", ".join(evidence.entries()),
+    )
+
+
+def _banner_required() -> dict:
+    return _finding(
+        "consent-banner-required",
+        "Chybí cookie lišta, přestože web sleduje návštěvníky",
+        "Web používá analytické nebo marketingové cookies, ale nemá cookie "
+        "lištu ani jiný mechanismus souhlasu. Doplňte consent lištu "
+        "s rovnocennými tlačítky Přijmout / Odmítnout a spouštějte měření až "
+        "po souhlasu, nebo měření odstraňte.",
+        Severity.CRITICAL,
+        [MISSING_CONSENT_ID],
+        category="legal",
+    )
+
+
+def _consent_not_required() -> dict:
+    return _finding(
+        "consent-not-required",
+        "Cookie lišta není potřeba — nezjistili jsme sledování",
+        "Web nemá cookie lištu a v prohlížeči jsme při načtení nezaznamenali "
+        "žádné sledovací cookies ani měřicí požadavky. Pokud web používá jen "
+        "technicky nezbytné cookies, lišta podle zákona není nutná. "
+        "Kontrolujeme známé analytické a marketingové služby; jiné formy "
+        "sledování (localStorage, fingerprinting) neověřujeme.",
+        Severity.OK,
+        [MISSING_CONSENT_ID],
+        category="legal",
+    )
+
+
+def _no_banner_findings(baseline: PhaseEvidence, fast_ids: frozenset) -> list[dict]:
+    """No buttons found in the browser - see spec 'No-banner detection'."""
+    if baseline.cmp or STATIC_CONSENT_ID in fast_ids:
+        # A banner exists, we just could not operate it
+        return [_before_consent(baseline)] if baseline.has_tracking else []
+    if baseline.has_tracking:
+        return [_tracking_without_banner(baseline), _banner_required()]
+    if TRACKING_NO_CONSENT_ID in fast_ids:
+        return []  # static tracking script the browser did not confirm
+    return [_consent_not_required()]
+
+
 def _flag(raw: dict, key: str) -> bool:
     return raw.get(key) is True
 
 
-def evaluate(raw) -> list[dict]:
-    """Turn collector JSON into consent findings (see spec scenario matrix)."""
+def evaluate(raw, fast_ids: frozenset = frozenset()) -> list[dict]:
+    """Turn collector JSON into consent findings (see spec scenario matrix).
+
+    fast_ids: ids of the fast-scan findings (CMP signal and F7 guard).
+    """
     if not isinstance(raw, dict) or raw.get("fatal"):
         return []
-    reject_found = _flag(raw, "reject_button_found")
-    accept_found = _flag(raw, "accept_button_found")
-    if not (reject_found or accept_found):
-        return []  # banner not rendered in the browser
+    # Button flags must be real booleans - anything else is malformed output
+    if not all(isinstance(raw.get(k), bool) for k in ("reject_button_found", "accept_button_found")):
+        return []
+    reject_found = raw["reject_button_found"]
+    accept_found = raw["accept_button_found"]
     baseline = phase_evidence(raw.get("baseline"))
     if baseline is None:
         return []
+    if not (reject_found or accept_found):
+        return _no_banner_findings(baseline, frozenset(fast_ids))
     # after_reject counts only when the click was verified (banner closed)
     after_reject = None
     if reject_found and _flag(raw, "reject_banner_closed"):
@@ -261,13 +363,13 @@ def evaluate(raw) -> list[dict]:
     return findings
 
 
-def run_consent_check(url: str) -> list[dict]:
+def run_consent_check(url: str, fast_ids: frozenset = frozenset()) -> list[dict]:
     """Run the Node collector against url and evaluate its output.
 
     Never raises for collector problems - the deep scan must not fail because
     of the consent check. Returns [] on timeout, crash or invalid output.
     """
-    config = json.dumps({"tracking_host_suffixes": list(GOOGLE_CONSENT_HOST_SUFFIXES)})
+    config = json.dumps({"tracking_host_suffixes": list(COLLECTOR_HOST_SUFFIXES)})
     try:
         proc = subprocess.run(
             ["node", str(CONSENT_SCRIPT), url, config],
@@ -300,4 +402,4 @@ def run_consent_check(url: str) -> list[dict]:
         if isinstance(errors, list):
             for error in errors[:10]:
                 logger.info("Consent check warning for %s: %s", url, str(error)[:300])
-    return evaluate(raw)
+    return evaluate(raw, fast_ids)

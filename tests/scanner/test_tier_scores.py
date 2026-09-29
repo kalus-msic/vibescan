@@ -380,3 +380,17 @@ class TestDirectSupersede:
         result = recalculate_with_deep_scan_tiered(list(self.FAST), deep, classification="auto")
         assert result["security"] == 95
         assert result["legal"] == 99
+
+    def test_tracking_without_banner_scores_worse_than_broken_banner(self):
+        from scanner.score import recalculate_with_deep_scan_tiered
+        f5 = {"id": "consent-tracking-without-banner", "severity": "critical",
+              "category": "tracking", "supersedes_ids": ["tracking-no-consent"]}
+        f6 = {"id": "consent-banner-required", "severity": "critical",
+              "category": "legal", "supersedes_ids": ["missing-cookie-consent"]}
+        no_banner = recalculate_with_deep_scan_tiered(list(self.FAST), [f5, f6], classification="auto")
+        broken = recalculate_with_deep_scan_tiered(list(self.FAST), [dict(self.CONSENT_F2)], classification="auto")
+        # no banner: security 88, legal 88, seo 100 → 44 + 26.4 + 20 = 90.4 → 90
+        assert (no_banner["security"], no_banner["legal"], no_banner["overall"]) == (88, 88, 90)
+        # broken banner (F2): security 88, legal 100 → 94
+        assert broken["overall"] == 94
+        assert no_banner["overall"] < broken["overall"]
