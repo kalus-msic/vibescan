@@ -148,6 +148,23 @@ class TestPhaseEvidence:
         assert phase_evidence(_phase("_ga", "sessionid")).cmp is False
         assert phase_evidence(_phase(requests=["https://evilcookielaw.org/x.js"])).cmp is False
 
+    @pytest.mark.parametrize("host_url", [
+        "https://consentmanager.net/x.js",
+        "https://cookiefirst.com/x.js",
+        "https://cookiehub.eu/x.js",
+        "https://termly.io/x.js",
+        "https://osano.com/x.js",
+        "https://axept.io/x.js",
+        "https://fundingchoicesmessages.google.com/x.js",
+    ])
+    def test_new_cmp_hosts_set_cmp_true(self, host_url):
+        assert phase_evidence(_phase(requests=[host_url])).cmp is True
+
+    def test_measurement_flag_from_google_host_request(self):
+        assert phase_evidence(_phase(requests=[GA_DENIED])).measurement is True
+        assert phase_evidence(_phase()).measurement is False
+        assert phase_evidence(_phase(requests=["https://evilgoogle-analytics.com/x"])).measurement is False
+
 
 class TestEvaluate:
     def test_clean_reject_path_is_ok(self):
@@ -256,6 +273,29 @@ class TestEvaluate:
         assert evaluate(_raw(_phase("didomi_token"), reject=False, accept=False)) == []
         assert evaluate(_raw(_phase(), reject=False, accept=False),
                         fast_ids=frozenset({"cookie-consent-ok"})) == []
+
+    def test_no_banner_denied_measurement_ping_blocks_f7(self):
+        findings = evaluate(_raw(_phase(requests=[GA_DENIED]), reject=False, accept=False))
+        assert findings == []
+
+    def test_no_banner_clean_with_no_measurement_request_still_yields_f7(self):
+        findings = evaluate(_raw(_phase(), reject=False, accept=False))
+        assert _ids(findings) == ["consent-not-required"]
+
+    def test_no_banner_error_status_blocks_f7(self):
+        raw = _raw(_phase(), reject=False, accept=False)
+        raw["baseline_status"] = 403
+        assert evaluate(raw) == []
+
+    def test_no_banner_ok_status_still_yields_f7(self):
+        raw = _raw(_phase(), reject=False, accept=False)
+        raw["baseline_status"] = 200
+        assert _ids(evaluate(raw)) == ["consent-not-required"]
+
+    def test_no_banner_missing_or_null_status_still_yields_f7(self):
+        raw = _raw(_phase(), reject=False, accept=False)
+        raw["baseline_status"] = None
+        assert _ids(evaluate(raw)) == ["consent-not-required"]
 
     def test_fatal_yields_nothing(self):
         assert evaluate({"fatal": "deadline"}) == []

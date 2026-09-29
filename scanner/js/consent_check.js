@@ -19,7 +19,7 @@ const BANNER_POLL_MS = 8000;
 const BANNER_POLL_STEP_MS = 500;
 const DEADLINE_MS = 80000;
 const NAV_RETRY_TIMEOUT_MS = 25000;
-const ACCEPT_PHASE_MIN_REMAINING_MS = 35000;
+const ACCEPT_PHASE_MIN_REMAINING_MS = 45000;
 const startedAt = Date.now();
 const MAX_REQUESTS = 200;
 const MAX_URL_LENGTH = 2000;
@@ -68,6 +68,7 @@ const BUTTON_CFG = {
 
 let emitted = false;
 let activeBrowser = null;
+let partialOut = null;  // set once phases 1-2 finish; see the watchdog
 
 // stdout is a pipe: resolve only after the write is flushed.
 function emit(obj) {
@@ -300,10 +301,10 @@ async function openPage(context, suffixes, userAgent) {
 // (real-site test: ms-ic.cz). Only timeouts are retried.
 async function gotoWithRetry(page, url) {
   try {
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
+    return await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
   } catch (e) {
     if (!e || e.name !== 'TimeoutError') throw e;
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_RETRY_TIMEOUT_MS });
+    return await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_RETRY_TIMEOUT_MS });
   }
 }
 
@@ -323,6 +324,7 @@ async function main() {
     accept_button_found: false,
     reject_banner_closed: false,
     baseline: null,
+    baseline_status: null,
     after_reject: null,
     after_accept: null,
     errors: [],
@@ -342,7 +344,8 @@ async function main() {
     // Phase 1 (baseline) + phase 2 (reject) share one fresh context
     const ctx1 = await browser.createBrowserContext();
     const s1 = await openPage(ctx1, suffixes, userAgent);
-    await gotoWithRetry(s1.page, url);
+    const baselineResponse = await gotoWithRetry(s1.page, url);
+    out.baseline_status = baselineResponse ? baselineResponse.status() : null;
     await settle(s1.page);
     const found = await waitForBanner(s1.page);
     out.reject_button_found = found.reject;
@@ -365,6 +368,9 @@ async function main() {
       }
     }
     await ctx1.close();
+    // Phases 1-2 are done: from here the watchdog can emit this partial
+    // result (with after_accept forced null) instead of {fatal: 'deadline'}
+    partialOut = out;
 
     // Phase 3 (accept) in a new context - no cookies from phases 1-2
     const remainingMs = DEADLINE_MS - (Date.now() - startedAt);
@@ -394,11 +400,20 @@ async function main() {
   return out;
 }
 
-// A half-finished run could look like "no reject button" - report it as fatal.
+// A half-finished run (before phases 1-2 finish) could look like "no reject
+// button" - report it as fatal instead. Once phases 1-2 are done, report the
+// partial result (see partialOut) rather than losing it.
 const watchdog = setTimeout(() => {
   const proc = activeBrowser && activeBrowser.process();
   if (proc) proc.kill('SIGKILL');
-  emit({ fatal: 'deadline' }).then(() => process.exit(0));
+  if (partialOut) {
+    // Phases 1-2 already finished: report what we have instead of losing it
+    partialOut.after_accept = null;
+    partialOut.errors.push('accept: deadline');
+    emit(partialOut).then(() => process.exit(0));
+  } else {
+    emit({ fatal: 'deadline' }).then(() => process.exit(0));
+  }
 }, DEADLINE_MS);
 
 main()

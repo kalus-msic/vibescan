@@ -51,7 +51,26 @@ class _QuietHandler(http.server.SimpleHTTPRequestHandler):
         if self.path.startswith("/slow/"):
             time.sleep(SLOW_RESPONSE_SECONDS)
             self.path = self.path[len("/slow"):]
+        # /status403/<file> answers with HTTP 403 and the file body (F7 status guard test)
+        elif self.path.startswith("/status403/"):
+            self.path = self.path[len("/status403"):]
+            self._send_with_status(403)
+            return
         super().do_GET()
+
+    def _send_with_status(self, status_code):
+        path = self.translate_path(self.path)
+        try:
+            with open(path, "rb") as f:
+                body = f.read()
+        except OSError:
+            self.send_error(404)
+            return
+        self.send_response(status_code)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
 
 class _QuietServer(http.server.ThreadingHTTPServer):
@@ -228,3 +247,15 @@ def test_navigation_timeout_is_retried(base_url):
     raw = _collect(f"{base_url}/slow/no_banner_tracking.html")
     assert not raw.get("fatal"), raw.get("fatal")
     assert _ids(evaluate(raw)) == NO_BANNER_PAIR
+
+
+def test_baseline_status_403_blocks_f7(base_url):
+    raw = _collect(f"{base_url}/status403/no_banner_clean.html")
+    assert raw["baseline_status"] == 403
+    assert evaluate(raw) == []
+
+
+def test_baseline_status_200_is_recorded(base_url):
+    raw = _collect(f"{base_url}/no_banner_clean.html")
+    assert raw["baseline_status"] == 200
+    assert _ids(evaluate(raw)) == ["consent-not-required"]

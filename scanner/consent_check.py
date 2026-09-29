@@ -67,6 +67,8 @@ CMP_HOST_SUFFIXES = (
     "cookielaw.org", "onetrust.com", "cookiebot.com", "privacy-center.org",
     "didomi.io", "cookie-script.com", "cookieyes.com", "usercentrics.eu",
     "privacy-mgmt.com", "consensu.org", "trustarc.com", "iubenda.com",
+    "consentmanager.net", "cookiefirst.com", "cookiehub.eu", "termly.io",
+    "osano.com", "axept.io", "fundingchoicesmessages.google.com",
 )
 # Hosts whose requests the collector records: Google gcs pings + CMP loaders
 COLLECTOR_HOST_SUFFIXES = GOOGLE_CONSENT_HOST_SUFFIXES + CMP_HOST_SUFFIXES
@@ -136,11 +138,22 @@ def _is_cmp_request(url) -> bool:
     return _host_matches(host, CMP_HOST_SUFFIXES)
 
 
+def _is_google_measurement_request(url) -> bool:
+    if not isinstance(url, str):
+        return False
+    try:
+        host = urlparse(url).hostname or ""
+    except ValueError:
+        return False
+    return _host_matches(host, GOOGLE_CONSENT_HOST_SUFFIXES)
+
+
 @dataclass
 class PhaseEvidence:
     cookies: dict[str, list[str]] = field(default_factory=dict)  # service -> names
     gcs: list[str] = field(default_factory=list)
     cmp: bool = False  # CMP cookie or CMP host request seen
+    measurement: bool = False  # any request to a Google measurement host
 
     @property
     def has_tracking(self) -> bool:
@@ -188,6 +201,8 @@ def phase_evidence(phase) -> PhaseEvidence | None:
     for url in requests:
         if _is_cmp_request(url):
             evidence.cmp = True
+        if _is_google_measurement_request(url):
+            evidence.measurement = True
         value = granted_gcs(url)
         if value and value not in evidence.gcs:
             evidence.gcs.append(value)
@@ -310,7 +325,8 @@ def _consent_not_required() -> dict:
     )
 
 
-def _no_banner_findings(baseline: PhaseEvidence, fast_ids: frozenset) -> list[dict]:
+def _no_banner_findings(baseline: PhaseEvidence, fast_ids: frozenset,
+                         baseline_status=None) -> list[dict]:
     """No buttons found in the browser - see spec 'No-banner detection'."""
     if baseline.cmp or STATIC_CONSENT_ID in fast_ids:
         # A banner exists, we just could not operate it
@@ -319,6 +335,14 @@ def _no_banner_findings(baseline: PhaseEvidence, fast_ids: frozenset) -> list[di
         return [_tracking_without_banner(baseline), _banner_required()]
     if TRACKING_NO_CONSENT_ID in fast_ids:
         return []  # static tracking script the browser did not confirm
+    if baseline.measurement:
+        return []  # a denied Consent Mode ping contradicts "no measurement"
+    is_error_status = (
+        isinstance(baseline_status, int) and not isinstance(baseline_status, bool)
+        and baseline_status >= 400
+    )
+    if is_error_status:
+        return []  # block/error page served only to headless Chrome
     return [_consent_not_required()]
 
 
@@ -342,7 +366,7 @@ def evaluate(raw, fast_ids: frozenset = frozenset()) -> list[dict]:
     if baseline is None:
         return []
     if not (reject_found or accept_found):
-        return _no_banner_findings(baseline, frozenset(fast_ids))
+        return _no_banner_findings(baseline, frozenset(fast_ids), raw.get("baseline_status"))
     # after_reject counts only when the click was verified (banner closed)
     after_reject = None
     if reject_found and _flag(raw, "reject_banner_closed"):
